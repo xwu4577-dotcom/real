@@ -408,34 +408,13 @@
         let syncTimer = null;
 
         // 初始化：先检查登录状态，再加载数据
-        // ==========================================
-        // 🧪 测试专用：纯静态模式 (断开数据库)
-        // ==========================================
         async function initApp() {
-            // 1. 强行跳过所有网络请求
-            console.log("🧪 测试模式：已切断云端连接");
-            
-            // 2. 直接加载本地数据 (如果有的话)
-            try {
-                // 确保先读取配置和数据
-                if (typeof loadConfig === 'function') loadConfig();
-                if (typeof migrateData === 'function') migrateData();
-                if (typeof initHome === 'function') initHome();
-                
-                // 渲染工程列表 (防止页面空白)
-                if (typeof renderProjects === 'function') renderProjects();
-                
-                // 3. 弹窗提示，证明网页活了
-                alert("测试成功！网页能打开！\n(当前为纯本地模式，未连接数据库)");
-                
-            } catch (e) {
-                alert("网页活了，但加载本地数据出错：" + e.message);
+            const { data: { session } } = await _supabase.auth.getSession();
+            if (session) {
+                handleLoginSuccess(session.user);
+            } else {
+                document.getElementById('auth-modal').style.display = 'flex';
             }
-
-            // 4. 为了不让你以为卡死，手动隐藏登录框（或者你想显示也行）
-            // 这里我们强制显示主页，把登录框关掉
-            const authModal = document.getElementById('auth-modal');
-            if (authModal) authModal.style.display = 'none';
         }
 
         async function handleAuth() {
