@@ -854,23 +854,59 @@
         
         function deleteStage(i){ if(confirm("删节点？")){ const l=DB.get(); const p=l.find(x=>x.id==currentProjectId); p.stages.splice(i,1); DB.save(l); refreshDetail(p); } }
         
-        // 🌟 V43: 工程列表改为【点击排序】
-        function renderProjects() {
-            const list = DB.get(); const cs = document.getElementById('container_special'); const co = document.getElementById('container_odd'); const cr = document.getElementById('container_repair');
-            cs.innerHTML=''; co.innerHTML=''; cr.innerHTML=''; let c1=0, c2=0, c3=0;
-            list.forEach((p, i) => {
-                const d = document.createElement('div'); d.className='list-item';
-                d.innerHTML = `
-                    <div class="list-item-content" onclick="openDetail(${p.id})"><div class="list-item-title">${p.name}</div><div class="list-item-date">${p.createDate}</div></div>
-                    <div class="list-sort-zone">
-                        <button class="sort-btn up" onclick="moveProjUp(${i}, '${p.type}')">⬆️</button>
-                        <button class="sort-btn down" onclick="moveProjDown(${i}, '${p.type}')">⬇️</button>
-                    </div>`;
-                if(p.type==='special'){cs.appendChild(d);c1++;} else if(p.type==='odd'){co.appendChild(d);c2++;} else{cr.appendChild(d);c3++;}
-            });
-            document.getElementById('c_s').innerText=c1; document.getElementById('c_o').innerText=c2; document.getElementById('c_r').innerText=c3;
-        }
+// 🌟 V45: 列表渲染（带删除按钮）
+function renderProjects() {
+    const list = DB.get(); 
+    const cs = document.getElementById('container_special'); 
+    const co = document.getElementById('container_odd'); 
+    const cr = document.getElementById('container_repair');
+    
+    cs.innerHTML=''; co.innerHTML=''; cr.innerHTML=''; 
+    let c1=0, c2=0, c3=0;
 
+    list.forEach((p, i) => {
+        const d = document.createElement('div'); 
+        d.className='list-item';
+        d.innerHTML = `
+            <div class="list-item-content" onclick="openDetail(${p.id})">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                    <div class="list-item-title">${p.name}</div>
+                    <button class="btn-mini" style="color:#FF3B30; border-color:#FF3B30; font-size:12px; padding:2px 8px; margin-left:10px; flex-shrink:0;" onclick="deleteProject(event, ${p.id})">删除</button>
+                </div>
+                <div class="list-item-date">${p.createDate}</div>
+            </div>
+            <div class="list-sort-zone">
+                <button class="sort-btn up" onclick="moveProjUp(${i}, '${p.type}')">↑</button>
+                <button class="sort-btn down" onclick="moveProjDown(${i}, '${p.type}')">↓</button>
+            </div>`;
+        
+        if(p.type==='special'){cs.appendChild(d);c1++;} 
+        else if(p.type==='odd'){co.appendChild(d);c2++;} 
+        else{cr.appendChild(d);c3++;}
+    });
+    
+    document.getElementById('c_s').innerText=c1; 
+    document.getElementById('c_o').innerText=c2; 
+    document.getElementById('c_r').innerText=c3;
+}
+        
+// 🗑️ 删除工程函数
+function deleteProject(e, id) {
+    // 阻止点击穿透（防止点删除按钮时误触打开详情页）
+    e.stopPropagation();
+    
+    if (confirm('⚠️ 确定要彻底删除这个工程吗？\n删除后无法恢复！')) {
+        let list = DB.get();
+        // 过滤掉这个 ID 的工程
+        list = list.filter(p => p.id !== id);
+        
+        // 保存并触发云同步
+        DB.save(list);
+        
+        // 刷新列表
+        renderProjects();
+    }
+}
         // 🌟 V43: 排序函数
         function moveProjUp(i, type) {
             if(i === 0) return; // 已经在最顶
@@ -989,6 +1025,7 @@ function importData(i) {
 
 
 </html>
+
 
 
 
