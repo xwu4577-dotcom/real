@@ -287,7 +287,7 @@
                 <div class="entry-card eng" onclick="goToPage('projectList')">
                     <span class="entry-icon">🏗️</span>
                     <span class="entry-title">工程项目</span>
-                    <span class="entry-desc">专项/零星/抢修</span>
+                    <span class="entry-desc">专项工程/零星工程/抢修工程</span>
                 </div>
                 <div class="entry-card non-eng" onclick="goToPage('nonProjectList')">
                     <span class="entry-icon">📂</span>
@@ -328,15 +328,15 @@
 
         <div id="projectList" class="page">
             <div class="project-section">
-                <div class="project-section-header" style="color:#007AFF;border-color:#007AFF;">🌟 专项工程 <span id="c_s" style="font-size:12px;background:#e3f2fd;padding:2px 8px;border-radius:10px;">0</span></div>
+                <div class="project-section-header" style="color:#007AFF;border-color:#007AFF;">🌟 专项工程工程 <span id="c_s" style="font-size:12px;background:#e3f2fd;padding:2px 8px;border-radius:10px;">0</span></div>
                 <div id="container_special" class="project-section-body"></div>
             </div>
             <div class="project-section">
-                <div class="project-section-header" style="color:#AF52DE;border-color:#AF52DE;">🔧 零星工程 <span id="c_o" style="font-size:12px;background:#f3e5f5;padding:2px 8px;border-radius:10px;">0</span></div>
+                <div class="project-section-header" style="color:#AF52DE;border-color:#AF52DE;">🔧 零星工程工程 <span id="c_o" style="font-size:12px;background:#f3e5f5;padding:2px 8px;border-radius:10px;">0</span></div>
                 <div id="container_odd" class="project-section-body"></div>
             </div>
             <div class="project-section">
-                <div class="project-section-header" style="color:#FF3B30;border-color:#FF3B30;">🚑 抢修工程 <span id="c_r" style="font-size:12px;background:#ffebee;padding:2px 8px;border-radius:10px;">0</span></div>
+                <div class="project-section-header" style="color:#FF3B30;border-color:#FF3B30;">🚑 抢修工程工程 <span id="c_r" style="font-size:12px;background:#ffebee;padding:2px 8px;border-radius:10px;">0</span></div>
                 <div id="container_repair" class="project-section-body"></div>
             </div>
             <button class="fab-add" onclick="openModal('createModal')">+</button>
@@ -388,7 +388,7 @@
     <div id="addOtModal" class="modal"><div class="modal-content"><h3>录入加班</h3><label class="form-label">日期</label><input type="date" id="otDate" class="input-box"><label class="form-label">天数</label><input type="number" id="otDays" class="input-box" step="0.5"><label class="form-label">备注</label><input type="text" id="otNote" class="input-box"><button class="btn-primary" onclick="addOvertime()">确认</button><button class="btn-cancel" onclick="closeModal('addOtModal')">取消</button></div></div>
     <div id="addLeaveModal" class="modal"><div class="modal-content"><h3>录入休假</h3><label class="form-label">类型</label><select id="lvType" class="input-box"><option value="年假">年假</option><option value="存休">存休</option><option value="倒休">倒休</option><option value="其他">其他</select><label class="form-label">日期</label><input type="date" id="lvDate" class="input-box"><label class="form-label">天数</label><input type="number" id="lvDays" class="input-box" step="0.5"><label class="form-label">说明</label><input type="text" id="lvNote" class="input-box"><button class="btn-primary" onclick="addLeaveRecord()">确认</button><button class="btn-cancel" onclick="closeModal('addLeaveModal')">取消</button></div></div>
     <div id="useOtModal" class="modal"><div class="modal-content"><h3>核销加班</h3><p style="color:#666;font-size:13px;margin-bottom:15px">确认已倒休？</p><label class="form-label">倒休日期</label><input type="date" id="useOtDate" class="input-box"><input type="hidden" id="useOtId"><button class="btn-primary" onclick="confirmUseOt()">确认</button><button class="btn-cancel" onclick="closeModal('useOtModal')">取消</button></div></div>
-    <div id="createModal" class="modal"><div class="modal-content"><h3>新建工程</h3><label class="form-label">名称</label><input type="text" id="newProjectName" class="input-box"><label class="form-label">类别</label><select id="newProjectType" class="input-box"><option value="special">🌟 专项</option><option value="odd">🔧 零星</option><option value="repair">🚑 抢修</option></select><button class="btn-primary" onclick="createProject()">创建</button><button class="btn-cancel" onclick="closeModal('createModal')">取消</button></div></div>
+    <div id="createModal" class="modal"><div class="modal-content"><h3>新建工程</h3><label class="form-label">名称</label><input type="text" id="newProjectName" class="input-box"><label class="form-label">类别</label><select id="newProjectType" class="input-box"><option value="special">🌟 专项工程</option><option value="odd">🔧 零星工程</option><option value="repair">🚑 抢修工程</option></select><button class="btn-primary" onclick="createProject()">创建</button><button class="btn-cancel" onclick="closeModal('createModal')">取消</button></div></div>
     <div id="nodeLibraryModal" class="modal"><div class="modal-content"><h3>选择节点</h3><div id="nodeLibraryGrid" class="node-library-grid"></div><button class="btn-cancel" onclick="closeModal('nodeLibraryModal')">取消</button></div></div>
     <div id="dynamicFormModal" class="modal"><div class="modal-content"><h3 id="formTitle"></h3><div id="dynamicFormContainer"></div><button class="btn-primary" onclick="saveDynamicData()">保存</button><button class="btn-cancel" onclick="closeModal('dynamicFormModal')">取消</button></div></div>
     <div id="configModal" class="modal"><div class="modal-content" style="max-width:600px;"><h3 id="configModalTitle">配置</h3><div style="display:flex;gap:10px;margin-bottom:10px"><button class="btn-small" id="btnAddConfigNode" onclick="addNewConfigNode()">+ 新类型</button></div><div class="config-container"><div class="config-sidebar" id="configSidebar"></div><div class="config-main" id="configMain"><div id="fieldEditorArea" style="display:none;"><h4 id="currentEditingNodeTitle"></h4><div id="configFieldsList"></div><button class="btn-small" onclick="addNewConfigField()">+ 字段</button></div><div id="configEmptyHint">请选择</div></div></div><button class="btn-primary" onclick="handleConfigSave()">保存</button><button class="btn-cancel" onclick="closeModal('configModal')">取消</button></div></div>
@@ -791,7 +791,7 @@
         }
 
         // 🌟 V44.0 修复：使用宽松等于 (==)
-        function openDetail(id){ currentProjectId=id; const p=DB.get().find(x=>x.id==id); document.getElementById('detailTitle').innerText=p.name; document.getElementById('detailType').innerText={'special':'专项','odd':'零星','repair':'抢修'}[p.type]; goToPage('projectDetail'); refreshDetail(p); }
+        function openDetail(id){ currentProjectId=id; const p=DB.get().find(x=>x.id==id); document.getElementById('detailTitle').innerText=p.name; document.getElementById('detailType').innerText={'special':'专项工程','odd':'零星工程','repair':'抢修工程'}[p.type]; goToPage('projectDetail'); refreshDetail(p); }
         
         function refreshDetail(p) {
             const c = document.getElementById('stagesContainer'); c.innerHTML = ''; const prev = document.getElementById('previewFlow'); prev.innerHTML = '';
@@ -900,6 +900,7 @@
 
 
 </html>
+
 
 
 
