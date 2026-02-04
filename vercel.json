@@ -1,8 +1,1 @@
-{
-  "rewrites": [
-    {
-      "source": "/supabase/:path*",
-      "destination": "https://dddimadzpbcvmtoujoec.supabase.co/:path*"
-    }
-  ]
-}
+{ "rewrites": [{ "source": "/weather/:path*", "destination": "https://dddimadzpbcvmtoujoec.supabase.co/:path*" }] }
