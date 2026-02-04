@@ -757,44 +757,98 @@
             renderCalendar(viewYear, viewMonth);
         }
 
-        function renderTodos() {
-            const list = DB_TODO.get(); const container = document.getElementById('todoList'); container.innerHTML = '';
-            list.forEach((t, idx) => {
-                const div = document.createElement('div'); div.className = `todo-item ${t.done?'done':''}`;
-                div.innerHTML = `<div class="todo-checkbox" onclick="toggleTodo(${idx})">${t.done?'✔':''}</div><div class="todo-text">${t.text}</div><div class="todo-del" onclick="deleteTodo(${idx})">×</div>`;
-                container.appendChild(div);
-            });
-        }
+        // 🌟 美化版：待办事项渲染 (换用新垃圾桶)
+function renderTodos() {
+    const list = DB_TODO.get(); 
+    const container = document.getElementById('todoList'); 
+    container.innerHTML = '';
+    
+    list.forEach((t, idx) => {
+        const div = document.createElement('div'); 
+        div.className = `todo-item ${t.done?'done':''}`;
+        div.innerHTML = `
+            <div class="todo-checkbox" onclick="toggleTodo(${idx})">${t.done?'✔':''}</div>
+            <div class="todo-text">${t.text}</div>
+            <button class="btn-delete-icon" onclick="deleteTodo(${idx})">
+                <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+            </button>`;
+        container.appendChild(div);
+    });
+}
         function addTodo() { const val = document.getElementById('todoInput').value; if(!val) return; const list = DB_TODO.get(); list.unshift({ text: val, done: false }); DB_TODO.save(list); document.getElementById('todoInput').value = ''; renderTodos(); initHome(); }
         function toggleTodo(idx) { const list = DB_TODO.get(); list[idx].done = !list[idx].done; DB_TODO.save(list); renderTodos(); initHome(); }
         function deleteTodo(idx) { const list = DB_TODO.get(); list.splice(idx, 1); DB_TODO.save(list); renderTodos(); initHome(); }
 
         // --- 考勤页逻辑 ---
         function getDeadline(dateStr) { if(!dateStr) return "未知"; const d = new Date(dateStr); const target = new Date(d.getFullYear(), d.getMonth() + 2, 0); return target.toISOString().split('T')[0]; }
-        function renderOtPage() {
-            const data = DB_OT.get(); document.getElementById('inpAnnual').value = data.annual; document.getElementById('inpSaved').value = data.saved;
-            let usedAnnual = 0, usedSaved = 0, activeOt = 0;
-            const lvContainer = document.getElementById('leaveListContainer'); lvContainer.innerHTML = '';
-            (data.leaveRecords || []).sort((a,b)=>new Date(b.date)-new Date(a.date)).forEach((l, idx) => {
-                const days = parseFloat(l.days); let typeColor = '#999';
-                if (l.type === '年假') { usedAnnual += days; typeColor = '#007AFF'; } if (l.type === '存休') { usedSaved += days; typeColor = '#AF52DE'; }
-                const div = document.createElement('div'); div.className = 'ot-list-item'; 
-                div.innerHTML = `<div><div style="font-weight:600"><span class="leave-type-tag" style="background:${typeColor}">${l.type||'休假'}</span>${l.date} <span style="color:#FF3B30">-${days}天</span></div><div style="font-size:12px;color:#999;margin-left:5px;">${l.note||'-'}</div></div><span onclick="delLeaveItem(${idx})" style="color:#ccc;cursor:pointer">🗑️</span>`;
-                lvContainer.appendChild(div);
-            });
-            const otContainer = document.getElementById('otListContainer'); otContainer.innerHTML = '';
-            (data.records || []).sort((a,b) => new Date(b.date) - new Date(a.date)).forEach(r => {
-                const div = document.createElement('div'); div.className = `ot-card ${r.status === 'used' ? 'used' : ''}`;
-                let actionHtml = ''; let statusBadge = '';
-                if (r.status === 'used') { statusBadge = `<span class="ot-badge">已休</span>`; actionHtml = `<span style="font-size:12px;">归档: ${r.usedDate}</span> <button class="btn-mini" onclick="delOtItem('${r.id}')">🗑️</button>`; } 
-                else { activeOt += parseFloat(r.days); const deadline = getDeadline(r.date); statusBadge = `<span class="ot-badge" style="background:#e3f2fd;color:#007AFF">待休</span>`; actionHtml = `<div style="display:flex;justify-content:space-between;align-items:center;"><div class="ot-deadline">有效期至: ${deadline}</div><div><button class="btn-mini action" onclick="preUseOt('${r.id}')">✅ 休完</button><button class="btn-mini" onclick="delOtItem('${r.id}')">🗑️</button></div></div>`; }
-                div.innerHTML = `<div class="ot-card-header"><div class="ot-date">${r.date} <span style="font-size:14px;margin-left:5px;">+${r.days}天</span></div>${statusBadge}</div><div class="ot-desc">${r.note || '无备注'}</div>${actionHtml}`;
-                otContainer.appendChild(div);
-            });
-            const remAnnual = parseFloat(data.annual || 0) - usedAnnual; const remSaved = parseFloat(data.saved || 0) - usedSaved;
-            document.getElementById('dispAnnual').innerText = remAnnual; document.getElementById('dispSaved').innerText = remSaved; document.getElementById('dispOt').innerText = activeOt;
-            document.getElementById('otTotalDays').innerText = remAnnual + remSaved + activeOt;
+// 🌟 美化版：考勤页面渲染 (统一垃圾桶风格)
+function renderOtPage() {
+    const data = DB_OT.get(); 
+    document.getElementById('inpAnnual').value = data.annual; 
+    document.getElementById('inpSaved').value = data.saved;
+    
+    let usedAnnual = 0, usedSaved = 0, activeOt = 0;
+    const lvContainer = document.getElementById('leaveListContainer'); 
+    lvContainer.innerHTML = '';
+    
+    // 渲染休假记录
+    (data.leaveRecords || []).sort((a,b)=>new Date(b.date)-new Date(a.date)).forEach((l, idx) => {
+        const days = parseFloat(l.days); 
+        let typeColor = '#999';
+        if (l.type === '年假') { usedAnnual += days; typeColor = '#007AFF'; } 
+        if (l.type === '存休') { usedSaved += days; typeColor = '#AF52DE'; }
+        
+        const div = document.createElement('div'); 
+        div.className = 'ot-list-item'; 
+        div.innerHTML = `
+            <div>
+                <div style="font-weight:600"><span class="leave-type-tag" style="background:${typeColor}">${l.type||'休假'}</span>${l.date} <span style="color:#FF3B30">-${days}天</span></div>
+                <div style="font-size:12px;color:#999;margin-left:5px;">${l.note||'-'}</div>
+            </div>
+            <button class="btn-delete-icon" onclick="delLeaveItem(${idx})">
+                <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+            </button>`;
+        lvContainer.appendChild(div);
+    });
+
+    const otContainer = document.getElementById('otListContainer'); 
+    otContainer.innerHTML = '';
+    
+    // 渲染加班记录
+    (data.records || []).sort((a,b) => new Date(b.date) - new Date(a.date)).forEach(r => {
+        const div = document.createElement('div'); 
+        div.className = `ot-card ${r.status === 'used' ? 'used' : ''}`;
+        
+        let actionHtml = ''; 
+        let statusBadge = '';
+        const trashIcon = `
+            <button class="btn-delete-icon" onclick="delOtItem('${r.id}')" style="margin-left:0;">
+                <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+            </button>`;
+
+        if (r.status === 'used') { 
+            statusBadge = `<span class="ot-badge">已休</span>`; 
+            // 已休记录：只有垃圾桶
+            actionHtml = `<div style="display:flex;justify-content:flex-end;align-items:center;margin-top:5px;"><span style="font-size:12px;margin-right:10px;">归档: ${r.usedDate}</span> ${trashIcon}</div>`; 
+        } else { 
+            activeOt += parseFloat(r.days); 
+            const deadline = getDeadline(r.date); 
+            statusBadge = `<span class="ot-badge" style="background:#e3f2fd;color:#007AFF">待休</span>`; 
+            // 待休记录：休完按钮 + 垃圾桶
+            actionHtml = `<div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;"><div class="ot-deadline">有效期至: ${deadline}</div><div style="display:flex;align-items:center;gap:5px;"><button class="btn-mini action" onclick="preUseOt('${r.id}')">✅ 休完</button>${trashIcon}</div></div>`; 
         }
+        
+        div.innerHTML = `<div class="ot-card-header"><div class="ot-date">${r.date} <span style="font-size:14px;margin-left:5px;">+${r.days}天</span></div>${statusBadge}</div><div class="ot-desc">${r.note || '无备注'}</div>${actionHtml}`;
+        otContainer.appendChild(div);
+    });
+
+    const remAnnual = parseFloat(data.annual || 0) - usedAnnual; 
+    const remSaved = parseFloat(data.saved || 0) - usedSaved;
+    document.getElementById('dispAnnual').innerText = remAnnual; 
+    document.getElementById('dispSaved').innerText = remSaved; 
+    document.getElementById('dispOt').innerText = activeOt;
+    document.getElementById('otTotalDays').innerText = remAnnual + remSaved + activeOt;
+}
         function saveBaseLeave() { const data = DB_OT.get(); data.annual = document.getElementById('inpAnnual').value || 0; data.saved = document.getElementById('inpSaved').value || 0; DB_OT.save(data); renderOtPage(); }
         function addOvertime() { const date = document.getElementById('otDate').value; const days = document.getElementById('otDays').value; if(!date || !days) return alert("请填写完整"); const data = DB_OT.get(); data.records.push({ id: Date.now().toString(), date, days, note: document.getElementById('otNote').value, status: 'active' }); DB_OT.save(data); closeModal('addOtModal'); renderOtPage(); }
         function preUseOt(id) { document.getElementById('useOtId').value = id; document.getElementById('useOtDate').value = new Date().toISOString().split('T')[0]; openModal('useOtModal'); }
@@ -864,42 +918,59 @@
         // 🌟 V44.0 修复：使用宽松等于 (==)
         function openDetail(id){ currentProjectId=id; const p=DB.get().find(x=>x.id==id); document.getElementById('detailTitle').innerText=p.name; document.getElementById('detailType').innerText={'special':'专项工程','odd':'零星工程','repair':'抢修工程'}[p.type]; goToPage('projectDetail'); refreshDetail(p); }
         
-        function refreshDetail(p) {
-            const c = document.getElementById('stagesContainer'); c.innerHTML = ''; const prev = document.getElementById('previewFlow'); prev.innerHTML = '';
-            p.stages.forEach((s, i) => {
-                const conf = s.config || [];
-                const getDisplayHtml = (mode) => {
-                    return conf.map(f => {
-                        if (!s.data[f.key]) return ''; if (f.key === 'otherContent' || f.key === 'otherContractName') return ''; 
-                        let displayVal = s.data[f.key]; if (f.type === 'number') displayVal = '¥' + displayVal;
-                        if ((f.key === 'meetType' || f.key === 'contractSubType' || f.key === 'contractType') && displayVal === '其他') { if (s.data['otherContent']) displayVal = s.data['otherContent']; if (s.data['otherContractName']) displayVal = s.data['otherContractName']; }
-                        if (mode === 'preview') return `<div class="preview-kv"><span class="preview-k">${f.label}:</span><span class="preview-v">${displayVal}</span></div>`;
-                        return `<div class="data-item"><span class="data-label">${f.label}</span><span class="data-value">${displayVal}</span></div>`;
-                    }).join('');
-                };
-                if(s.status === 'done') { prev.innerHTML += `<div class="preview-item done"><div class="preview-item-title"><span>${s.name}</span></div><div class="preview-data-table">${getDisplayHtml('preview')}</div></div>`; }
-                let det = ''; if(s.status !== 'waiting') { det = '<div class="data-grid">' + getDisplayHtml('card') + '</div>'; }
-                const ico = s.status==='done'?'✅':(s.status==='processing'?'🔥':'⏳');
-                // 🌟 V44 节点排序按钮 (替代拖拽)
-                c.innerHTML += `
-                <div class="stage-card ${s.status}">
-                    <div class="node-sort-zone">
-                        <button class="node-sort-btn" onclick="moveStageUp(${i})">↑</button>
-                        <button class="node-sort-btn" onclick="moveStageDown(${i})">↓</button>
-                    </div>
-                    <div class="card-content" onclick="openStageEdit(${i})">
-                        <div class="card-actions-fixed">
-                            <button class="icon-btn-card btn-edit-struct" onclick="event.stopPropagation();openConfigModal('local', ${i})">⚙️</button>
-                            <button class="icon-btn-card btn-delete-node" onclick="event.stopPropagation();deleteStage(${i})">×</button>
-                        </div>
-                        <div class="status-bar ${s.status}"></div>
-                        <div class="card-header-row"><span class="card-title">${s.name}</span><span class="card-status-text">${ico}</span></div>
-                        ${det}
-                    </div>
-                </div>`;
-            });
+// 🌟 美化版：详情页渲染 (节点卡片使用新垃圾桶)
+function refreshDetail(p) {
+    const c = document.getElementById('stagesContainer'); 
+    c.innerHTML = ''; 
+    const prev = document.getElementById('previewFlow'); 
+    prev.innerHTML = '';
+    
+    p.stages.forEach((s, i) => {
+        const conf = s.config || [];
+        const getDisplayHtml = (mode) => {
+            return conf.map(f => {
+                if (!s.data[f.key]) return ''; 
+                if (f.key === 'otherContent' || f.key === 'otherContractName') return ''; 
+                let displayVal = s.data[f.key]; 
+                if (f.type === 'number') displayVal = '¥' + displayVal;
+                if ((f.key === 'meetType' || f.key === 'contractSubType' || f.key === 'contractType') && displayVal === '其他') { 
+                    if (s.data['otherContent']) displayVal = s.data['otherContent']; 
+                    if (s.data['otherContractName']) displayVal = s.data['otherContractName']; 
+                }
+                if (mode === 'preview') return `<div class="preview-kv"><span class="preview-k">${f.label}:</span><span class="preview-v">${displayVal}</span></div>`;
+                return `<div class="data-item"><span class="data-label">${f.label}</span><span class="data-value">${displayVal}</span></div>`;
+            }).join('');
+        };
+        
+        if(s.status === 'done') { 
+            prev.innerHTML += `<div class="preview-item done"><div class="preview-item-title"><span>${s.name}</span></div><div class="preview-data-table">${getDisplayHtml('preview')}</div></div>`; 
         }
-
+        
+        let det = ''; 
+        if(s.status !== 'waiting') { det = '<div class="data-grid">' + getDisplayHtml('card') + '</div>'; }
+        
+        const ico = s.status==='done'?'✅':(s.status==='processing'?'🔥':'⏳');
+        
+        c.innerHTML += `
+        <div class="stage-card ${s.status}">
+            <div class="node-sort-zone">
+                <button class="node-sort-btn" onclick="moveStageUp(${i})">↑</button>
+                <button class="node-sort-btn" onclick="moveStageDown(${i})">↓</button>
+            </div>
+            <div class="card-content" onclick="openStageEdit(${i})">
+                <div class="card-actions-fixed">
+                    <button class="icon-btn-card btn-edit-struct" onclick="event.stopPropagation();openConfigModal('local', ${i})">⚙️</button>
+                    <button class="btn-delete-icon" style="margin-left:0;" onclick="event.stopPropagation();deleteStage(${i})">
+                        <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                    </button>
+                </div>
+                <div class="status-bar ${s.status}"></div>
+                <div class="card-header-row"><span class="card-title">${s.name}</span><span class="card-status-text">${ico}</span></div>
+                ${det}
+            </div>
+        </div>`;
+    });
+}
         // 🌟 V44 节点排序逻辑
         function moveStageUp(i) {
             if (i === 0) return;
@@ -1114,6 +1185,7 @@ function importData(i) {
 
 
 </html>
+
 
 
 
