@@ -889,7 +889,49 @@
 
         function exportData(){ const d={v:"44.0",d:new Date(),p:DB.get(),c:GLOBAL_CONFIG, ot:DB_OT.get(), todo:DB_TODO.get(), cal:DB_CAL.get()}; const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([JSON.stringify(d)],{type:"json"})); a.download=`backup_${Date.now()}.json`; a.click(); }
         function triggerImport(){ document.getElementById('importFile').click(); }
-        function importData(i){ const r=new FileReader(); r.onload=e=>{ const b=JSON.parse(e.target.result); if(b.p) DB.save(b.p); if(b.c) localStorage.setItem(DB_KEY_CONFIG,JSON.stringify(b.c)); if(b.ot) DB_OT.save(b.ot); if(b.todo) DB_TODO.save(b.todo); if(b.cal) DB_CAL.save(b.cal); location.reload(); }; r.readAsText(i.files[0]); }
+        // 【修复版】带提示的导入功能
+function importData(i){ 
+    // 1. 先弹窗证明按钮点到了
+    alert("正在读取文件，请稍候...");
+
+    if (!i.files || !i.files[0]) {
+        alert("❌ 好像没有选中文件，请重新选择。");
+        return;
+    }
+
+    const r = new FileReader(); 
+    r.onload = e => { 
+        try {
+            console.log("文件读取完成，正在解析...");
+            const b = JSON.parse(e.target.result); 
+            
+            let count = 0;
+            // 逐个检查数据是否存在
+            if(b.p) { DB.save(b.p); count++; }
+            if(b.c) { localStorage.setItem(DB_KEY_CONFIG,JSON.stringify(b.c)); count++; }
+            if(b.ot) { DB_OT.save(b.ot); count++; }
+            if(b.todo) { DB_TODO.save(b.todo); count++; }
+            if(b.cal) { DB_CAL.save(b.cal); count++; }
+            
+            // 如果发现了有效数据
+            if (count > 0) {
+                alert(`✅ 成功！识别到 ${count} 类数据。\n点击确定后页面将自动刷新，数据会自动同步到云端。`);
+                location.reload(); 
+            } else {
+                alert("⚠️ 文件已读取，但里面似乎是空的，或者格式不对。\n请检查你选的是不是 backup_xxxx.json 文件？");
+            }
+
+        } catch (err) {
+            // 如果解析出错，直接弹窗报错
+            alert("❌ 导入失败！文件格式看起来有问题。\n错误信息: " + err.message);
+        }
+    }; 
+    
+    // 开始读取
+    r.readAsText(i.files[0]); 
+    // 防止同一个文件选两次不触发
+    i.value = ''; 
+}
 
         function goHome(){ goToPage('homePage'); updateStats(); }
         function updateStats(){  }
@@ -900,6 +942,7 @@
 
 
 </html>
+
 
 
 
