@@ -242,28 +242,37 @@
         /* ... 上面是 .user-badge 的样式 ... */
         .user-badge { font-size: 12px; color: var(--primary); background: #e3f2fd; padding: 4px 8px; border-radius: 10px; cursor: pointer; }
 
-        /* 👇👇👇 请把新代码粘贴在这里 👇👇👇 */
-        .btn-delete-icon {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            background: rgba(255, 59, 48, 0.08);
-            color: #FF3B30;
-            border: none;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 16px;
-            cursor: pointer;
-            margin-left: 12px;
-            flex-shrink: 0;
-            transition: all 0.2s;
-        }
-        .btn-delete-icon:active {
-            background: rgba(255, 59, 48, 0.2); 
-            transform: scale(0.9);
-        }
-        /* 👆👆👆 粘贴结束 👆👆👆 */
+/* 🌟 极简版：无背景、线框风格删除图标 */
+.btn-delete-icon {
+    width: 32px;
+    height: 32px;
+    /* 去掉背景色，改用透明 */
+    background: transparent; 
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    margin-left: 8px;
+    flex-shrink: 0;
+    opacity: 0.4; /* 平时淡一点，不抢眼 */
+    transition: all 0.2s;
+}
+.btn-delete-icon:active {
+    transform: scale(0.9);
+    opacity: 1; /* 点击时变实 */
+}
+/* 给 SVG 设定颜色，跟随文字颜色或指定灰色 */
+.btn-delete-icon svg {
+    width: 18px; 
+    height: 18px;
+    stroke: #999; /* 线条颜色：深灰 */
+    stroke-width: 1.5; /* 线条粗细 */
+    fill: none;
+}
+.btn-delete-icon:active svg {
+    stroke: #FF3B30; /* 点击变红 */
+}
 
     </style> </head>
 <body>
@@ -408,13 +417,18 @@
         </div>
 
         <div id="projectDetail" class="page">
-            <div style="margin-bottom:15px; display:flex; justify-content:space-between; align-items:flex-start;">
-                <div>
-                    <h2 id="detailTitle" style="margin:0; font-size:18px; display:inline-block;" onclick="editProjectName()"></h2>
-                    <span style="font-size:14px; color:#999; cursor:pointer;" onclick="editProjectName()"> ✏️</span>
-                    <div id="detailType" style="font-size:12px; color:#666; margin-top:2px;"></div>
+<div style="position: relative; height: 44px; display: flex; align-items: center; margin-bottom: 20px;">
+                
+                <button class="back-btn-float" onclick="goToPage('projectList')" style="z-index: 10; position: relative;">
+                    ← 返回列表
+                </button>
+
+                <div style="position: absolute; left: 0; right: 0; text-align: center; pointer-events: none;">
+                    <h2 id="detailTitle" style="margin: 0; font-size: 18px; display: inline-block; pointer-events: auto;" onclick="editProjectName()"></h2>
+                    <span style="font-size: 14px; color: #999; cursor: pointer; pointer-events: auto;" onclick="editProjectName()"> ✏️</span>
+                    <div id="detailType" style="font-size: 10px; color: #999; margin-top: 2px;"></div>
                 </div>
-                <button class="back-btn-float" onclick="goToPage('projectList')">↩ 返回列表</button>
+
             </div>
             <div class="preview-section">
                 <div class="preview-header"><span>📋 全息进度预览</span></div>
@@ -930,7 +944,12 @@ function renderProjects() {
                     <div class="list-item-title" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${p.name}</div>
                     <div class="list-item-date">${p.createDate}</div>
                 </div>
-                <button class="btn-delete-icon" onclick="deleteProject(event, ${p.id})">🗑️</button>
+                <button class="btn-delete-icon" onclick="deleteProject(event, ${p.id})">
+                    <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                </button>
             </div>
             <div class="list-sort-zone">
                 <button class="sort-btn up" onclick="moveProjUp(${i}, '${p.type}')">↑</button>
@@ -964,21 +983,46 @@ function deleteProject(e, id) {
         renderProjects();
     }
 }
-        // 🌟 V43: 排序函数
-        function moveProjUp(i, type) {
-            if(i === 0) return; // 已经在最顶
-            const list = DB.get();
-            // 注意：因为列表是分类渲染的，i是全局索引，我们需要更聪明的交换
-            // 简单做法：直接交换数组元素
-            const temp = list[i]; list[i] = list[i-1]; list[i-1] = temp;
-            DB.save(list); renderProjects();
+        // 🌟 智能排序：只在同类型工程之间交换位置 (精准跳跃版)
+function moveProjUp(i, type) {
+    const list = DB.get();
+    // 往前找，找到【上一个同类型】的工程在哪里
+    let targetIndex = -1;
+    for (let k = i - 1; k >= 0; k--) {
+        if (list[k].type === type) {
+            targetIndex = k;
+            break;
         }
-        function moveProjDown(i, type) {
-            const list = DB.get();
-            if(i === list.length - 1) return; // 已经在最底
-            const temp = list[i]; list[i] = list[i+1]; list[i+1] = temp;
-            DB.save(list); renderProjects();
+    }
+    // 如果找到了兄弟，就交换位置
+    if (targetIndex !== -1) {
+        const temp = list[i];
+        list[i] = list[targetIndex];
+        list[targetIndex] = temp;
+        DB.save(list);
+        renderProjects();
+    }
+}
+
+function moveProjDown(i, type) {
+    const list = DB.get();
+    // 往后找，找到【下一个同类型】的工程在哪里
+    let targetIndex = -1;
+    for (let k = i + 1; k < list.length; k++) {
+        if (list[k].type === type) {
+            targetIndex = k;
+            break;
         }
+    }
+    // 如果找到了兄弟，就交换位置
+    if (targetIndex !== -1) {
+        const temp = list[i];
+        list[i] = list[targetIndex];
+        list[targetIndex] = temp;
+        DB.save(list);
+        renderProjects();
+    }
+}
 
         function exportData(){ const d={v:"44.0",d:new Date(),p:DB.get(),c:GLOBAL_CONFIG, ot:DB_OT.get(), todo:DB_TODO.get(), cal:DB_CAL.get()}; const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([JSON.stringify(d)],{type:"json"})); a.download=`backup_${Date.now()}.json`; a.click(); }
         function triggerImport(){ document.getElementById('importFile').click(); }
@@ -1070,6 +1114,7 @@ function importData(i) {
 
 
 </html>
+
 
 
 
