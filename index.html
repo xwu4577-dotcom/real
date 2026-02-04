@@ -926,63 +926,60 @@ function deleteProject(e, id) {
         function exportData(){ const d={v:"44.0",d:new Date(),p:DB.get(),c:GLOBAL_CONFIG, ot:DB_OT.get(), todo:DB_TODO.get(), cal:DB_CAL.get()}; const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([JSON.stringify(d)],{type:"json"})); a.download=`backup_${Date.now()}.json`; a.click(); }
         function triggerImport(){ document.getElementById('importFile').click(); }
         // 【修复版】带提示的导入功能
-// ➕ 增量合并版：保留现有数据，把备份文件里的数据“追加”进来
+// 🧠 智能去重版导入：防止工程重复
 function importData(i) {
     if (!i.files || !i.files[0]) return alert("❌ 没选文件！");
 
     const r = new FileReader();
     r.onload = async (e) => {
         try {
-            alert("🔍 正在解析备份文件...");
+            alert("🔍 正在解析并去重...");
             const b = JSON.parse(e.target.result);
             
-            // 兼容旧版数据格式
             const impP = b.p || b.projects || [];
             const impConf = b.c || b.config || {};
             const impOt = b.ot || b.attendance || { records: [], leaveRecords: [] };
             const impTodo = b.todo || [];
             const impCal = b.cal || b.calendar || {};
 
-            // --- 🛑 核心修改：先读取当前的“现有数据” ---
-            alert("🔄 正在进行数据合并 (Current + Backup)...");
-
+            // 读取现有数据
             const currP = JSON.parse(localStorage.getItem(DB_KEY_DATA) || '[]');
             const currConf = JSON.parse(localStorage.getItem(DB_KEY_CONFIG) || '{}');
             const currOt = JSON.parse(localStorage.getItem(DB_KEY_OT) || '{"records":[], "leaveRecords":[]}');
             const currTodo = JSON.parse(localStorage.getItem(DB_KEY_TODO) || '[]');
             const currCal = JSON.parse(localStorage.getItem(DB_KEY_CAL) || '{}');
 
-            // --- 🔗 核心修改：执行合并逻辑 ---
+            // --- 🧠 核心修改：工程列表智能去重 ---
+            // 逻辑：创建一个 Map，以 ID 为身份证。
+            // 1. 先把现有的放进去
+            const projectMap = new Map();
+            currP.forEach(p => projectMap.set(p.id, p));
+            
+            // 2. 再把导入的放进去（如果有相同 ID，导入的会覆盖现有的，实现更新；如果是新 ID，就添加）
+            impP.forEach(p => projectMap.set(p.id, p));
+            
+            // 3. 转回数组
+            const mergedProjects = Array.from(projectMap.values());
 
-            // 1. 工程列表：直接追加 (现有 + 导入)
-            // 为防止ID完全重复（几率很小），我们简单追加
-            const mergedProjects = [...currP, ...impP];
-
-            // 2. 考勤记录：追加数组
+            // 其他数据保持合并逻辑...
             const mergedOt = {
-                annual: currOt.annual || impOt.annual, // 优先保留现有的年假基数
-                saved: currOt.saved || impOt.saved,    // 优先保留现有的存休基数
-                records: [...(currOt.records || []), ...(impOt.records || [])],
+                annual: currOt.annual || impOt.annual,
+                saved: currOt.saved || impOt.saved,
+                records: [...(currOt.records || []), ...(impOt.records || [])], // 考勤记录稍微复杂，暂时保持追加
                 leaveRecords: [...(currOt.leaveRecords || []), ...(impOt.leaveRecords || [])]
             };
-
-            // 3. 待办事项：追加
             const mergedTodo = [...currTodo, ...impTodo];
-
-            // 4. 日历日志：合并对象 (如果同一天都有日志，保留现有的)
             const mergedCal = { ...impCal, ...currCal };
-
-            // 5. 配置模版：合并 (如果同名模版，保留现有的)
             const mergedConfig = { ...impConf, ...currConf };
 
-            // --- 💾 存入本地 ---
+            // 存入本地
             localStorage.setItem(DB_KEY_DATA, JSON.stringify(mergedProjects));
             localStorage.setItem(DB_KEY_CONFIG, JSON.stringify(mergedConfig));
             localStorage.setItem(DB_KEY_OT, JSON.stringify(mergedOt));
             localStorage.setItem(DB_KEY_TODO, JSON.stringify(mergedTodo));
             localStorage.setItem(DB_KEY_CAL, JSON.stringify(mergedCal));
 
-            // --- ☁️ 上传云端 ---
+            // 上传云端
             if (currentUser) {
                 const payload = {
                     projects: mergedProjects,
@@ -992,24 +989,15 @@ function importData(i) {
                     calendar: mergedCal,
                     updated_at: new Date().toISOString()
                 };
-
-                const { error } = await _supabase
-                    .from('user_data')
-                    .upsert({ user_id: currentUser.id, content: payload });
-
-                if (error) {
-                    alert("⚠️ 本地合并成功，但云端同步失败: " + error.message);
-                } else {
-                    alert(`✅ 合并成功！\n现在共有 ${mergedProjects.length} 个工程。\n点击确定刷新页面。`);
-                    location.reload();
-                }
-            } else {
-                 alert("✅ 本地合并成功 (未登录状态)！\n点击确定刷新页面。");
-                 location.reload();
+                const { error } = await _supabase.from('user_data').upsert({ user_id: currentUser.id, content: payload });
+                if (error) throw error;
             }
 
+            alert(`✅ 导入完成！\n已智能去重，现在共有 ${mergedProjects.length} 个工程。\n请刷新页面。`);
+            location.reload();
+
         } catch (err) {
-            alert("💥 合并出错: " + err.message);
+            alert("💥 出错: " + err.message);
         }
     };
     r.readAsText(i.files[0]);
@@ -1025,6 +1013,7 @@ function importData(i) {
 
 
 </html>
+
 
 
 
