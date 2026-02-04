@@ -890,54 +890,72 @@
         function exportData(){ const d={v:"44.0",d:new Date(),p:DB.get(),c:GLOBAL_CONFIG, ot:DB_OT.get(), todo:DB_TODO.get(), cal:DB_CAL.get()}; const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([JSON.stringify(d)],{type:"json"})); a.download=`backup_${Date.now()}.json`; a.click(); }
         function triggerImport(){ document.getElementById('importFile').click(); }
         // 【修复版】带提示的导入功能
-// 📦 终极版：先上传，再刷新 (解决数据被覆盖问题)
+// 🕵️‍♂️ 侦探版导入函数：每一步都会弹窗告诉你发生了什么
 function importData(i) {
-    if (!i.files || !i.files[0]) return;
+    if (!i.files || !i.files[0]) return alert("❌ 没选文件！");
 
     const r = new FileReader();
     r.onload = async (e) => {
         try {
-            // 1. 解析文件
+            // --- 阶段 1: 检查文件内容 ---
+            alert("🔍 1. 文件读取成功，正在解析...");
             const b = JSON.parse(e.target.result);
             
-            // 2. 先存入本地 (防止变量丢失)
+            // 打印一下看看里面有哪些钥匙
+            const keys = Object.keys(b).join(", ");
+            alert("🔑 2. 解析成功！发现数据键名: " + keys);
+
+            // 检查是不是版本不匹配
+            // 如果只有 'projects' 没有 'p'，说明是老版本，我们需要手动转换
+            if (!b.p && b.projects) {
+                alert("⚠️ 检测到旧版数据格式，正在尝试自动转换...");
+                b.p = b.projects;
+                b.c = b.config;
+                b.ot = b.attendance;
+                b.todo = b.todo; // 这个可能名字没变
+                b.cal = b.calendar;
+            }
+
+            // --- 阶段 2: 存入本地 ---
+            alert("💾 3. 正在写入本地缓存...");
             if(b.p) localStorage.setItem(DB_KEY_DATA, JSON.stringify(b.p));
             if(b.c) localStorage.setItem(DB_KEY_CONFIG, JSON.stringify(b.c));
             if(b.ot) localStorage.setItem(DB_KEY_OT, JSON.stringify(b.ot));
-            if(b.todo) localStorage.setItem(DB_KEY_TODO, JSON.stringify(b.todo));
-            if(b.cal) localStorage.setItem(DB_KEY_CAL, JSON.stringify(b.cal));
+            
+            // --- 阶段 3: 检查登录状态 ---
+            if (!currentUser) {
+                alert("❌ 4. 失败：系统检测到你【未登录】！\n数据无法上传到云端。请先登录再导入。");
+                return;
+            }
+            alert(`👤 4. 当前登录用户: ${currentUser.email}\n准备上传云端...`);
 
-            // 3. 🚨 关键修改：强制立即上传到云端
-            // 只有云端存好了，刷新页面才不会丢
-            if (currentUser) {
-                alert("正在把数据搬运到云端数据库，请稍候...");
-                
-                const payload = {
-                    projects: b.p || [],
-                    config: b.c || {},
-                    attendance: b.ot || {},
-                    todo: b.todo || [],
-                    calendar: b.cal || {},
-                    updated_at: new Date().toISOString()
-                };
+            // --- 阶段 4: 强行上传 ---
+            const payload = {
+                projects: b.p || [],
+                config: b.c || {},
+                attendance: b.ot || {},
+                todo: b.todo || [],
+                calendar: b.cal || {},
+                updated_at: new Date().toISOString()
+            };
 
-                const { error } = await _supabase
-                    .from('user_data')
-                    .upsert({ user_id: currentUser.id, content: payload });
+            const { error } = await _supabase
+                .from('user_data')
+                .upsert({ user_id: currentUser.id, content: payload });
 
-                if (error) throw error;
+            if (error) {
+                alert("❌ 5. 上传云端失败！\nSupabase 拒绝了写入。\n错误原因: " + error.message + "\n\n(提示：请检查你的数据库 RLS 策略是否允许 update/insert)");
+            } else {
+                alert("✅ 6. 大功告成！云端接收成功。\n点击确定刷新页面，数据应该就出来了！");
+                location.reload();
             }
 
-            // 4. 一切就绪，再刷新
-            alert("✅ 完美！旧数据已成功上传到新系统。\n点击确定刷新页面。");
-            location.reload();
-
         } catch (err) {
-            alert("❌ 出错了: " + err.message);
+            alert("💥 严重错误: " + err.message);
         }
     };
     r.readAsText(i.files[0]);
-    i.value = ''; // 清空文件框，方便下次再选
+    i.value = '';
 }
 
         function goHome(){ goToPage('homePage'); updateStats(); }
@@ -949,6 +967,7 @@ function importData(i) {
 
 
 </html>
+
 
 
 
