@@ -394,28 +394,67 @@
     <div id="configModal" class="modal"><div class="modal-content" style="max-width:600px;"><h3 id="configModalTitle">配置</h3><div style="display:flex;gap:10px;margin-bottom:10px"><button class="btn-small" id="btnAddConfigNode" onclick="addNewConfigNode()">+ 新类型</button></div><div class="config-container"><div class="config-sidebar" id="configSidebar"></div><div class="config-main" id="configMain"><div id="fieldEditorArea" style="display:none;"><h4 id="currentEditingNodeTitle"></h4><div id="configFieldsList"></div><button class="btn-small" onclick="addNewConfigField()">+ 字段</button></div><div id="configEmptyHint">请选择</div></div></div><button class="btn-primary" onclick="handleConfigSave()">保存</button><button class="btn-cancel" onclick="closeModal('configModal')">取消</button></div></div>
 
     <script>
-        // ==========================================
-        // ☁️ 核心配置：云同步模块 (V44.0 Cloud)
-        // ==========================================
-        const SUPABASE_URL = 'https://real-tau-seven.vercel.app/weather';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRkZGltYWR6cGJjdm10b3Vqb2VjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAxMTE3NTksImV4cCI6MjA4NTY4Nzc1OX0.dMJdVjjr3D0oGRli1DE2ohvl-5abwLGHSPAaS8wREG0';
+// ============================================
+// ☁️ 核心配置：云同步模块 (V44.0 Cloud 异步增强版)
+// ============================================
+// 请确保这里的网址和你 Vercel 控制台看到的一致
+const SUPABASE_URL = 'https://real-tau-seven.vercel.app/supabase'; 
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'; // 保持你原本的长 Key
+
+let _supabase = null;
+let isCloudConnected = false;
+
+// 1. 初始化客户端（仅建立对象，不发起网络请求，不会卡死）
+function initSupabaseSafe() {
+    try {
+        _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        console.log("Supabase 客户端准备就绪");
+    } catch (e) {
+        console.error("客户端初始化失败:", e);
+    }
+}
+
+// 2. 探测云端连接（在后台跑，3.5秒连不上就自动放弃）
+async function checkConnection() {
+    if (!_supabase) return;
+    
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => {
+        controller.abort();
+        console.warn("☁️ 云端连接超时，已切换至本地模式");
+    }, 3500); // 3.5秒期限
+
+    try {
+        // 尝试获取一次会话，看能不能通
+        const { data, error } = await _supabase.auth.getSession();
+        clearTimeout(timeoutId);
         
-        const { createClient } = supabase;
-        const _supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+        if (error) throw error;
+        
+        isCloudConnected = true;
+        console.log("✅ 云端同步已激活");
+    } catch (err) {
+        isCloudConnected = false;
+        // 此时不会白屏，用户可以继续操作本地数据
+    }
+}
 
-        let currentUser = null;
-        let isRegisterMode = false;
-        let syncTimer = null;
+// 3. 修改后的 initApp：确保 UI 优先，数据库最后
+async function initApp() {
+    console.log("正在启动应用...");
+    
+    // 【关键】这里保留你原本用来加载本地数据和渲染界面的所有函数名
+    // 例如：loadLocalData(); renderMainUI();
+    
+    // 异步启动数据库连接，不加 await
+    initSupabaseSafe();
+    checkConnection();
+}
 
-        // 初始化：先检查登录状态，再加载数据
-        async function initApp() {
-            const { data: { session } } = await _supabase.auth.getSession();
-            if (session) {
-                handleLoginSuccess(session.user);
-            } else {
-                document.getElementById('auth-modal').style.display = 'flex';
-            }
-        }
+// 4. 确保页面加载完后立刻运行
+window.onload = () => {
+    initApp();
+};
 
         async function handleAuth() {
             const email = document.getElementById('email').value;
@@ -890,4 +929,5 @@
 </body>
 
 </html>
+
 
