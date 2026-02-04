@@ -393,68 +393,56 @@
     <div id="dynamicFormModal" class="modal"><div class="modal-content"><h3 id="formTitle"></h3><div id="dynamicFormContainer"></div><button class="btn-primary" onclick="saveDynamicData()">保存</button><button class="btn-cancel" onclick="closeModal('dynamicFormModal')">取消</button></div></div>
     <div id="configModal" class="modal"><div class="modal-content" style="max-width:600px;"><h3 id="configModalTitle">配置</h3><div style="display:flex;gap:10px;margin-bottom:10px"><button class="btn-small" id="btnAddConfigNode" onclick="addNewConfigNode()">+ 新类型</button></div><div class="config-container"><div class="config-sidebar" id="configSidebar"></div><div class="config-main" id="configMain"><div id="fieldEditorArea" style="display:none;"><h4 id="currentEditingNodeTitle"></h4><div id="configFieldsList"></div><button class="btn-small" onclick="addNewConfigField()">+ 字段</button></div><div id="configEmptyHint">请选择</div></div></div><button class="btn-primary" onclick="handleConfigSave()">保存</button><button class="btn-cancel" onclick="closeModal('configModal')">取消</button></div></div>
 
-    <script>
-// ============================================
-// ☁️ 核心配置：云同步模块 (V44.0 Cloud 异步增强版)
-// ============================================
-// 请确保这里的网址和你 Vercel 控制台看到的一致
-const SUPABASE_URL = 'https://real-tau-seven.vercel.app/supabase'; 
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'; // 保持你原本的长 Key
+<script>
+  // 【断点测试】：如果关了梯子连这个都不弹，说明域名彻底被封了
+  alert('网页程序已启动，正在渲染界面...');
 
-let _supabase = null;
-let isCloudConnected = false;
+  // 1. 变量声明（不在这里初始化）
+  const SUPABASE_URL = 'https://real-tau-seven.vercel.app/supabase';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'; 
+  let _supabase = null;
 
-// 1. 初始化客户端（仅建立对象，不发起网络请求，不会卡死）
-function initSupabaseSafe() {
-    try {
-        _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-        console.log("Supabase 客户端准备就绪");
-    } catch (e) {
-        console.error("客户端初始化失败:", e);
-    }
-}
+  // 2. 核心渲染函数：保证界面先出来
+  function renderInitialUI() {
+      console.log("正在渲染初始界面...");
+      // 这里执行你原本显示登录框或主界面的逻辑
+      const authModal = document.getElementById('auth-modal');
+      if (authModal) authModal.style.display = 'flex';
+  }
 
-// 2. 探测云端连接（在后台跑，3.5秒连不上就自动放弃）
-async function checkConnection() {
-    if (!_supabase) return;
-    
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => {
-        controller.abort();
-        console.warn("☁️ 云端连接超时，已切换至本地模式");
-    }, 3500); // 3.5秒期限
+  // 3. 安全初始化函数：哪怕报错也不影响 UI
+  async function initSupabaseSafe() {
+      try {
+          // 确保 URL 和 KEY 存在且不是 undefined
+          if (!SUPABASE_URL || !SUPABASE_KEY) throw new Error("配置缺失");
 
-    try {
-        // 尝试获取一次会话，看能不能通
-        const { data, error } = await _supabase.auth.getSession();
-        clearTimeout(timeoutId);
-        
-        if (error) throw error;
-        
-        isCloudConnected = true;
-        console.log("✅ 云端同步已激活");
-    } catch (err) {
-        isCloudConnected = false;
-        // 此时不会白屏，用户可以继续操作本地数据
-    }
-}
+          // 初始化客户端
+          _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// 3. 修改后的 initApp：确保 UI 优先，数据库最后
-async function initApp() {
-    console.log("正在启动应用...");
-    
-    // 【关键】这里保留你原本用来加载本地数据和渲染界面的所有函数名
-    // 例如：loadLocalData(); renderMainUI();
-    
-    // 异步启动数据库连接，不加 await
-    initSupabaseSafe();
-    checkConnection();
-}
+          // 手动设置 3 秒超时比赛
+          const timeout = new Promise((_, reject) =>
+              setTimeout(() => reject(new Error('网络连接超时')), 3000)
+          );
 
-// 4. 确保页面加载完后立刻运行
-window.onload = () => {
-    initApp();
-};
+          // 尝试获取会话，并与超时比赛
+          await Promise.race([
+              _supabase.auth.getSession(),
+              timeout
+          ]);
+
+          console.log("✅ 云端连接成功");
+      } catch (e) {
+          console.warn('⚠️ 进入离线模式：', e.message);
+          // 在界面上给个提示，不影响使用本地数据
+      }
+  }
+
+  // 4. 程序入口：严格遵循“先渲染，再联网”
+  window.addEventListener('load', () => {
+      renderInitialUI();    // 第一步：先让用户看到界面
+      initSupabaseSafe();   // 第二步：后台悄悄连数据库
+  });
+</script>
 
         async function handleAuth() {
             const email = document.getElementById('email').value;
@@ -929,5 +917,6 @@ window.onload = () => {
 </body>
 
 </html>
+
 
 
