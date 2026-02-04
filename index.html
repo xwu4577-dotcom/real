@@ -394,73 +394,200 @@
     <div id="configModal" class="modal"><div class="modal-content" style="max-width:600px;"><h3 id="configModalTitle">配置</h3><div style="display:flex;gap:10px;margin-bottom:10px"><button class="btn-small" id="btnAddConfigNode" onclick="addNewConfigNode()">+ 新类型</button></div><div class="config-container"><div class="config-sidebar" id="configSidebar"></div><div class="config-main" id="configMain"><div id="fieldEditorArea" style="display:none;"><h4 id="currentEditingNodeTitle"></h4><div id="configFieldsList"></div><button class="btn-small" onclick="addNewConfigField()">+ 字段</button></div><div id="configEmptyHint">请选择</div></div></div><button class="btn-primary" onclick="handleConfigSave()">保存</button><button class="btn-cancel" onclick="closeModal('configModal')">取消</button></div></div>
 
     <script>
-// ==========================================
-    // ☁️ 核心配置：云同步模块 (防卡死增强版)
-    // ==========================================
-    
-    // 【注意】如果你用了方案一，这里要换成你自己的域名
-    // 如果用了方案二，这里换成 xxxx.pages.dev
-    // 如果还没换域名，保留这个也没用，因为 vercel.app 打不开
-    const SUPABASE_URL = 'https://real-tau-seven.vercel.app/weather'; 
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRkZGltYWR6cGJjdm10b3Vqb2VjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAxMTE3NTksImV4cCI6MjA4NTY4Nzc1OX0.dMJdVjjr3D0oGRli1DE2ohvl-5abwLGHSPAaS8wREG0';
-    
-    // 防止 SDK 初始化报错导致全站崩溃
-    let _supabase = null;
-    try {
-        const { createClient } = supabase;
-        _supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
-    } catch (e) {
-        console.error("Supabase 客户端初始化失败", e);
-    }
-
-    let currentUser = null;
-    let isRegisterMode = false;
-    let syncTimer = null;
-
-    // 🌟 核心修改：UI 优先，网络靠后
-    async function initApp() {
-        // 1. 先把界面渲染出来，让用户能看本地数据
-        // 这里的 initHome 和 loadConfig 读取的是 localStorage，不需要网络
-        loadConfig();
-        initHome(); 
+        // ==========================================
+        // ☁️ 核心配置：云同步模块 (V44.0 Cloud)
+        // ==========================================
+        const SUPABASE_URL = 'https://real-tau-seven.vercel.app/weather';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRkZGltYWR6cGJjdm10b3Vqb2VjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAxMTE3NTksImV4cCI6MjA4NTY4Nzc1OX0.dMJdVjjr3D0oGRli1DE2ohvl-5abwLGHSPAaS8wREG0';
         
-        console.log("界面已加载，正在后台尝试连接云端...");
+        const { createClient } = supabase;
+        const _supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        if (!_supabase) return;
+        let currentUser = null;
+        let isRegisterMode = false;
+        let syncTimer = null;
 
-        // 2. 异步检查登录状态（设置 3 秒超时，连不上就拉倒，别卡死界面）
-        const timeoutPromise = new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('网络超时')), 3000)
-        );
-
-        try {
-            // 比赛：看是先连上 Supabase，还是先超时
-            const { data } = await Promise.race([
-                _supabase.auth.getSession(),
-                timeoutPromise
-            ]);
-
-            if (data && data.session) {
-                console.log("✅ 云端连接成功");
-                handleLoginSuccess(data.session.user);
+        // 初始化：先检查登录状态，再加载数据
+        async function initApp() {
+            const { data: { session } } = await _supabase.auth.getSession();
+            if (session) {
+                handleLoginSuccess(session.user);
             } else {
-                console.log("未登录，显示登录框");
-                // 仅在明确连接成功但未登录时，才强制弹窗，或者你可以选择不弹窗让用户手动点
-                 document.getElementById('auth-modal').style.display = 'flex';
+                document.getElementById('auth-modal').style.display = 'flex';
             }
-        } catch (err) {
-            console.warn("⚠️ 进入离线模式（免梯子访问失败）:", err.message);
-            // 可以在这里给个小红点提示，但不要阻塞用户用本地功能
-            document.getElementById('userBadge').innerText = "离线模式";
-            document.getElementById('userBadge').style.display = 'block';
-            document.getElementById('userBadge').style.color = '#999';
         }
-    }
 
-    // 只需要保留这一处入口
-    window.onload = function() { 
-        initApp(); 
-    };
+        async function handleAuth() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const btn = document.getElementById('auth-action-btn');
+            const errorDiv = document.getElementById('auth-error');
+
+            if (!email || !password) return showAuthError('请输入邮箱和密码');
+            
+            btn.innerText = '处理中...';
+            btn.disabled = true;
+            errorDiv.style.display = 'none';
+
+            let result;
+            if (isRegisterMode) {
+                result = await _supabase.auth.signUp({ email, password });
+            } else {
+                result = await _supabase.auth.signInWithPassword({ email, password });
+            }
+
+            if (result.error) {
+                showAuthError(result.error.message);
+                btn.innerText = isRegisterMode ? '注册' : '登录';
+                btn.disabled = false;
+            } else {
+                if (isRegisterMode && !result.data.session) {
+                    showAuthError('注册成功！请检查邮箱确认邮件，确认后重新登录。');
+                    btn.innerText = '注册';
+                    btn.disabled = false;
+                } else {
+                    handleLoginSuccess(result.data.user);
+                }
+            }
+        }
+
+        function handleLoginSuccess(user) {
+            currentUser = user;
+            document.getElementById('auth-modal').style.display = 'none';
+            document.getElementById('userBadge').innerText = user.email.split('@')[0];
+            document.getElementById('userBadge').style.display = 'block';
+            
+            // 登录后，立即执行一次“云端 -> 本地”同步
+            syncCloudToLocal().then(() => {
+                loadConfig(); 
+                migrateData(); 
+                initHome();
+            });
+        }
+
+        function switchMode() {
+            isRegisterMode = !isRegisterMode;
+            document.getElementById('auth-title').innerText = isRegisterMode ? '注册新账号' : '云端账号登录';
+            document.getElementById('auth-action-btn').innerText = isRegisterMode ? '注册' : '登录';
+            document.querySelector('.auth-switch').innerText = isRegisterMode ? '已有账号？点击登录' : '没有账号？点击注册';
+            document.getElementById('auth-error').style.display = 'none';
+        }
+
+        function showAuthError(msg) {
+            const el = document.getElementById('auth-error');
+            el.innerText = msg;
+            el.style.display = 'block';
+        }
+
+        async function logout() {
+            if(confirm('确定退出登录吗？')) {
+                await _supabase.auth.signOut();
+                window.location.reload();
+            }
+        }
+
+        // --- ☁️ 核心：数据同步逻辑 ---
+        
+        // 1. 上传：本地 -> 云端 (防抖，操作后延迟1秒触发)
+        function debouncedSync() {
+            if (!currentUser) return;
+            showToast('🔄 正在同步...');
+            clearTimeout(syncTimer);
+            syncTimer = setTimeout(async () => {
+                const payload = {
+                    projects: JSON.parse(localStorage.getItem(DB_KEY_DATA) || '[]'),
+                    config: JSON.parse(localStorage.getItem(DB_KEY_CONFIG) || '{}'),
+                    attendance: JSON.parse(localStorage.getItem(DB_KEY_OT) || '{}'),
+                    todo: JSON.parse(localStorage.getItem(DB_KEY_TODO) || '[]'),
+                    calendar: JSON.parse(localStorage.getItem(DB_KEY_CAL) || '{}'),
+                    updated_at: new Date().toISOString()
+                };
+                
+                const { error } = await _supabase
+                    .from('user_data')
+                    .upsert({ user_id: currentUser.id, content: payload });
+
+                if (!error) showToast('✅ 已同步到云端');
+                else showToast('❌ 同步失败: ' + error.message);
+            }, 1000);
+        }
+
+        // 2. 下载：云端 -> 本地 (登录时触发)
+        async function syncCloudToLocal() {
+            const { data, error } = await _supabase
+                .from('user_data')
+                .select('content')
+                .eq('user_id', currentUser.id)
+                .single();
+            
+            if (data && data.content) {
+                const c = data.content;
+                if(c.projects) localStorage.setItem(DB_KEY_DATA, JSON.stringify(c.projects));
+                if(c.config && Object.keys(c.config).length > 0) localStorage.setItem(DB_KEY_CONFIG, JSON.stringify(c.config));
+                if(c.attendance) localStorage.setItem(DB_KEY_OT, JSON.stringify(c.attendance));
+                if(c.todo) localStorage.setItem(DB_KEY_TODO, JSON.stringify(c.todo));
+                if(c.calendar) localStorage.setItem(DB_KEY_CAL, JSON.stringify(c.calendar));
+                console.log('云端数据已加载');
+            }
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.innerText = msg;
+            t.style.opacity = '1';
+            setTimeout(() => t.style.opacity = '0', 2000);
+        }
+
+        // ==========================================
+        // 📦 原有逻辑 (无缝集成)
+        // ==========================================
+
+        function goToPage(id) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            
+            document.getElementById('backBtn').style.display = id === 'homePage' ? 'none' : 'block';
+            
+            const confBtn = document.getElementById('nodeConfigBtn');
+            if(confBtn) {
+                if (id === 'projectList' || id === 'projectDetail') {
+                    confBtn.style.display = 'block';
+                } else {
+                    confBtn.style.display = 'none';
+                }
+            }
+
+            if (id === 'projectList') renderProjects();
+            if (id === 'attendancePage') renderOtPage();
+            if (id === 'homePage') initHome();
+        }
+
+        const DB_KEY_DATA = 'engineering_master_db'; 
+        const DB_KEY_CONFIG = 'engineering_config_v15';
+        const DB_KEY_OT = 'attendance_master_db_v2';
+        const DB_KEY_TODO = 'todo_master_db'; 
+        const DB_KEY_CAL = 'calendar_master_db';
+
+        const DEFAULT_CONFIG={"方案设计":[{"key":"finishDate","label":"完成时间","type":"date"},{"key":"unit","label":"设计单位","type":"text"}],"提交市局审核":[{"key":"submitDate","label":"初审提交","type":"date"},{"key":"replyDate","label":"初审复函","type":"date"},{"key":"reCheckSubmit","label":"复核提交","type":"date"},{"key":"reCheckReply","label":"复核复函","type":"date"}],"事前评估":[{"key":"evalDate","label":"评估时间","type":"date"},{"key":"reportDate","label":"报告出具","type":"date"}],"财政评审":[{"key":"submitTime","label":"资料提交","type":"date"},{"key":"outTime","label":"报告出具","type":"date"},{"key":"money","label":"审定金额(元)","type":"number"}],"资金到账":[{"key":"arriveDate","label":"下达时间","type":"date"},{"key":"amount","label":"到账金额","type":"number"}],"管理处决策":[{"key":"meetType","label":"议题类型","type":"select","options":["立项","合同签订","其他"]},{"key":"contractSubType","label":"合同类型","type":"select","options":["设计合同","施工合同","监理合同","其他"]},{"key":"otherContent","label":"其他内容","type":"text"},{"key":"meetLevel","label":"决策层级","type":"select","options":["党组会","主任办公会","纸质请示"]},{"key":"meetDate","label":"会议时间","type":"date"}],"签订合同":[{"key":"contractType","label":"合同类型","type":"select","options":["施工合同","设计合同","监理合同","其他"]},{"key":"otherContractName","label":"其他合同名","type":"text"},{"key":"signDate","label":"签订日期","type":"date"},{"key":"contractAmount","label":"合同金额","type":"number"}],"施工过程":[{"key":"startDate","label":"开工时间","type":"date"},{"key":"endDate","label":"竣工时间","type":"date"},{"key":"checkDate","label":"验收时间","type":"date"}],"付款":[{"key":"linkContract","label":"关联合同","type":"select","options":["无可用合同"]},{"key":"payType","label":"款项性质","type":"select","options":["首笔","进度款","尾款"]},{"key":"payAmount","label":"支付金额(元)","type":"number"}],"结算审计":[{"key":"auditEnd","label":"报告出具","type":"date"},{"key":"finalAmount","label":"最终金额","type":"number"}],"归档":[{"key":"archiveDate","label":"归档时间","type":"date"},{"key":"location","label":"存放位置","type":"text"}]};
+
+        let GLOBAL_CONFIG={}, currentProjectId=null, currentStageIndex=null, draggedItemIndex=null, draggedProjectIndex=null, configMode='global', tempLocalConfig=null, editingKey=null, dragSrcType=null;
+        
+        let viewYear = new Date().getFullYear();
+        let viewMonth = new Date().getMonth();
+        let selectedDateStr = null;
+
+        // 🌟 核心修改：在保存本地时，触发 debouncedSync()
+        const DB = { get:()=>JSON.parse(localStorage.getItem(DB_KEY_DATA)||'[]'), save:d=>{localStorage.setItem(DB_KEY_DATA,JSON.stringify(d)); debouncedSync();} };
+        const DB_OT = { get:()=>{const d=localStorage.getItem(DB_KEY_OT);return d?JSON.parse(d):{annual:0, saved:0, records:[], leaveRecords:[]}}, save:d=>{localStorage.setItem(DB_KEY_OT,JSON.stringify(d)); debouncedSync();} };
+        const DB_TODO = { get:()=>JSON.parse(localStorage.getItem(DB_KEY_TODO)||'[]'), save:d=>{localStorage.setItem(DB_KEY_TODO,JSON.stringify(d)); debouncedSync();} };
+        const DB_CAL = { get:()=>{const d=localStorage.getItem(DB_KEY_CAL); return d?JSON.parse(d):{}}, save:d=>{localStorage.setItem(DB_KEY_CAL,JSON.stringify(d)); debouncedSync();} };
+
+        function loadConfig() { GLOBAL_CONFIG = JSON.parse(localStorage.getItem(DB_KEY_CONFIG)) || JSON.parse(JSON.stringify(DEFAULT_CONFIG)); }
+        function migrateData() { let list=DB.get(),ch=false; list.forEach(p=>{p.stages.forEach(s=>{if(!s.config){s.config=JSON.parse(JSON.stringify(GLOBAL_CONFIG[s.name]||[]));ch=true}})}); if(ch)DB.save(list); }
+
+        window.onload = function() { 
+            initApp(); // 改为先启动 App 鉴权
+        };
 
         // --- 首页 & 日历逻辑 ---
         function initHome() {
