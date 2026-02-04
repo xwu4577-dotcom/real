@@ -890,47 +890,54 @@
         function exportData(){ const d={v:"44.0",d:new Date(),p:DB.get(),c:GLOBAL_CONFIG, ot:DB_OT.get(), todo:DB_TODO.get(), cal:DB_CAL.get()}; const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([JSON.stringify(d)],{type:"json"})); a.download=`backup_${Date.now()}.json`; a.click(); }
         function triggerImport(){ document.getElementById('importFile').click(); }
         // 【修复版】带提示的导入功能
-function importData(i){ 
-    // 1. 先弹窗证明按钮点到了
-    alert("正在读取文件，请稍候...");
+// 📦 终极版：先上传，再刷新 (解决数据被覆盖问题)
+function importData(i) {
+    if (!i.files || !i.files[0]) return;
 
-    if (!i.files || !i.files[0]) {
-        alert("❌ 好像没有选中文件，请重新选择。");
-        return;
-    }
-
-    const r = new FileReader(); 
-    r.onload = e => { 
+    const r = new FileReader();
+    r.onload = async (e) => {
         try {
-            console.log("文件读取完成，正在解析...");
-            const b = JSON.parse(e.target.result); 
+            // 1. 解析文件
+            const b = JSON.parse(e.target.result);
             
-            let count = 0;
-            // 逐个检查数据是否存在
-            if(b.p) { DB.save(b.p); count++; }
-            if(b.c) { localStorage.setItem(DB_KEY_CONFIG,JSON.stringify(b.c)); count++; }
-            if(b.ot) { DB_OT.save(b.ot); count++; }
-            if(b.todo) { DB_TODO.save(b.todo); count++; }
-            if(b.cal) { DB_CAL.save(b.cal); count++; }
-            
-            // 如果发现了有效数据
-            if (count > 0) {
-                alert(`✅ 成功！识别到 ${count} 类数据。\n点击确定后页面将自动刷新，数据会自动同步到云端。`);
-                location.reload(); 
-            } else {
-                alert("⚠️ 文件已读取，但里面似乎是空的，或者格式不对。\n请检查你选的是不是 backup_xxxx.json 文件？");
+            // 2. 先存入本地 (防止变量丢失)
+            if(b.p) localStorage.setItem(DB_KEY_DATA, JSON.stringify(b.p));
+            if(b.c) localStorage.setItem(DB_KEY_CONFIG, JSON.stringify(b.c));
+            if(b.ot) localStorage.setItem(DB_KEY_OT, JSON.stringify(b.ot));
+            if(b.todo) localStorage.setItem(DB_KEY_TODO, JSON.stringify(b.todo));
+            if(b.cal) localStorage.setItem(DB_KEY_CAL, JSON.stringify(b.cal));
+
+            // 3. 🚨 关键修改：强制立即上传到云端
+            // 只有云端存好了，刷新页面才不会丢
+            if (currentUser) {
+                alert("正在把数据搬运到云端数据库，请稍候...");
+                
+                const payload = {
+                    projects: b.p || [],
+                    config: b.c || {},
+                    attendance: b.ot || {},
+                    todo: b.todo || [],
+                    calendar: b.cal || {},
+                    updated_at: new Date().toISOString()
+                };
+
+                const { error } = await _supabase
+                    .from('user_data')
+                    .upsert({ user_id: currentUser.id, content: payload });
+
+                if (error) throw error;
             }
 
+            // 4. 一切就绪，再刷新
+            alert("✅ 完美！旧数据已成功上传到新系统。\n点击确定刷新页面。");
+            location.reload();
+
         } catch (err) {
-            // 如果解析出错，直接弹窗报错
-            alert("❌ 导入失败！文件格式看起来有问题。\n错误信息: " + err.message);
+            alert("❌ 出错了: " + err.message);
         }
-    }; 
-    
-    // 开始读取
-    r.readAsText(i.files[0]); 
-    // 防止同一个文件选两次不触发
-    i.value = ''; 
+    };
+    r.readAsText(i.files[0]);
+    i.value = ''; // 清空文件框，方便下次再选
 }
 
         function goHome(){ goToPage('homePage'); updateStats(); }
@@ -942,6 +949,7 @@ function importData(i){
 
 
 </html>
+
 
 
 
