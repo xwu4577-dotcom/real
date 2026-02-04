@@ -364,7 +364,10 @@
 
             <div class="footer-tools">
                 <div class="tool-btn" onclick="exportData()">📤 备份数据</div>
-                <div class="tool-btn" onclick="triggerImport()">📥 恢复数据(测试版)</div>
+                <div class="tool-btn" onclick="triggerImport()">📥 恢复数据(Plus版)</div>
+            </div>
+            <div style="text-align: center; color: #ccc; font-size: 10px; margin-bottom: 20px; font-family: monospace; opacity: 0.6;">
+                v1.0.0
             </div>
             <input type="file" id="importFile" style="display:none" onchange="importData(this)">
         </div>
@@ -907,7 +910,8 @@ function renderOtPage() {
                     if(f.key === 'meetType' || f.key === 'contractSubType' || f.key === 'contractType') { inp.addEventListener('change', handleLinkage); }
                 } else {
                     inp = document.createElement('input'); inp.type = f.type==='date'?'date':(f.type==='number'?'number':'text'); inp.className = 'input-box'; inp.value = v;
-                    if(f.type==='date' && minD) { inp.min = minD; inp.onchange = function() { if(this.value && this.value < minD) { alert("不可早于上一步"); this.value=''; } } }
+                    // 只设置最小值，让浏览器自己变灰早于上一步的日期，绝不弹窗
+                    if(f.type==='date' && minD) { inp.min = minD; }
                     if(f.key==='payAmount') inp.oninput = function() { calcPay(this.value, stage.data.linkContract, project); }
                 }
                 inp.id = `f_${f.key}`; w.appendChild(inp); if(f.key==='payAmount') w.innerHTML+='<div id="calcHint" style="font-size:12px;color:blue;margin-top:2px;"></div>'; container.appendChild(w);
@@ -1185,6 +1189,7 @@ function importData(i) {
 
 
 </html>
+
 
 
 
