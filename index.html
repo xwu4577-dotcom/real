@@ -137,10 +137,39 @@
 
         /* --- 工程列表样式 (按键排序) --- */
         .list-item { background: white; padding: 0; margin-bottom: 10px; border-radius: 10px; display: flex; align-items: stretch; box-shadow: 0 1px 3px rgba(0,0,0,0.05); overflow: hidden; }
-        .list-item-content { flex: 1; padding: 15px; cursor: pointer; display: flex; flex-direction: column; justify-content: center; }
+        /* 🌟 布局优化：左边文字，右边图标 */
+        .list-item-content { 
+            flex: 1; 
+            padding: 12px 15px; 
+            cursor: pointer; 
+            display: flex; 
+            justify-content: space-between; /* 两端对齐 */
+            align-items: center; /* 垂直居中 */
+        }
         .list-item-content:active { background: #f5f5f5; }
-        .list-sort-zone { width: 46px; background: #f9f9f9; border-left: 1px solid #eee; display: flex; flex-direction: column; }
-        .sort-btn { flex: 1; border: none; background: transparent; color: #ccc; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        /* 🌟 瘦身优化：把排序条宽度从 46px 减小到 32px */
+        .list-sort-zone { 
+            width: 32px; 
+            background: #fcfcfc; 
+            border-left: 1px solid #f0f0f0; 
+            display: flex; 
+            flex-direction: column; 
+        }
+        /* 🌟 箭头优化：更精致的箭头按钮 */
+        .sort-btn { 
+            flex: 1; 
+            border: none; 
+            background: transparent; 
+            color: #ccc; 
+            font-size: 14px; 
+            cursor: pointer; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            transition: color 0.2s;
+        }
+        .sort-btn:active { color: var(--primary); }
+        .sort-btn.up { border-bottom: none; } /* 去掉中间横线 */
         .sort-btn:active { background: #e0e0e0; color: var(--primary); }
         .sort-btn.up { border-bottom: 1px solid #eee; }
         .list-item-title { font-weight: 600; font-size: 15px; margin-bottom: 4px; color: #333; }
@@ -210,6 +239,34 @@
         .error-msg { color: #ff3b30; font-size: 14px; margin-top: 10px; display: none; }
         .toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.7); color: white; padding: 8px 16px; border-radius: 20px; font-size: 12px; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 1000; }
         .user-badge { font-size: 12px; color: var(--primary); background: #e3f2fd; padding: 4px 8px; border-radius: 10px; cursor: pointer; }
+        /* ... 上面是 .user-badge 的样式 ... */
+        .user-badge { font-size: 12px; color: var(--primary); background: #e3f2fd; padding: 4px 8px; border-radius: 10px; cursor: pointer; }
+
+        /* 👇👇👇 请把新代码粘贴在这里 👇👇👇 */
+        .btn-delete-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: rgba(255, 59, 48, 0.08);
+            color: #FF3B30;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            cursor: pointer;
+            margin-left: 12px;
+            flex-shrink: 0;
+            transition: all 0.2s;
+        }
+        .btn-delete-icon:active {
+            background: rgba(255, 59, 48, 0.2); 
+            transform: scale(0.9);
+        }
+        /* 👆👆👆 粘贴结束 👆👆👆 */
+
+    </style> </head>
+<body>
     </style>
 </head>
 <body>
@@ -854,7 +911,7 @@
         
         function deleteStage(i){ if(confirm("删节点？")){ const l=DB.get(); const p=l.find(x=>x.id==currentProjectId); p.stages.splice(i,1); DB.save(l); refreshDetail(p); } }
         
-// 🌟 V45: 列表渲染（带删除按钮）
+// 🌟 V46 美化版：精致图标 + 窄排序条
 function renderProjects() {
     const list = DB.get(); 
     const cs = document.getElementById('container_special'); 
@@ -869,11 +926,11 @@ function renderProjects() {
         d.className='list-item';
         d.innerHTML = `
             <div class="list-item-content" onclick="openDetail(${p.id})">
-                <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-                    <div class="list-item-title">${p.name}</div>
-                    <button class="btn-mini" style="color:#FF3B30; border-color:#FF3B30; font-size:12px; padding:2px 8px; margin-left:10px; flex-shrink:0;" onclick="deleteProject(event, ${p.id})">删除</button>
+                <div style="display:flex; flex-direction:column; overflow:hidden;">
+                    <div class="list-item-title" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${p.name}</div>
+                    <div class="list-item-date">${p.createDate}</div>
                 </div>
-                <div class="list-item-date">${p.createDate}</div>
+                <button class="btn-delete-icon" onclick="deleteProject(event, ${p.id})">🗑️</button>
             </div>
             <div class="list-sort-zone">
                 <button class="sort-btn up" onclick="moveProjUp(${i}, '${p.type}')">↑</button>
@@ -1013,6 +1070,7 @@ function importData(i) {
 
 
 </html>
+
 
 
 
