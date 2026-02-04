@@ -328,15 +328,15 @@
 
         <div id="projectList" class="page">
             <div class="project-section">
-                <div class="project-section-header" style="color:#007AFF;border-color:#007AFF;">🌟 专项工程工程 <span id="c_s" style="font-size:12px;background:#e3f2fd;padding:2px 8px;border-radius:10px;">0</span></div>
+                <div class="project-section-header" style="color:#007AFF;border-color:#007AFF;">🌟 专项工程 <span id="c_s" style="font-size:12px;background:#e3f2fd;padding:2px 8px;border-radius:10px;">0</span></div>
                 <div id="container_special" class="project-section-body"></div>
             </div>
             <div class="project-section">
-                <div class="project-section-header" style="color:#AF52DE;border-color:#AF52DE;">🔧 零星工程工程 <span id="c_o" style="font-size:12px;background:#f3e5f5;padding:2px 8px;border-radius:10px;">0</span></div>
+                <div class="project-section-header" style="color:#AF52DE;border-color:#AF52DE;">🔧 零星工程 <span id="c_o" style="font-size:12px;background:#f3e5f5;padding:2px 8px;border-radius:10px;">0</span></div>
                 <div id="container_odd" class="project-section-body"></div>
             </div>
             <div class="project-section">
-                <div class="project-section-header" style="color:#FF3B30;border-color:#FF3B30;">🚑 抢修工程工程 <span id="c_r" style="font-size:12px;background:#ffebee;padding:2px 8px;border-radius:10px;">0</span></div>
+                <div class="project-section-header" style="color:#FF3B30;border-color:#FF3B30;">🚑 抢修工程 <span id="c_r" style="font-size:12px;background:#ffebee;padding:2px 8px;border-radius:10px;">0</span></div>
                 <div id="container_repair" class="project-section-body"></div>
             </div>
             <button class="fab-add" onclick="openModal('createModal')">+</button>
@@ -900,6 +900,7 @@
 
 
 </html>
+
 
 
 
