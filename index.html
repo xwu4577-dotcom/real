@@ -393,56 +393,29 @@
     <div id="dynamicFormModal" class="modal"><div class="modal-content"><h3 id="formTitle"></h3><div id="dynamicFormContainer"></div><button class="btn-primary" onclick="saveDynamicData()">保存</button><button class="btn-cancel" onclick="closeModal('dynamicFormModal')">取消</button></div></div>
     <div id="configModal" class="modal"><div class="modal-content" style="max-width:600px;"><h3 id="configModalTitle">配置</h3><div style="display:flex;gap:10px;margin-bottom:10px"><button class="btn-small" id="btnAddConfigNode" onclick="addNewConfigNode()">+ 新类型</button></div><div class="config-container"><div class="config-sidebar" id="configSidebar"></div><div class="config-main" id="configMain"><div id="fieldEditorArea" style="display:none;"><h4 id="currentEditingNodeTitle"></h4><div id="configFieldsList"></div><button class="btn-small" onclick="addNewConfigField()">+ 字段</button></div><div id="configEmptyHint">请选择</div></div></div><button class="btn-primary" onclick="handleConfigSave()">保存</button><button class="btn-cancel" onclick="closeModal('configModal')">取消</button></div></div>
 
-<script>
-  // 【断点测试】：如果关了梯子连这个都不弹，说明域名彻底被封了
-  alert('网页程序已启动，正在渲染界面...');
+    <script>
+        // ==========================================
+        // ☁️ 核心配置：云同步模块 (V44.0 Cloud)
+        // ==========================================
+        const SUPABASE_URL = 'https://real-tau-seven.vercel.app/weather';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRkZGltYWR6cGJjdm10b3Vqb2VjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAxMTE3NTksImV4cCI6MjA4NTY4Nzc1OX0.dMJdVjjr3D0oGRli1DE2ohvl-5abwLGHSPAaS8wREG0';
+        
+        const { createClient } = supabase;
+        const _supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-  // 1. 变量声明（不在这里初始化）
-  const SUPABASE_URL = 'https://real-tau-seven.vercel.app/supabase';
-  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'; 
-  let _supabase = null;
+        let currentUser = null;
+        let isRegisterMode = false;
+        let syncTimer = null;
 
-  // 2. 核心渲染函数：保证界面先出来
-  function renderInitialUI() {
-      console.log("正在渲染初始界面...");
-      // 这里执行你原本显示登录框或主界面的逻辑
-      const authModal = document.getElementById('auth-modal');
-      if (authModal) authModal.style.display = 'flex';
-  }
-
-  // 3. 安全初始化函数：哪怕报错也不影响 UI
-  async function initSupabaseSafe() {
-      try {
-          // 确保 URL 和 KEY 存在且不是 undefined
-          if (!SUPABASE_URL || !SUPABASE_KEY) throw new Error("配置缺失");
-
-          // 初始化客户端
-          _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-          // 手动设置 3 秒超时比赛
-          const timeout = new Promise((_, reject) =>
-              setTimeout(() => reject(new Error('网络连接超时')), 3000)
-          );
-
-          // 尝试获取会话，并与超时比赛
-          await Promise.race([
-              _supabase.auth.getSession(),
-              timeout
-          ]);
-
-          console.log("✅ 云端连接成功");
-      } catch (e) {
-          console.warn('⚠️ 进入离线模式：', e.message);
-          // 在界面上给个提示，不影响使用本地数据
-      }
-  }
-
-  // 4. 程序入口：严格遵循“先渲染，再联网”
-  window.addEventListener('load', () => {
-      renderInitialUI();    // 第一步：先让用户看到界面
-      initSupabaseSafe();   // 第二步：后台悄悄连数据库
-  });
-</script>
+        // 初始化：先检查登录状态，再加载数据
+        async function initApp() {
+            const { data: { session } } = await _supabase.auth.getSession();
+            if (session) {
+                handleLoginSuccess(session.user);
+            } else {
+                document.getElementById('auth-modal').style.display = 'flex';
+            }
+        }
 
         async function handleAuth() {
             const email = document.getElementById('email').value;
@@ -917,6 +890,3 @@
 </body>
 
 </html>
-
-
-
