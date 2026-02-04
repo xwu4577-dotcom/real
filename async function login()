@@ -229,8 +229,8 @@
         <div class="auth-box">
             <h2 id="auth-title">个人账号登录</h2>
             <p style="font-size:12px;color:#666;margin-bottom:20px;">登录后可多端同步数据</p>
-            <input type="email" id="email" class="auth-input" placeholder="任意邮箱格式的用户名">
-            <input type="password" id="password" class="auth-input" placeholder="密码 (至少6位)">
+            <input type="email" id="email" name="username" autocomplete="username" class="auth-input" placeholder="任意邮箱格式的用户名">
+            <input type="password" id="password" name="password" autocomplete="current-password" class="auth-input" placeholder="密码 (至少6位)">
             <button class="auth-btn" id="auth-action-btn" onclick="handleAuth()">登录</button>
             <div id="auth-error" class="error-msg"></div>
             <div class="auth-switch" onclick="switchMode()">没有账号？点击注册</div>
@@ -401,7 +401,13 @@
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRkZGltYWR6cGJjdm10b3Vqb2VjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAxMTE3NTksImV4cCI6MjA4NTY4Nzc1OX0.dMJdVjjr3D0oGRli1DE2ohvl-5abwLGHSPAaS8wREG0';
         
         const { createClient } = supabase;
-        const _supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+    auth: {
+        persistSession: true,   // 开启持久化，把钥匙留在手机里
+        autoRefreshToken: true, // 钥匙快过期时自动换新的
+        detectSessionInUrl: true
+    }
+});
 
         let currentUser = null;
         let isRegisterMode = false;
@@ -411,8 +417,11 @@
         async function initApp() {
             const { data: { session } } = await _supabase.auth.getSession();
             if (session) {
+                // 如果发现有钥匙，先把登录框藏起来，不让它闪现
+                document.getElementById('auth-modal').style.display = 'none';
                 handleLoginSuccess(session.user);
             } else {
+                // 没钥匙才显示登录框
                 document.getElementById('auth-modal').style.display = 'flex';
             }
         }
@@ -891,6 +900,7 @@
 
 
 </html>
+
 
 
 
