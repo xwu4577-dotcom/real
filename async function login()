@@ -298,7 +298,7 @@
 
             <div class="footer-tools">
                 <div class="tool-btn" onclick="exportData()">📤 备份数据</div>
-                <div class="tool-btn" onclick="triggerImport()">📥 恢复数据</div>
+                <div class="tool-btn" onclick="triggerImport()">📥 恢复数据(测试版)</div>
             </div>
             <input type="file" id="importFile" style="display:none" onchange="importData(this)">
         </div>
@@ -967,6 +967,7 @@ function importData(i) {
 
 
 </html>
+
 
 
 
