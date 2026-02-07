@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>工作助手 (云端同步版)</title>
+    <title>工作助手 (精简专业版)</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
         /* --- 基础变量 --- */
         :root { --primary: #007AFF; --bg: #F5F7FA; --white: #FFFFFF; --green: #34C759; --orange: #FF9500; --purple: #5856D6; --text: #333; --border: #E5E5EA; --red: #FF3B30; --gray: #8E8E93; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); margin: 0; height: 100vh; display: flex; flex-direction: column; color: var(--text); -webkit-tap-highlight-color: transparent; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: var(--bg); margin: 0; height: 100vh; display: flex; flex-direction: column; color: var(--text); -webkit-tap-highlight-color: transparent; }
         
         /* 导航 */
         .navbar { background: var(--white); color: var(--text); padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 0 rgba(0,0,0,0.05); flex-shrink: 0; z-index: 100; height: 44px; }
@@ -19,72 +19,39 @@
         #nodeConfigBtn { background: #f0f0f5; border: none; color: var(--primary); padding: 6px 12px; border-radius: 15px; font-size: 13px; cursor: pointer; font-weight: 500; display: none; }
         
         /* 容器 */
-        .page-container { flex: 1; overflow-y: auto; padding: 15px; padding-bottom: 80px; position: relative; } /* padding-bottom 增加，防止遮挡底部内容 */
+        .page-container { flex: 1; overflow-y: auto; padding: 15px; padding-bottom: 80px; position: relative; }
         .page { display: none; }
         .page.active { display: block; animation: fadeIn 0.2s; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* --- 🌟 V44 新增：标准悬浮按钮 (FAB) --- */
+        /* 悬浮按钮 (FAB) */
         .fab-add {
-            position: fixed;
-            bottom: 30px;
-            right: 20px;
-            width: 56px;
-            height: 56px;
-            background-color: var(--primary);
-            color: white;
-            border-radius: 50%;
-            border: none;
-            box-shadow: 0 4px 12px rgba(0, 122, 255, 0.4);
-            font-size: 28px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            z-index: 900;
-            transition: transform 0.1s;
+            position: fixed; bottom: 30px; right: 20px; width: 56px; height: 56px;
+            background-color: var(--primary); color: white; border-radius: 50%;
+            border: none; box-shadow: 0 4px 12px rgba(0, 122, 255, 0.4);
+            font-size: 28px; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; z-index: 900; transition: transform 0.1s;
         }
         .fab-add:active { transform: scale(0.95); background-color: #0056b3; }
 
-        /* --- 🌟 V44 新增：节点排序区域 (素雅箭头) --- */
-        .node-sort-zone {
-            width: 36px;
-            background: #f9f9f9;
-            border-right: 1px solid #eee;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-        }
-        .node-sort-btn {
-            flex: 1;
-            width: 100%;
-            border: none;
-            background: transparent;
-            color: #ccc; /* 普通灰色 */
-            font-size: 14px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 0;
-        }
+        /* 节点排序 */
+        .node-sort-zone { width: 36px; background: #f9f9f9; border-right: 1px solid #eee; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .node-sort-btn { flex: 1; width: 100%; border: none; background: transparent; color: #ccc; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; }
         .node-sort-btn:active { color: var(--primary); background: #eee; }
         .node-sort-btn:first-child { border-bottom: 1px solid #eee; }
 
-
-        /* --- 首页样式 --- */
+        /* 首页资产卡片 */
         .welcome-row { margin-bottom: 20px; }
         .welcome-date { font-size: 13px; color: #888; text-transform: uppercase; letter-spacing: 1px; }
         .welcome-title { font-size: 24px; font-weight: 800; color: #333; margin: 5px 0 0 0; }
-        .asset-card-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 25px; }
-        .asset-card { background: white; border-radius: 16px; padding: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); position: relative; overflow: hidden; cursor: pointer; transition: transform 0.1s; }
+        .asset-card-row { display: flex; flex-direction: column; margin-bottom: 20px; }
+        .asset-card { width: 100%; border-radius: 16px; padding: 20px; box-shadow: 0 4px 15px rgba(0,122,255,0.2); position: relative; overflow: hidden; cursor: pointer; transition: transform 0.1s; box-sizing: border-box; }
         .asset-card:active { transform: scale(0.98); }
-        .asset-card.blue { background: linear-gradient(145deg, #007AFF, #0056b3); color: white; }
-        .asset-card.orange { background: white; color: #333; }
+        .asset-card.blue { background: linear-gradient(135deg, #007AFF 0%, #0056b3 100%); color: white; }
         .asset-label { font-size: 12px; opacity: 0.8; margin-bottom: 5px; }
         .asset-value { font-size: 28px; font-weight: 800; line-height: 1.1; }
-        .asset-sub { font-size: 11px; margin-top: 5px; opacity: 0.7; }
+
+        /* 日历 */
         .calendar-section { background: white; border-radius: 16px; padding: 15px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); }
         .cal-header { font-weight: bold; margin-bottom: 10px; font-size: 15px; display: flex; justify-content: space-between; }
         .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; text-align: center; }
@@ -92,6 +59,8 @@
         .cal-day { font-size: 13px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 50%; color: #333; position: relative; }
         .cal-day.today { background: var(--primary); color: white; font-weight: bold; box-shadow: 0 2px 5px rgba(0,122,255,0.4); }
         .cal-day.has-log::after { content:''; width:4px; height:4px; background:var(--red); border-radius:50%; position:absolute; bottom:4px; }
+
+        /* 待办 */
         .todo-section { margin-bottom: 30px; }
         .section-head { font-size: 16px; font-weight: 800; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
         .todo-input-row { display: flex; gap: 10px; margin-bottom: 15px; }
@@ -104,19 +73,20 @@
         .todo-checkbox { width: 20px; height: 20px; border-radius: 6px; border: 2px solid #ddd; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
         .todo-item.done .todo-checkbox { background: var(--green); border-color: var(--green); color: white; }
         .todo-text { font-size: 14px; flex: 1; }
-        .todo-del { color: #ccc; font-size: 18px; padding: 5px; cursor: pointer; }
-        .project-entry-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 30px; }
+
+        /* 功能导航 */
+        .project-entry-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-bottom: 30px; }
         .entry-card { background: white; border-radius: 16px; padding: 20px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.03); cursor: pointer; border: 1px solid transparent; transition: all 0.1s; }
         .entry-card:active { transform: scale(0.96); background: #fafafa; }
         .entry-card.eng { border-bottom: 4px solid var(--primary); }
         .entry-card.non-eng { border-bottom: 4px solid var(--purple); }
+        .entry-card.tools { border-bottom: 4px solid var(--orange); }
         .entry-icon { font-size: 32px; margin-bottom: 10px; display: block; }
         .entry-title { font-weight: 700; font-size: 15px; color: #333; display: block; }
-        .entry-desc { font-size: 11px; color: #999; margin-top: 4px; display: block; }
         .footer-tools { display: flex; gap: 10px; justify-content: center; margin-bottom: 40px; }
         .tool-btn { font-size: 12px; color: #999; padding: 8px 15px; background: rgba(0,0,0,0.03); border-radius: 20px; cursor: pointer; }
 
-        /* --- 考勤样式 --- */
+        /* 考勤 */
         .ot-summary-card { background: linear-gradient(135deg, #007AFF 0%, #5856D6 100%); color: white; padding: 25px; border-radius: 15px; text-align: center; margin-bottom: 15px; }
         .ot-big-num { font-size: 48px; font-weight: bold; margin: 10px 0; }
         .ot-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 15px; background: rgba(255,255,255,0.15); padding: 10px; border-radius: 10px; }
@@ -135,49 +105,20 @@
         .ot-list-item { background: white; padding: 15px; border-radius: 10px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
         .leave-type-tag { font-size: 12px; padding: 2px 6px; border-radius: 4px; margin-right: 5px; color: white; }
 
-        /* --- 工程列表样式 (按键排序) --- */
+        /* 工程列表 */
         .list-item { background: white; padding: 0; margin-bottom: 10px; border-radius: 10px; display: flex; align-items: stretch; box-shadow: 0 1px 3px rgba(0,0,0,0.05); overflow: hidden; }
-        /* 🌟 布局优化：左边文字，右边图标 */
-        .list-item-content { 
-            flex: 1; 
-            padding: 12px 15px; 
-            cursor: pointer; 
-            display: flex; 
-            justify-content: space-between; /* 两端对齐 */
-            align-items: center; /* 垂直居中 */
-        }
+        .list-item-content { flex: 1; padding: 12px 15px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
         .list-item-content:active { background: #f5f5f5; }
-        /* 🌟 瘦身优化：把排序条宽度从 46px 减小到 32px */
-        .list-sort-zone { 
-            width: 32px; 
-            background: #fcfcfc; 
-            border-left: 1px solid #f0f0f0; 
-            display: flex; 
-            flex-direction: column; 
-        }
-        /* 🌟 箭头优化：更精致的箭头按钮 */
-        .sort-btn { 
-            flex: 1; 
-            border: none; 
-            background: transparent; 
-            color: #ccc; 
-            font-size: 14px; 
-            cursor: pointer; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            transition: color 0.2s;
-        }
-        .sort-btn:active { color: var(--primary); }
-        .sort-btn.up { border-bottom: none; } /* 去掉中间横线 */
-        .sort-btn:active { background: #e0e0e0; color: var(--primary); }
+        .list-sort-zone { width: 32px; background: #fcfcfc; border-left: 1px solid #f0f0f0; display: flex; flex-direction: column; }
+        .sort-btn { flex: 1; border: none; background: transparent; color: #ccc; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: color 0.2s; }
+        .sort-btn:active { color: var(--primary); background: #e0e0e0; }
         .sort-btn.up { border-bottom: 1px solid #eee; }
         .list-item-title { font-weight: 600; font-size: 15px; margin-bottom: 4px; color: #333; }
         .list-item-date { font-size: 12px; color: #999; }
         .project-section-header { font-size: 14px; font-weight: bold; color: #555; margin: 15px 0 10px; padding-left: 10px; border-left: 4px solid var(--primary); display: flex; justify-content: space-between; }
         .home-section-title { font-size: 14px; font-weight: bold; color: #666; margin: 25px 0 10px 5px; border-left: 3px solid var(--primary); padding-left: 8px; }
 
-        /* --- 详情页样式 --- */
+        /* 详情页 */
         .stage-card { background: white; margin-bottom: 15px; border-radius: 10px; position: relative; box-shadow: 0 2px 6px rgba(0,0,0,0.05); display: flex; overflow: hidden; }
         .card-content { flex: 1; padding: 12px 15px; position: relative; min-width: 0; }
         .status-bar { position: absolute; left: 0; top: 0; bottom: 0; width: 4px; }
@@ -214,21 +155,39 @@
         .btn-primary { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 10px; font-size: 16px; margin-top: 25px; cursor: pointer; font-weight: 600; }
         .btn-cancel { width: 100%; margin-top: 10px; border: none; background: transparent; color: #999; cursor: pointer; padding: 10px; font-size: 14px; }
         
-        /* 配置器 */
-        .config-container { display: flex; height: 350px; border: 1px solid #eee; border-radius: 8px; overflow: hidden; margin-top: 10px; }
-        .config-sidebar { width: 35%; background: #f5f5f7; border-right: 1px solid #eee; overflow-y: auto; }
-        .config-main { width: 65%; padding: 10px; overflow-y: auto; background: white; }
-        .config-node-item { padding: 12px 8px; font-size: 13px; border-bottom: 1px solid #eee; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
-        .config-node-item.active { background: white; color: var(--primary); border-left: 3px solid var(--primary); font-weight: bold; }
+        /* 备选配置 - 垂直布局 */
+        .config-container { display: flex; flex-direction: column; max-height: 70vh; overflow-y: auto; margin-top: 10px; }
+        .config-sidebar { display: none; }
+        .config-main { width: 100%; padding: 0; overflow-y: auto; background: white; }
+        .config-category-title { background: #f5f5f7; border-left: 4px solid var(--primary); padding: 12px 15px; font-size: 14px; font-weight: bold; color: #333; margin: 15px 0 10px 0; width: 100%; box-sizing: border-box; }
+        .config-node-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; padding: 0 10px; margin-bottom: 10px; }
+        .config-node-item { background: white; border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px 10px; text-align: center; cursor: pointer; font-size: 12px; color: #333; box-shadow: 0 2px 4px rgba(0,0,0,0.05); transition: all 0.2s; display: flex; align-items: center; justify-content: center; min-height: 60px; }
+        .config-node-item:hover { background: #f9f9f9; border-color: var(--primary); box-shadow: 0 4px 8px rgba(0,122,255,0.1); }
+        .config-node-item.active { background: #e3f2fd; border-color: var(--primary); color: var(--primary); font-weight: bold; }
         .field-row { display: flex; gap: 5px; margin-bottom: 8px; align-items: center; background: #f9f9f9; padding: 5px; border-radius: 4px; }
         .field-row input, .field-row select { width: 100%; padding: 6px; font-size: 12px; border: 1px solid #ddd; border-radius: 4px; }
         .icon-btn { cursor: pointer; padding: 4px; color: #999; font-size: 16px; }
         .btn-small { padding: 6px 10px; font-size: 12px; border-radius: 6px; border: 1px solid #ddd; background: #fff; cursor: pointer; }
         .node-option { background: #f0f2f5; border: 1px solid transparent; padding: 15px 5px; border-radius: 10px; text-align: center; cursor: pointer; font-size: 13px; font-weight: 500; color: #333; }
+        
+        /* 节点详情弹窗 (二级弹窗) */
+        .node-detail-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(2px); }
+        .node-detail-modal.open { display: flex; }
+        .node-detail-content { background: white; width: 85%; max-width: 500px; padding: 25px 20px; border-radius: 15px; max-height: 80vh; overflow-y: auto; display: flex; flex-direction: column; }
+        .node-detail-header { font-size: 16px; font-weight: bold; margin-bottom: 20px; color: #333; }
+        .node-field-list { flex: 1; margin-bottom: 15px; }
+        .node-field-item { background: #f9f9f9; border: 1px solid #e0e0e0; border-radius: 8px; padding: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+        .node-field-info { flex: 1; }
+        .node-field-name { font-weight: bold; color: #333; margin-bottom: 4px; }
+        .node-field-type { font-size: 12px; color: #999; }
+        .node-detail-buttons { display: flex; gap: 10px; margin-top: 20px; }
+        .node-detail-buttons button { flex: 1; padding: 10px; border-radius: 8px; border: none; cursor: pointer; font-size: 14px; font-weight: 600; }
+        .btn-detail-save { background: var(--primary); color: white; }
+        .btn-detail-close { background: #f0f0f0; color: #333; }
 
         .hidden { display: none; }
         
-        /* --- ☁️ 云同步样式 --- */
+        /* 云同步 */
         #auth-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 9999; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
         .auth-box { background: white; padding: 30px; border-radius: 16px; width: 85%; max-width: 350px; box-shadow: 0 4px 20px rgba(0,0,0,0.2); text-align: center; }
         .auth-box h2 { margin-top: 0; color: #1d1d1f; }
@@ -239,43 +198,67 @@
         .error-msg { color: #ff3b30; font-size: 14px; margin-top: 10px; display: none; }
         .toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.7); color: white; padding: 8px 16px; border-radius: 20px; font-size: 12px; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 1000; }
         .user-badge { font-size: 12px; color: var(--primary); background: #e3f2fd; padding: 4px 8px; border-radius: 10px; cursor: pointer; }
-        /* ... 上面是 .user-badge 的样式 ... */
-        .user-badge { font-size: 12px; color: var(--primary); background: #e3f2fd; padding: 4px 8px; border-radius: 10px; cursor: pointer; }
 
-/* 🌟 极简版：无背景、线框风格删除图标 */
-.btn-delete-icon {
-    width: 32px;
-    height: 32px;
-    /* 去掉背景色，改用透明 */
-    background: transparent; 
-    border: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+        /* 图标 */
+        .btn-delete-icon { width: 32px; height: 32px; background: transparent; border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; margin-left: 8px; flex-shrink: 0; opacity: 0.4; transition: all 0.2s; }
+        .btn-delete-icon:active { transform: scale(0.9); opacity: 1; }
+        .btn-delete-icon svg { width: 18px; height: 18px; stroke: #999; stroke-width: 1.5; fill: none; }
+        .btn-delete-icon:active svg { stroke: #FF3B30; }
+
+        /* 百宝箱布局 (V56 补丁) */
+        #toolsPage { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); padding: 20px; box-sizing: border-box; z-index: 50; }
+        #toolsPage.active { display: flex !important; flex-direction: column; justify-content: flex-start; }
+        #toolsPage .page-header-row { margin-top: 0 !important; padding-top: 5px; }
+        .page-header-row { display: flex; align-items: center; padding: 10px 0 20px 0; width: 100%; border-bottom: 1px solid #f5f5f7; margin-bottom: 15px; flex-shrink: 0; }
+        .page-header-title { font-size: 18px; font-weight: 700; margin-left: 15px; color: #333; }
+        .tool-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; align-content: start; width: 100%; }
+        .tool-item { background: white; border-radius: 16px; padding: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 2px 10px rgba(0,0,0,0.03); cursor: pointer; border: 1px solid #f5f5f7; height: 90px; }
+        .tool-item:active { transform: scale(0.95); background: #fafafa; }
+        .tool-icon { font-size: 32px; margin-bottom: 8px; line-height: 1; }
+        .tool-name { font-size: 13px; font-weight: 500; color: #333; }
+
+        /* 🌟 核心修复：节点库弹窗网格化布局 */
+#nodeLibraryGrid {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important; /* 强制两列 */
+    gap: 12px;
+    max-height: 60vh;
+    overflow-y: auto;
+    padding: 10px;
+}
+
+/* 分类标题：横跨两列并增加间距 */
+#nodeLibraryGrid > div[style*="grid-column"] {
+    grid-column: 1 / -1 !important;
+    margin: 15px 0 5px 0;
+    padding-left: 8px;
+    border-left: 3px solid var(--primary);
+    font-size: 13px;
+    font-weight: bold;
+    color: #666;
+    background: #f8f9fa;
+    line-height: 30px;
+}
+
+/* 节点选项：iOS 风格大圆角按钮 */
+.node-option {
+    background: #ffffff;
+    border: 1px solid #e5e5ea;
+    border-radius: 12px;
+    padding: 15px 10px;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 500;
+    color: #333;
     cursor: pointer;
-    margin-left: 8px;
-    flex-shrink: 0;
-    opacity: 0.4; /* 平时淡一点，不抢眼 */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
     transition: all 0.2s;
 }
-.btn-delete-icon:active {
-    transform: scale(0.9);
-    opacity: 1; /* 点击时变实 */
-}
-/* 给 SVG 设定颜色，跟随文字颜色或指定灰色 */
-.btn-delete-icon svg {
-    width: 18px; 
-    height: 18px;
-    stroke: #999; /* 线条颜色：深灰 */
-    stroke-width: 1.5; /* 线条粗细 */
-    fill: none;
-}
-.btn-delete-icon:active svg {
-    stroke: #FF3B30; /* 点击变红 */
-}
 
-    </style> </head>
-<body>
+.node-option:active {
+    background: #f2f2f7;
+    transform: scale(0.96);
+}
     </style>
 </head>
 <body>
@@ -314,14 +297,16 @@
 
             <div class="asset-card-row">
                 <div class="asset-card blue" onclick="goToPage('attendancePage')">
-                    <div class="asset-label">可休天数</div>
-                    <div class="asset-value" id="homeOtDays">0</div>
-                    <div class="asset-sub">年假/存休/倒休</div>
-                </div>
-                <div class="asset-card orange" onclick="document.getElementById('todoInput').focus()">
-                    <div class="asset-label">待办事项</div>
-                    <div class="asset-value" id="homeTodoCount" style="color:var(--primary)">0</div>
-                    <div class="asset-sub">今日未完成</div>
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <div class="asset-label" style="color:rgba(255,255,255,0.8); margin-bottom:5px;">当前可休总天数</div>
+                            <div class="asset-value" id="homeOtDays" style="font-size:42px;">0</div>
+                        </div>
+                        <div style="text-align:right; opacity:0.9;">
+                            <div style="font-size:12px;">年假/存休/倒休</div>
+                            <div style="font-size:24px; margin-top:5px;">📅</div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -338,9 +323,7 @@
             </div>
 
             <div class="todo-section">
-                <div class="section-head">
-                    <span>📝 我的待办</span>
-                </div>
+                <div class="section-head"><span>📝 我的待办</span></div>
                 <div class="todo-input-row">
                     <input type="text" id="todoInput" class="todo-input" placeholder="添加新任务...">
                     <button class="todo-add-btn" onclick="addTodo()">+</button>
@@ -348,17 +331,19 @@
                 <div id="todoList" class="todo-list"></div>
             </div>
 
-            <div class="section-head" style="margin-top:20px;">🚀 项目管理</div>
-            <div class="project-entry-grid">
-                <div class="entry-card eng" onclick="goToPage('projectList')">
+            <div class="section-head" style="margin-top:20px;">🚀 功能导航</div>
+            <div class="project-entry-grid" style="grid-template-columns: 1fr 1fr 1fr;">
+                <div class="entry-card eng" onclick="goToPage('projectList')" style="padding:15px 5px;">
                     <span class="entry-icon">🏗️</span>
-                    <span class="entry-title">工程项目</span>
-                    <span class="entry-desc">专项工程/零星工程/抢修工程</span>
+                    <span class="entry-title" style="font-size:13px;">工程项目</span>
                 </div>
-                <div class="entry-card non-eng" onclick="goToPage('nonProjectList')">
+                <div class="entry-card non-eng" onclick="goToPage('nonProjectList')" style="padding:15px 5px;">
                     <span class="entry-icon">📂</span>
-                    <span class="entry-title">非工程项目</span>
-                    <span class="entry-desc">其他事务管理</span>
+                    <span class="entry-title" style="font-size:13px;">非工程</span>
+                </div>
+                <div class="entry-card tools" onclick="goToPage('toolsPage')" style="padding:15px 5px;">
+                    <span class="entry-icon">🧰</span>
+                    <span class="entry-title" style="font-size:13px;">百宝箱</span>
                 </div>
             </div>
 
@@ -366,9 +351,7 @@
                 <div class="tool-btn" onclick="exportData()">📤 备份数据</div>
                 <div class="tool-btn" onclick="triggerImport()">📥 恢复数据(Plus版)</div>
             </div>
-            <div style="text-align: center; color: #ccc; font-size: 10px; margin-bottom: 20px; font-family: monospace; opacity: 0.6;">
-                v1.0.0
-            </div>
+            <div style="text-align: center; color: #ccc; font-size: 10px; margin-bottom: 20px; font-family: monospace; opacity: 0.6;">v1.0.0</div>
             <input type="file" id="importFile" style="display:none" onchange="importData(this)">
         </div>
 
@@ -392,7 +375,7 @@
             <div style="text-align:center; padding:10px;"><button class="btn-mini" onclick="openModal('addOtModal')">+ 录入加班</button></div>
             <div class="home-section-title">休假记录</div>
             <div id="leaveListContainer"></div>
-            <div style="text-align:center; padding:10px; margin-bottom:50px;"><button class="btn-mini" onclick="openModal('addLeaveModal')">+ 录入休假</button></div>
+            <div style="text-align:center; padding:10px; margin-bottom:50px;"><button class="btn-mini" onclick="openNewLeave()">+ 录入休假</button></div>
         </div>
 
         <div id="projectList" class="page">
@@ -420,18 +403,13 @@
         </div>
 
         <div id="projectDetail" class="page">
-<div style="position: relative; height: 44px; display: flex; align-items: center; margin-bottom: 20px;">
-                
-                <button class="back-btn-float" onclick="goToPage('projectList')" style="z-index: 10; position: relative;">
-                    ← 返回列表
-                </button>
-
+            <div style="position: relative; height: 44px; display: flex; align-items: center; margin-bottom: 20px;">
+                <button class="back-btn-float" onclick="goToPage('projectList')" style="z-index: 10; position: relative;">← 返回列表</button>
                 <div style="position: absolute; left: 0; right: 0; text-align: center; pointer-events: none;">
                     <h2 id="detailTitle" style="margin: 0; font-size: 18px; display: inline-block; pointer-events: auto;" onclick="editProjectName()"></h2>
                     <span style="font-size: 14px; color: #999; cursor: pointer; pointer-events: auto;" onclick="editProjectName()"> ✏️</span>
                     <div id="detailType" style="font-size: 10px; color: #999; margin-top: 2px;"></div>
                 </div>
-
             </div>
             <div class="preview-section">
                 <div class="preview-header"><span>📋 全息进度预览</span></div>
@@ -442,10 +420,41 @@
                 <div id="stagesContainer"></div>
                 <div id="emptyHint" style="text-align:center; padding:40px; color:#999; font-size:14px; display:none;">👇 点击下方按钮添加第一个流程节点</div>
             </div>
-            
             <div style="text-align:center; padding-bottom:30px;">
                 <button class="btn-add-node" onclick="openNodeLibrary()">+ 添加流程节点</button>
             </div>
+        </div>
+    </div>
+
+    <div id="toolsPage" class="page">
+        <div style="display: flex; align-items: center; margin-bottom: 20px;">
+            <span style="font-size: 20px; font-weight: 800; color: #333; letter-spacing: 1px;">🧰 百宝箱</span>
+        </div>
+        <div class="tool-grid">
+            <div class="tool-item" onclick="openModal('dateCalcModal')">
+                <span class="tool-icon">📅</span>
+                <span class="tool-name">日期计算</span>
+            </div>
+            <div class="tool-item" style="opacity:0.5; background:#f9f9f9; border:none; cursor:default;">
+                <span class="tool-icon" style="font-size:24px; opacity:0.5;">➕</span>
+                <span class="tool-name">更多...</span>
+            </div>
+            <div class="tool-item" style="opacity:0; pointer-events:none;"></div>
+        </div>
+    </div>
+
+    <div id="dateCalcModal" class="modal">
+        <div class="modal-content">
+            <h3>📅 日期差计算器</h3>
+            <div style="margin-top:15px;">
+                <label class="form-label">开始日期</label>
+                <input type="date" id="toolStartDate" class="input-box" max="2099-12-31" oninput="if(this.value.length > 10) this.value = this.value.slice(0, 10)">
+                <label class="form-label">结束日期</label>
+                <input type="date" id="toolEndDate" class="input-box" max="2099-12-31" oninput="if(this.value.length > 10) this.value = this.value.slice(0, 10)">
+                <button class="btn-primary" onclick="calcDateDiff()" style="margin-top:20px;">计算天数</button>
+                <div id="dateResult" class="tool-result"></div>
+            </div>
+            <button class="btn-cancel" onclick="closeModal('dateCalcModal')">关闭</button>
         </div>
     </div>
 
@@ -459,43 +468,132 @@
         </div>
     </div>
 
-    <div id="addOtModal" class="modal"><div class="modal-content"><h3>录入加班</h3><label class="form-label">日期</label><input type="date" id="otDate" class="input-box"><label class="form-label">天数</label><input type="number" id="otDays" class="input-box" step="0.5"><label class="form-label">备注</label><input type="text" id="otNote" class="input-box"><button class="btn-primary" onclick="addOvertime()">确认</button><button class="btn-cancel" onclick="closeModal('addOtModal')">取消</button></div></div>
-    <div id="addLeaveModal" class="modal"><div class="modal-content"><h3>录入休假</h3><label class="form-label">类型</label><select id="lvType" class="input-box"><option value="年假">年假</option><option value="存休">存休</option><option value="倒休">倒休</option><option value="其他">其他</select><label class="form-label">日期</label><input type="date" id="lvDate" class="input-box"><label class="form-label">天数</label><input type="number" id="lvDays" class="input-box" step="0.5"><label class="form-label">说明</label><input type="text" id="lvNote" class="input-box"><button class="btn-primary" onclick="addLeaveRecord()">确认</button><button class="btn-cancel" onclick="closeModal('addLeaveModal')">取消</button></div></div>
-    <div id="useOtModal" class="modal"><div class="modal-content"><h3>核销加班</h3><p style="color:#666;font-size:13px;margin-bottom:15px">确认已倒休？</p><label class="form-label">倒休日期</label><input type="date" id="useOtDate" class="input-box"><input type="hidden" id="useOtId"><button class="btn-primary" onclick="confirmUseOt()">确认</button><button class="btn-cancel" onclick="closeModal('useOtModal')">取消</button></div></div>
-    <div id="createModal" class="modal"><div class="modal-content"><h3>新建工程</h3><label class="form-label">名称</label><input type="text" id="newProjectName" class="input-box"><label class="form-label">类别</label><select id="newProjectType" class="input-box"><option value="special">🌟 专项工程</option><option value="odd">🔧 零星工程</option><option value="repair">🚑 抢修工程</option></select><button class="btn-primary" onclick="createProject()">创建</button><button class="btn-cancel" onclick="closeModal('createModal')">取消</button></div></div>
-    <div id="nodeLibraryModal" class="modal"><div class="modal-content"><h3>选择节点</h3><div id="nodeLibraryGrid" class="node-library-grid"></div><button class="btn-cancel" onclick="closeModal('nodeLibraryModal')">取消</button></div></div>
-    <div id="dynamicFormModal" class="modal"><div class="modal-content"><h3 id="formTitle"></h3><div id="dynamicFormContainer"></div><button class="btn-primary" onclick="saveDynamicData()">保存</button><button class="btn-cancel" onclick="closeModal('dynamicFormModal')">取消</button></div></div>
-    <div id="configModal" class="modal"><div class="modal-content" style="max-width:600px;"><h3 id="configModalTitle">配置</h3><div style="display:flex;gap:10px;margin-bottom:10px"><button class="btn-small" id="btnAddConfigNode" onclick="addNewConfigNode()">+ 新类型</button></div><div class="config-container"><div class="config-sidebar" id="configSidebar"></div><div class="config-main" id="configMain"><div id="fieldEditorArea" style="display:none;"><h4 id="currentEditingNodeTitle"></h4><div id="configFieldsList"></div><button class="btn-small" onclick="addNewConfigField()">+ 字段</button></div><div id="configEmptyHint">请选择</div></div></div><button class="btn-primary" onclick="handleConfigSave()">保存</button><button class="btn-cancel" onclick="closeModal('configModal')">取消</button></div></div>
+    <div id="addOtModal" class="modal">
+        <div class="modal-content">
+            <h3>录入加班</h3>
+            <label class="form-label">日期</label>
+            <input type="date" id="otDate" class="input-box" max="2099-12-31" oninput="if(this.value.length > 10) this.value = this.value.slice(0, 10)">
+            <label class="form-label">天数</label>
+            <input type="number" id="otDays" class="input-box" step="0.5">
+            <label class="form-label">备注</label>
+            <input type="text" id="otNote" class="input-box">
+            <button class="btn-primary" onclick="addOvertime()">确认</button>
+            <button class="btn-cancel" onclick="closeModal('addOtModal')">取消</button>
+        </div>
+    </div>
+
+    <div id="addLeaveModal" class="modal">
+        <div class="modal-content">
+            <h3 id="leaveModalTitle">录入休假</h3>
+            <input type="hidden" id="lvEditIndex">
+            <label class="form-label">类型</label>
+            <select id="lvType" class="input-box">
+                <option value="年假">年假</option>
+                <option value="存休">存休</option>
+                <option value="倒休">倒休</option>
+                <option value="其他">其他</option>
+            </select>
+            <label class="form-label">日期</label>
+            <input type="date" id="lvDate" class="input-box" max="2099-12-31" oninput="if(this.value.length > 10) this.value = this.value.slice(0, 10)">
+            <label class="form-label">天数</label>
+            <input type="number" id="lvDays" class="input-box" step="0.5">
+            <label class="form-label">说明</label>
+            <input type="text" id="lvNote" class="input-box">
+            <button class="btn-primary" id="lvSaveBtn" onclick="saveLeaveRecord()">确认</button>
+            <button class="btn-cancel" onclick="closeModal('addLeaveModal')">取消</button>
+        </div>
+    </div>
+
+    <div id="useOtModal" class="modal">
+        <div class="modal-content">
+            <h3>核销加班</h3>
+            <p style="color:#666;font-size:13px;margin-bottom:15px">确认已倒休？</p>
+            <label class="form-label">倒休日期</label>
+            <input type="date" id="useOtDate" class="input-box" max="2099-12-31" oninput="if(this.value.length > 10) this.value = this.value.slice(0, 10)">
+            <input type="hidden" id="useOtId">
+            <button class="btn-primary" onclick="confirmUseOt()">确认</button>
+            <button class="btn-cancel" onclick="closeModal('useOtModal')">取消</button>
+        </div>
+    </div>
+
+    <div id="createModal" class="modal">
+        <div class="modal-content">
+            <h3>新建工程</h3>
+            <label class="form-label">名称</label>
+            <input type="text" id="newProjectName" class="input-box">
+            <label class="form-label">类别</label>
+            <select id="newProjectType" class="input-box">
+                <option value="special">🌟 专项工程</option>
+                <option value="odd">🔧 零星工程</option>
+                <option value="repair">🚑 抢修工程</option>
+            </select>
+            <button class="btn-primary" onclick="createProject()">创建</button>
+            <button class="btn-cancel" onclick="closeModal('createModal')">取消</button>
+        </div>
+    </div>
+
+    <div id="nodeLibraryModal" class="modal">
+        <div class="modal-content">
+            <h3>选择节点</h3>
+            <div id="nodeLibraryGrid" class="node-library-grid"></div>
+            <button class="btn-cancel" onclick="closeModal('nodeLibraryModal')">取消</button>
+        </div>
+    </div>
+
+    <div id="dynamicFormModal" class="modal">
+        <div class="modal-content">
+            <h3 id="formTitle"></h3>
+            <div id="dynamicFormContainer"></div>
+            <button class="btn-primary" onclick="saveDynamicData()">保存</button>
+            <button class="btn-cancel" onclick="closeModal('dynamicFormModal')">取消</button>
+        </div>
+    </div>
+
+    <div id="configModal" class="modal">
+        <div class="modal-content" style="max-width:600px;">
+            <h3 id="configModalTitle">备选节点配置</h3>
+            <div class="config-container" id="configContainer"></div>
+            <div style="display:flex; gap:10px; margin-top:15px;">
+                <button class="btn-primary" style="flex:1;" onclick="handleConfigSave()">保存</button>
+                <button class="btn-cancel" style="flex:1;" onclick="closeModal('configModal')">关闭</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="nodeDetailModal" class="node-detail-modal">
+        <div class="node-detail-content">
+            <div class="node-detail-header" id="nodeDetailTitle"></div>
+            <div class="node-field-list" id="nodeFieldList"></div>
+            <div style="display:flex; gap:10px;">
+                <button class="btn-small" onclick="addNewConfigField()" style="flex:1;">+ 增加字段</button>
+                <button class="btn-small" onclick="saveNodeDetailEditor()" style="flex:1; background:var(--primary); color:white;">保存</button>
+                <button class="btn-small" onclick="closeNodeDetailEditor()" style="flex:1;">返回</button>
+            </div>
+        </div>
+    </div>
 
     <script>
         // ==========================================
-        // ☁️ 核心配置：云同步模块 (V44.0 Cloud)
+        // ☁️ 核心配置：云同步模块
         // ==========================================
         const SUPABASE_URL = 'https://api.9990088.xyz';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRkZGltYWR6cGJjdm10b3Vqb2VjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAxMTE3NTksImV4cCI6MjA4NTY4Nzc1OX0.dMJdVjjr3D0oGRli1DE2ohvl-5abwLGHSPAaS8wREG0';
         
         const { createClient } = supabase;
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
-    auth: {
-        persistSession: true,   // 开启持久化，把钥匙留在手机里
-        autoRefreshToken: true, // 钥匙快过期时自动换新的
-        detectSessionInUrl: true
-    }
-});
+            auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+        });
 
         let currentUser = null;
         let isRegisterMode = false;
         let syncTimer = null;
 
-        // 初始化：先检查登录状态，再加载数据
         async function initApp() {
             const { data: { session } } = await _supabase.auth.getSession();
             if (session) {
-                // 如果发现有钥匙，先把登录框藏起来，不让它闪现
                 document.getElementById('auth-modal').style.display = 'none';
                 handleLoginSuccess(session.user);
             } else {
-                // 没钥匙才显示登录框
                 document.getElementById('auth-modal').style.display = 'flex';
             }
         }
@@ -537,14 +635,21 @@
         function handleLoginSuccess(user) {
             currentUser = user;
             document.getElementById('auth-modal').style.display = 'none';
-            document.getElementById('userBadge').innerText = user.email.split('@')[0];
-            document.getElementById('userBadge').style.display = 'block';
+            const userBadge = document.getElementById('userBadge');
+            userBadge.innerText = user.email.split('@')[0];
+            userBadge.style.display = 'block'; 
             
-            // 登录后，立即执行一次“云端 -> 本地”同步
+            loadConfig(); 
+            migrateData(); 
+            initHome(); 
+
             syncCloudToLocal().then(() => {
+                console.log("云端数据同步完成，刷新界面");
                 loadConfig(); 
                 migrateData(); 
-                initHome();
+                initHome(); 
+            }).catch(err => {
+                console.error("后台同步失败:", err);
             });
         }
 
@@ -569,9 +674,6 @@
             }
         }
 
-        // --- ☁️ 核心：数据同步逻辑 ---
-        
-        // 1. 上传：本地 -> 云端 (防抖，操作后延迟1秒触发)
         function debouncedSync() {
             if (!currentUser) return;
             showToast('🔄 正在同步...');
@@ -585,24 +687,14 @@
                     calendar: JSON.parse(localStorage.getItem(DB_KEY_CAL) || '{}'),
                     updated_at: new Date().toISOString()
                 };
-                
-                const { error } = await _supabase
-                    .from('user_data')
-                    .upsert({ user_id: currentUser.id, content: payload });
-
+                const { error } = await _supabase.from('user_data').upsert({ user_id: currentUser.id, content: payload });
                 if (!error) showToast('✅ 已同步到云端');
                 else showToast('❌ 同步失败: ' + error.message);
             }, 1000);
         }
 
-        // 2. 下载：云端 -> 本地 (登录时触发)
         async function syncCloudToLocal() {
-            const { data, error } = await _supabase
-                .from('user_data')
-                .select('content')
-                .eq('user_id', currentUser.id)
-                .single();
-            
+            const { data, error } = await _supabase.from('user_data').select('content').eq('user_id', currentUser.id).single();
             if (data && data.content) {
                 const c = data.content;
                 if(c.projects) localStorage.setItem(DB_KEY_DATA, JSON.stringify(c.projects));
@@ -610,7 +702,6 @@
                 if(c.attendance) localStorage.setItem(DB_KEY_OT, JSON.stringify(c.attendance));
                 if(c.todo) localStorage.setItem(DB_KEY_TODO, JSON.stringify(c.todo));
                 if(c.calendar) localStorage.setItem(DB_KEY_CAL, JSON.stringify(c.calendar));
-                console.log('云端数据已加载');
             }
         }
 
@@ -621,25 +712,14 @@
             setTimeout(() => t.style.opacity = '0', 2000);
         }
 
-        // ==========================================
-        // 📦 原有逻辑 (无缝集成)
-        // ==========================================
-
         function goToPage(id) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.getElementById(id).classList.add('active');
-            
             document.getElementById('backBtn').style.display = id === 'homePage' ? 'none' : 'block';
-            
+            const userBadge = document.getElementById('userBadge');
+            if (userBadge) userBadge.style.display = id === 'homePage' ? 'block' : 'none';
             const confBtn = document.getElementById('nodeConfigBtn');
-            if(confBtn) {
-                if (id === 'projectList' || id === 'projectDetail') {
-                    confBtn.style.display = 'block';
-                } else {
-                    confBtn.style.display = 'none';
-                }
-            }
-
+            if(confBtn) confBtn.style.display = (id === 'projectList' || id === 'projectDetail') ? 'block' : 'none';
             if (id === 'projectList') renderProjects();
             if (id === 'attendancePage') renderOtPage();
             if (id === 'homePage') initHome();
@@ -651,45 +731,148 @@
         const DB_KEY_TODO = 'todo_master_db'; 
         const DB_KEY_CAL = 'calendar_master_db';
 
-        const DEFAULT_CONFIG={"方案设计":[{"key":"finishDate","label":"完成时间","type":"date"},{"key":"unit","label":"设计单位","type":"text"}],"提交市局审核":[{"key":"submitDate","label":"初审提交","type":"date"},{"key":"replyDate","label":"初审复函","type":"date"},{"key":"reCheckSubmit","label":"复核提交","type":"date"},{"key":"reCheckReply","label":"复核复函","type":"date"}],"事前评估":[{"key":"evalDate","label":"评估时间","type":"date"},{"key":"reportDate","label":"报告出具","type":"date"}],"财政评审":[{"key":"submitTime","label":"资料提交","type":"date"},{"key":"outTime","label":"报告出具","type":"date"},{"key":"money","label":"审定金额(元)","type":"number"}],"资金到账":[{"key":"arriveDate","label":"下达时间","type":"date"},{"key":"amount","label":"到账金额","type":"number"}],"管理处决策":[{"key":"meetType","label":"议题类型","type":"select","options":["立项","合同签订","其他"]},{"key":"contractSubType","label":"合同类型","type":"select","options":["设计合同","施工合同","监理合同","其他"]},{"key":"otherContent","label":"其他内容","type":"text"},{"key":"meetLevel","label":"决策层级","type":"select","options":["党组会","主任办公会","纸质请示"]},{"key":"meetDate","label":"会议时间","type":"date"}],"签订合同":[{"key":"contractType","label":"合同类型","type":"select","options":["施工合同","设计合同","监理合同","其他"]},{"key":"otherContractName","label":"其他合同名","type":"text"},{"key":"signDate","label":"签订日期","type":"date"},{"key":"contractAmount","label":"合同金额","type":"number"}],"施工过程":[{"key":"startDate","label":"开工时间","type":"date"},{"key":"endDate","label":"竣工时间","type":"date"},{"key":"checkDate","label":"验收时间","type":"date"}],"付款":[{"key":"linkContract","label":"关联合同","type":"select","options":["无可用合同"]},{"key":"payType","label":"款项性质","type":"select","options":["首笔","进度款","尾款"]},{"key":"payAmount","label":"支付金额(元)","type":"number"}],"结算审计":[{"key":"auditEnd","label":"报告出具","type":"date"},{"key":"finalAmount","label":"最终金额","type":"number"}],"归档":[{"key":"archiveDate","label":"归档时间","type":"date"},{"key":"location","label":"存放位置","type":"text"}]};
+        const NODE_CATEGORIES = {
+            "📌 项目前期手续": ["方案设计", "市局报审", "区政府会", "发改委立项", "事前评估", "财政评审", "自定义新增"],
+            "💰 采购手续": ["委托代理签合同", "编制采购文件", "意向公开", "发布公告", "完成评标", "发布中标公示"],
+            "🏢 管理处内部手续": ["党组会", "主任办公会", "纸质请示", "付款"],
+            "🏗️ 工程实施过程手续": ["开工备案", "设计交底", "施工入场", "竣工验收", "结算审核", "资料归档"]
+        };
+
+        // 🌟 核心：行业标准工程节点字段库
+        const DEFAULT_CONFIG = {
+            "方案设计": [
+                {key: "finishDate", label: "图纸完成时间", type: "date"},
+                {key: "designUnit", label: "设计单位", type: "text"}
+            ],
+            "市局报审": [
+                {key: "submitDate", label: "报送时间", type: "date"},
+                {key: "replyDate", label: "批复时间", type: "date"}
+            ],
+            "区政府会": [
+                {key: "meetDate", label: "上会时间", type: "date"},
+                {key: "minutesNo", label: "纪要文号", type: "text"}
+            ],
+            "发改委立项": [
+                {key: "submitDate", label: "申报时间", type: "date"},
+                {key: "approvalDate", label: "批复时间", type: "date"},
+                {key: "approvalAmount", label: "批复金额(元)", type: "number"},
+                {key: "projectCode", label: "项目代码", type: "text"}
+            ],
+            "事前评估": [
+                {key: "evalDate", label: "评估会议时间", type: "date"},
+                {key: "reportDate", label: "报告出具时间", type: "date"}
+            ],
+            "财政评审": [
+                {key: "sendDate", label: "送审时间", type: "date"},
+                {key: "reportDate", label: "评审报告时间", type: "date"},
+                {key: "auditAmount", label: "审定金额(元)", type: "number"}
+            ],
+            "自定义新增": [
+                {key: "taskName", label: "事项名称", type: "text"},
+                {key: "finishDate", label: "完成时间", type: "date"},
+                {key: "remark", label: "备注", type: "text"}
+            ],
+            "委托代理签合同": [
+                {key: "signDate", label: "签订时间", type: "date"},
+                {key: "agencyName", label: "代理机构名称", type: "text"}
+            ],
+            "编制采购文件": [
+                {key: "finishDate", label: "编制完成时间", type: "date"},
+                {key: "controlPrice", label: "控制价/预算(元)", type: "number"},
+                {key: "purchaseMode", label: "采购方式", type: "select", options: ["公开招标","竞争性磋商","单一来源","询价"]}
+            ],
+            "意向公开": [
+                {key: "publicDate", label: "挂网时间", type: "date"},
+                {key: "link", label: "公告链接", type: "text"}
+            ],
+            "发布公告": [
+                {key: "publishDate", label: "发布时间", type: "date"},
+                {key: "openDate", label: "预计开标时间", type: "date"}
+            ],
+            "完成评标": [
+                {key: "evalDate", label: "评标时间", type: "date"},
+                {key: "evalLocation", label: "评标地点", type: "text"}
+            ],
+            "发布中标公示": [
+                {key: "noticeDate", label: "公示发布时间", type: "date"},
+                {key: "winner", label: "中标单位", type: "text"},
+                {key: "winAmount", label: "中标金额(元)", type: "number"}
+            ],
+            "党组会": [
+                {key: "meetDate", label: "会议时间", type: "date"},
+                {key: "topic", label: "议题名称", type: "text"}
+            ],
+            "主任办公会": [
+                {key: "meetDate", label: "会议时间", type: "date"},
+                {key: "topic", label: "议题名称", type: "text"}
+            ],
+            "纸质请示": [
+                {key: "approveDate", label: "批准时间", type: "date"}
+            ],
+            "付款": [
+                {key: "submitFinanceDate", label: "提交财务日期", type: "date"},
+                {key: "payAmount", label: "支付金额(元)", type: "number"},
+                {key: "payType", label: "款项性质", type: "select", options: ["首笔款","进度款","尾款","质保金"]}
+            ],
+            "开工备案": [
+                {key: "submitDate", label: "备案时间", type: "date"},
+                {key: "recordType", label: "备案类型", type: "select", options: ["监督站备案","工程科备案"]}
+            ],
+            "设计交底": [
+                {key: "meetDate", label: "交底时间", type: "date"}
+            ],
+            "施工入场": [
+                {key: "entryDate", label: "进场日期", type: "date"}
+            ],
+            "竣工验收": [
+                {key: "checkDate", label: "竣工验收日期", type: "date"}
+            ],
+            "结算审核": [
+                {key: "finishAuditDate", label: "审定日期", type: "date"},
+                {key: "finalAmount", label: "审定金额(元)", type: "number"},
+                {key: "reduceAmount", label: "核减金额(元)", type: "number"}
+            ],
+            "资料归档": [
+                {key: "archiveDate", label: "归档日期", type: "date"}
+            ]
+        };
 
         let GLOBAL_CONFIG={}, currentProjectId=null, currentStageIndex=null, draggedItemIndex=null, draggedProjectIndex=null, configMode='global', tempLocalConfig=null, editingKey=null, dragSrcType=null;
-        
         let viewYear = new Date().getFullYear();
         let viewMonth = new Date().getMonth();
         let selectedDateStr = null;
 
-        // 🌟 核心修改：在保存本地时，触发 debouncedSync()
         const DB = { get:()=>JSON.parse(localStorage.getItem(DB_KEY_DATA)||'[]'), save:d=>{localStorage.setItem(DB_KEY_DATA,JSON.stringify(d)); debouncedSync();} };
         const DB_OT = { get:()=>{const d=localStorage.getItem(DB_KEY_OT);return d?JSON.parse(d):{annual:0, saved:0, records:[], leaveRecords:[]}}, save:d=>{localStorage.setItem(DB_KEY_OT,JSON.stringify(d)); debouncedSync();} };
         const DB_TODO = { get:()=>JSON.parse(localStorage.getItem(DB_KEY_TODO)||'[]'), save:d=>{localStorage.setItem(DB_KEY_TODO,JSON.stringify(d)); debouncedSync();} };
         const DB_CAL = { get:()=>{const d=localStorage.getItem(DB_KEY_CAL); return d?JSON.parse(d):{}}, save:d=>{localStorage.setItem(DB_KEY_CAL,JSON.stringify(d)); debouncedSync();} };
 
-        function loadConfig() { GLOBAL_CONFIG = JSON.parse(localStorage.getItem(DB_KEY_CONFIG)) || JSON.parse(JSON.stringify(DEFAULT_CONFIG)); }
+        function loadConfig() { 
+            const local = JSON.parse(localStorage.getItem(DB_KEY_CONFIG)) || {};
+            GLOBAL_CONFIG = { ...DEFAULT_CONFIG, ...local };
+            Object.keys(DEFAULT_CONFIG).forEach(key => {
+                if (!GLOBAL_CONFIG[key] || GLOBAL_CONFIG[key].length === 0) {
+                    GLOBAL_CONFIG[key] = JSON.parse(JSON.stringify(DEFAULT_CONFIG[key]));
+                }
+            });
+        }
         function migrateData() { let list=DB.get(),ch=false; list.forEach(p=>{p.stages.forEach(s=>{if(!s.config){s.config=JSON.parse(JSON.stringify(GLOBAL_CONFIG[s.name]||[]));ch=true}})}); if(ch)DB.save(list); }
 
-        window.onload = function() { 
-            initApp(); // 改为先启动 App 鉴权
-        };
+        window.onload = function() { initApp(); };
 
-        // --- 首页 & 日历逻辑 ---
         function initHome() {
             const d = new Date();
             const days = ["周日","周一","周二","周三","周四","周五","周六"];
             document.getElementById('welcomeDate').innerText = `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日 · ${days[d.getDay()]}`;
-            
+            viewYear = d.getFullYear();
+            viewMonth = d.getMonth();
+            renderCalendar(viewYear, viewMonth);
             const ot = DB_OT.get();
             let usedAnnual=0, usedSaved=0, activeOt=0;
             (ot.leaveRecords||[]).forEach(l=>{ if(l.type=='年假')usedAnnual+=parseFloat(l.days); if(l.type=='存休')usedSaved+=parseFloat(l.days); });
             (ot.records||[]).forEach(r=>{ if(r.status!='used') activeOt+=parseFloat(r.days); });
             const total = (parseFloat(ot.annual||0)-usedAnnual) + (parseFloat(ot.saved||0)-usedSaved) + activeOt;
             document.getElementById('homeOtDays').innerText = total;
-
-            const todos = DB_TODO.get();
-            const activeTodo = todos.filter(t=>!t.done).length;
-            document.getElementById('homeTodoCount').innerText = activeTodo;
-
-            renderCalendar(viewYear, viewMonth);
             renderTodos();
         }
 
@@ -700,22 +883,17 @@
             const isCurrentMonth = (y === todayDate.getFullYear() && m === todayDate.getMonth());
             const today = todayDate.getDate();
             const logs = DB_CAL.get();
-
             document.getElementById('calMonth').innerText = `${y}年 ${m+1}月`;
             const grid = document.getElementById('calGrid');
             grid.innerHTML = '<div class="cal-day-name">日</div><div class="cal-day-name">一</div><div class="cal-day-name">二</div><div class="cal-day-name">三</div><div class="cal-day-name">四</div><div class="cal-day-name">五</div><div class="cal-day-name">六</div>';
-            
             for(let i=0; i<firstDay; i++) grid.innerHTML += '<div></div>';
-            
             for(let i=1; i<=daysInMonth; i++) {
                 const mStr = (m+1).toString().padStart(2,'0');
                 const dStr = i.toString().padStart(2,'0');
                 const dateKey = `${y}-${mStr}-${dStr}`;
-                
                 let cls = 'cal-day';
                 if (isCurrentMonth && i === today) cls += ' today';
                 if (logs[dateKey]) cls += ' has-log';
-
                 const div = document.createElement('div');
                 div.className = cls;
                 div.innerText = i;
@@ -750,460 +928,479 @@
             if(!selectedDateStr) return;
             const content = document.getElementById('logContent').value.trim();
             const logs = DB_CAL.get();
-            if(content) {
-                logs[selectedDateStr] = content;
-            } else {
-                delete logs[selectedDateStr];
-            }
+            if(content) { logs[selectedDateStr] = content; } else { delete logs[selectedDateStr]; }
             DB_CAL.save(logs);
             closeModal('dayLogModal');
             renderCalendar(viewYear, viewMonth);
         }
 
-        // 🌟 美化版：待办事项渲染 (换用新垃圾桶)
-function renderTodos() {
-    const list = DB_TODO.get(); 
-    const container = document.getElementById('todoList'); 
-    container.innerHTML = '';
-    
-    list.forEach((t, idx) => {
-        const div = document.createElement('div'); 
-        div.className = `todo-item ${t.done?'done':''}`;
-        div.innerHTML = `
-            <div class="todo-checkbox" onclick="toggleTodo(${idx})">${t.done?'✔':''}</div>
-            <div class="todo-text">${t.text}</div>
-            <button class="btn-delete-icon" onclick="deleteTodo(${idx})">
-                <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-            </button>`;
-        container.appendChild(div);
-    });
-}
+        function renderTodos() {
+            const list = DB_TODO.get();
+            const container = document.getElementById('todoList');
+            container.innerHTML = '';
+            list.forEach((t, idx) => {
+                const div = document.createElement('div');
+                div.className = `todo-item ${t.done?'done':''}`;
+                div.innerHTML = `<div class="todo-checkbox" onclick="toggleTodo(${idx})">${t.done?'✔':''}</div><div class="todo-text">${t.text}</div><button class="btn-delete-icon" onclick="deleteTodo(${idx})"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>`;
+                container.appendChild(div);
+            });
+        }
         function addTodo() { const val = document.getElementById('todoInput').value; if(!val) return; const list = DB_TODO.get(); list.unshift({ text: val, done: false }); DB_TODO.save(list); document.getElementById('todoInput').value = ''; renderTodos(); initHome(); }
         function toggleTodo(idx) { const list = DB_TODO.get(); list[idx].done = !list[idx].done; DB_TODO.save(list); renderTodos(); initHome(); }
         function deleteTodo(idx) { const list = DB_TODO.get(); list.splice(idx, 1); DB_TODO.save(list); renderTodos(); initHome(); }
 
-        // --- 考勤页逻辑 ---
         function getDeadline(dateStr) { if(!dateStr) return "未知"; const d = new Date(dateStr); const target = new Date(d.getFullYear(), d.getMonth() + 2, 0); return target.toISOString().split('T')[0]; }
-// 🌟 美化版：考勤页面渲染 (统一垃圾桶风格)
-function renderOtPage() {
-    const data = DB_OT.get(); 
-    document.getElementById('inpAnnual').value = data.annual; 
-    document.getElementById('inpSaved').value = data.saved;
-    
-    let usedAnnual = 0, usedSaved = 0, activeOt = 0;
-    const lvContainer = document.getElementById('leaveListContainer'); 
-    lvContainer.innerHTML = '';
-    
-    // 渲染休假记录
-    (data.leaveRecords || []).sort((a,b)=>new Date(b.date)-new Date(a.date)).forEach((l, idx) => {
-        const days = parseFloat(l.days); 
-        let typeColor = '#999';
-        if (l.type === '年假') { usedAnnual += days; typeColor = '#007AFF'; } 
-        if (l.type === '存休') { usedSaved += days; typeColor = '#AF52DE'; }
         
-        const div = document.createElement('div'); 
-        div.className = 'ot-list-item'; 
-        div.innerHTML = `
-            <div>
-                <div style="font-weight:600"><span class="leave-type-tag" style="background:${typeColor}">${l.type||'休假'}</span>${l.date} <span style="color:#FF3B30">-${days}天</span></div>
-                <div style="font-size:12px;color:#999;margin-left:5px;">${l.note||'-'}</div>
-            </div>
-            <button class="btn-delete-icon" onclick="delLeaveItem(${idx})">
-                <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-            </button>`;
-        lvContainer.appendChild(div);
-    });
-
-    const otContainer = document.getElementById('otListContainer'); 
-    otContainer.innerHTML = '';
-    
-    // 渲染加班记录
-    (data.records || []).sort((a,b) => new Date(b.date) - new Date(a.date)).forEach(r => {
-        const div = document.createElement('div'); 
-        div.className = `ot-card ${r.status === 'used' ? 'used' : ''}`;
-        
-        let actionHtml = ''; 
-        let statusBadge = '';
-        const trashIcon = `
-            <button class="btn-delete-icon" onclick="delOtItem('${r.id}')" style="margin-left:0;">
-                <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-            </button>`;
-
-        if (r.status === 'used') { 
-            statusBadge = `<span class="ot-badge">已休</span>`; 
-            // 已休记录：只有垃圾桶
-            actionHtml = `<div style="display:flex;justify-content:flex-end;align-items:center;margin-top:5px;"><span style="font-size:12px;margin-right:10px;">归档: ${r.usedDate}</span> ${trashIcon}</div>`; 
-        } else { 
-            activeOt += parseFloat(r.days); 
-            const deadline = getDeadline(r.date); 
-            statusBadge = `<span class="ot-badge" style="background:#e3f2fd;color:#007AFF">待休</span>`; 
-            // 待休记录：休完按钮 + 垃圾桶
-            actionHtml = `<div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;"><div class="ot-deadline">有效期至: ${deadline}</div><div style="display:flex;align-items:center;gap:5px;"><button class="btn-mini action" onclick="preUseOt('${r.id}')">✅ 休完</button>${trashIcon}</div></div>`; 
+        function renderOtPage() {
+            const data = DB_OT.get();
+            document.getElementById('inpAnnual').value = data.annual;
+            document.getElementById('inpSaved').value = data.saved;
+            let usedAnnual = 0, usedSaved = 0, activeOt = 0;
+            const lvContainer = document.getElementById('leaveListContainer');
+            lvContainer.innerHTML = '';
+            (data.leaveRecords || []).sort((a,b)=>new Date(b.date)-new Date(a.date)).forEach((l, idx) => {
+                const days = parseFloat(l.days);
+                let typeColor = '#999';
+                if (l.type === '年假') { usedAnnual += days; typeColor = '#007AFF'; }
+                if (l.type === '存休') { usedSaved += days; typeColor = '#AF52DE'; }
+                const div = document.createElement('div');
+                div.className = 'ot-list-item';
+                div.style.cursor = 'pointer';
+                div.innerHTML = `<div style="flex:1;"><div style="font-weight:600"><span class="leave-type-tag" style="background:${typeColor}">${l.type||'休假'}</span>${l.date} <span style="color:#FF3B30">-${days}天</span></div><div style="font-size:12px;color:#999;margin-left:5px;">${l.note||'-'}</div></div><button class="btn-delete-icon" onclick="event.stopPropagation(); delLeaveItem(${idx})"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>`;
+                div.onclick = () => editLeave(idx);
+                lvContainer.appendChild(div);
+            });
+            const otContainer = document.getElementById('otListContainer');
+            otContainer.innerHTML = '';
+            (data.records || []).sort((a,b) => new Date(b.date) - new Date(a.date)).forEach(r => {
+                const div = document.createElement('div');
+                div.className = `ot-card ${r.status === 'used' ? 'used' : ''}`;
+                let actionHtml = '';
+                let statusBadge = '';
+                const trashIcon = `<button class="btn-delete-icon" onclick="delOtItem('${r.id}')" style="margin-left:0;"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>`;
+                if (r.status === 'used') {
+                    statusBadge = `<span class="ot-badge">已休</span>`;
+                    actionHtml = `<div style="display:flex;justify-content:flex-end;align-items:center;margin-top:5px;"><span style="font-size:12px;margin-right:10px;">归档: ${r.usedDate}</span> ${trashIcon}</div>`;
+                } else {
+                    activeOt += parseFloat(r.days);
+                    const deadline = getDeadline(r.date);
+                    statusBadge = `<span class="ot-badge" style="background:#e3f2fd;color:#007AFF">待休</span>`;
+                    actionHtml = `<div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;"><div class="ot-deadline">有效期至: ${deadline}</div><div style="display:flex;align-items:center;gap:5px;"><button class="btn-mini action" onclick="preUseOt('${r.id}')">✅ 休完</button>${trashIcon}</div></div>`;
+                }
+                div.innerHTML = `<div class="ot-card-header"><div class="ot-date">${r.date} <span style="font-size:14px;margin-left:5px;">+${r.days}天</span></div>${statusBadge}</div><div class="ot-desc">${r.note || '无备注'}</div>${actionHtml}`;
+                otContainer.appendChild(div);
+            });
+            const remAnnual = parseFloat(data.annual || 0) - usedAnnual;
+            const remSaved = parseFloat(data.saved || 0) - usedSaved;
+            document.getElementById('dispAnnual').innerText = remAnnual;
+            document.getElementById('dispSaved').innerText = remSaved;
+            document.getElementById('dispOt').innerText = activeOt;
+            document.getElementById('otTotalDays').innerText = remAnnual + remSaved + activeOt;
         }
-        
-        div.innerHTML = `<div class="ot-card-header"><div class="ot-date">${r.date} <span style="font-size:14px;margin-left:5px;">+${r.days}天</span></div>${statusBadge}</div><div class="ot-desc">${r.note || '无备注'}</div>${actionHtml}`;
-        otContainer.appendChild(div);
-    });
 
-    const remAnnual = parseFloat(data.annual || 0) - usedAnnual; 
-    const remSaved = parseFloat(data.saved || 0) - usedSaved;
-    document.getElementById('dispAnnual').innerText = remAnnual; 
-    document.getElementById('dispSaved').innerText = remSaved; 
-    document.getElementById('dispOt').innerText = activeOt;
-    document.getElementById('otTotalDays').innerText = remAnnual + remSaved + activeOt;
-}
         function saveBaseLeave() { const data = DB_OT.get(); data.annual = document.getElementById('inpAnnual').value || 0; data.saved = document.getElementById('inpSaved').value || 0; DB_OT.save(data); renderOtPage(); }
         function addOvertime() { const date = document.getElementById('otDate').value; const days = document.getElementById('otDays').value; if(!date || !days) return alert("请填写完整"); const data = DB_OT.get(); data.records.push({ id: Date.now().toString(), date, days, note: document.getElementById('otNote').value, status: 'active' }); DB_OT.save(data); closeModal('addOtModal'); renderOtPage(); }
         function preUseOt(id) { document.getElementById('useOtId').value = id; document.getElementById('useOtDate').value = new Date().toISOString().split('T')[0]; openModal('useOtModal'); }
         function confirmUseOt() { const id = document.getElementById('useOtId').value; const date = document.getElementById('useOtDate').value; if(!date) return alert("请填写日期"); const data = DB_OT.get(); const item = data.records.find(r => r.id === id); if(item) { item.status = 'used'; item.usedDate = date; DB_OT.save(data); closeModal('useOtModal'); renderOtPage(); } }
         function delOtItem(id) { if(confirm("删除此记录？")) { const data = DB_OT.get(); data.records = data.records.filter(r => r.id !== id); DB_OT.save(data); renderOtPage(); } }
-        function addLeaveRecord() { const type = document.getElementById('lvType').value; const date = document.getElementById('lvDate').value; const days = document.getElementById('lvDays').value; if(!date || !days) return alert("请填写完整"); const data = DB_OT.get(); if(!data.leaveRecords) data.leaveRecords = []; data.leaveRecords.push({ type, date, days, note: document.getElementById('lvNote').value }); DB_OT.save(data); document.getElementById('lvDate').value=''; closeModal('addLeaveModal'); renderOtPage(); }
+        function openNewLeave() { document.getElementById('lvEditIndex').value = ''; document.getElementById('leaveModalTitle').innerText = '录入休假'; document.getElementById('lvType').value = '年假'; document.getElementById('lvDate').value = new Date().toISOString().split('T')[0]; document.getElementById('lvDays').value = ''; document.getElementById('lvNote').value = ''; document.getElementById('lvSaveBtn').innerText = '确认'; openModal('addLeaveModal'); }
+        function editLeave(idx) {
+            const data = DB_OT.get();
+            const sorted = (data.leaveRecords || []).sort((a,b)=>new Date(b.date)-new Date(a.date));
+            const record = sorted[idx];
+            if (!record) return alert('记录不存在');
+            document.getElementById('lvEditIndex').value = idx;
+            document.getElementById('leaveModalTitle').innerText = '编辑休假';
+            document.getElementById('lvType').value = record.type || '年假';
+            document.getElementById('lvDate').value = record.date;
+            document.getElementById('lvDays').value = record.days;
+            document.getElementById('lvNote').value = record.note || '';
+            document.getElementById('lvSaveBtn').innerText = '保存修改';
+            openModal('addLeaveModal');
+        }
+        function saveLeaveRecord() {
+            const editIdx = document.getElementById('lvEditIndex').value;
+            const type = document.getElementById('lvType').value;
+            const date = document.getElementById('lvDate').value;
+            const days = document.getElementById('lvDays').value;
+            if(!date || !days) return alert("请填写完整");
+            const data = DB_OT.get();
+            if(!data.leaveRecords) data.leaveRecords = [];
+            if (editIdx === '') {
+                data.leaveRecords.push({ type, date, days, note: document.getElementById('lvNote').value });
+            } else {
+                const sorted = data.leaveRecords.sort((a,b)=>new Date(b.date)-new Date(a.date));
+                const record = sorted[parseInt(editIdx)];
+                if (record) { record.type = type; record.date = date; record.days = days; record.note = document.getElementById('lvNote').value; }
+            }
+            DB_OT.save(data);
+            closeModal('addLeaveModal');
+            renderOtPage();
+        }
         function delLeaveItem(idx) { if(confirm("删除此休假记录？将恢复对应的额度。")) { const data = DB_OT.get(); data.leaveRecords.sort((a,b)=>new Date(b.date)-new Date(a.date)); data.leaveRecords.splice(idx, 1); DB_OT.save(data); renderOtPage(); } }
 
-        // --- 工程核心 ---
         function openConfigModal(mode, stageIndex = null) {
-            configMode = mode; document.getElementById('configEmptyHint').style.display = 'block'; document.getElementById('fieldEditorArea').style.display = 'none';
-            if (mode === 'global') { document.getElementById('configSidebar').style.display = 'block'; renderConfigSidebar(); } 
-            else { document.getElementById('configSidebar').style.display = 'none'; currentStageIndex = stageIndex; const p = DB.get().find(x => x.id === currentProjectId); const stage = p.stages[stageIndex]; tempLocalConfig = JSON.parse(JSON.stringify(stage.config)); editingKey = 'LOCAL_EDIT'; document.getElementById('configEmptyHint').style.display='none'; document.getElementById('fieldEditorArea').style.display='block'; document.getElementById('currentEditingNodeTitle').innerText = stage.name; renderConfigFields(tempLocalConfig); }
+            configMode = mode;
+            if (mode === 'global') { renderConfigContainer(); } else {
+                currentStageIndex = stageIndex;
+                const p = DB.get().find(x => x.id === currentProjectId);
+                const stage = p.stages[stageIndex];
+                tempLocalConfig = JSON.parse(JSON.stringify(stage.config));
+                editingKey = 'LOCAL_EDIT';
+                document.getElementById('configModalTitle').innerText = '配置：' + stage.name;
+                renderConfigFields(tempLocalConfig);
+            }
             openModal('configModal');
         }
-        function renderConfigSidebar() { const c = document.getElementById('configSidebar'); c.innerHTML=''; Object.keys(GLOBAL_CONFIG).forEach(n=>{ const d=document.createElement('div'); d.className=`config-node-item ${editingKey===n?'active':''}`; d.innerHTML=`<span>${n}</span> <span class="icon-btn" onclick="deleteConfigNode(event,'${n}')">×</span>`; d.onclick=()=>selectConfigNode(n); c.appendChild(d); }); }
-        function selectConfigNode(n) { editingKey = n; renderConfigSidebar(); document.getElementById('configEmptyHint').style.display='none'; document.getElementById('fieldEditorArea').style.display='block'; document.getElementById('currentEditingNodeTitle').innerText=`编辑模版：${n}`; renderConfigFields(GLOBAL_CONFIG[n]); }
-        function renderConfigFields(fields) { const list = document.getElementById('configFieldsList'); list.innerHTML = ''; fields.forEach((f, i) => { const row = document.createElement('div'); row.className = 'field-row'; let t=`<option value="text" ${f.type==='text'?'selected':''}>文本</option><option value="date" ${f.type==='date'?'selected':''}>日期</option><option value="number" ${f.type==='number'?'selected':''}>数字</option><option value="select" ${f.type==='select'?'selected':''}>下拉</option>`; let optBtn = ''; if(f.type === 'select') { optBtn = `<span class="icon-btn" onclick="editFieldOptions(${i})" style="color:var(--primary);font-weight:bold;">≡</span>`; } row.innerHTML = `<input value="${f.label}" onchange="updateField(${i},'label',this.value)" style="flex:2"><select onchange="updateField(${i},'type',this.value)" style="flex:1">${t}</select>${optBtn}<span class="icon-btn" onclick="deleteConfigField(${i})">🗑️</span>`; list.appendChild(row); }); }
-        function editFieldOptions(i) { const target = configMode === 'global' ? GLOBAL_CONFIG[editingKey] : tempLocalConfig; const newString = prompt("请输入选项 (用逗号分隔):", (target[i].options||[]).join(",")); if (newString !== null) { target[i].options = newString.split(/[,，]/).map(s => s.trim()).filter(s => s); renderConfigFields(target); } }
-        function addNewConfigNode() { const n = prompt("请输入新节点名称"); if(n && !GLOBAL_CONFIG[n]) { GLOBAL_CONFIG[n] = [{ key: "note", label: "备注", type: "text" }]; renderConfigSidebar(); selectConfigNode(n); } }
-        function deleteConfigNode(e, name) { e.stopPropagation(); if(confirm(`删除模版【${name}】？`)) { delete GLOBAL_CONFIG[name]; if(editingKey === name) { editingKey = null; document.getElementById('fieldEditorArea').style.display = 'none'; document.getElementById('configEmptyHint').style.display = 'block'; } renderConfigSidebar(); } }
-        function addNewConfigField() { const target = configMode === 'global' ? GLOBAL_CONFIG[editingKey] : tempLocalConfig; target.push({key:'f_'+Date.now(), label:"新项目", type:"text"}); renderConfigFields(target); }
-        function deleteConfigField(i) { const target = configMode === 'global' ? GLOBAL_CONFIG[editingKey] : tempLocalConfig; target.splice(i, 1); renderConfigFields(target); }
-        function updateField(i, p, v) { const target = configMode === 'global' ? GLOBAL_CONFIG[editingKey] : tempLocalConfig; target[i][p] = v; if(p === 'type') renderConfigFields(target); }
-        function handleConfigSave() { 
-            if (configMode === 'global') { 
-                localStorage.setItem(DB_KEY_CONFIG, JSON.stringify(GLOBAL_CONFIG)); 
-                debouncedSync(); // 触发同步
-                alert("全局模版已更新"); 
-            } else { 
-                const list = DB.get(); 
-                const p = list.find(x => x.id === currentProjectId); 
-                p.stages[currentStageIndex].config = tempLocalConfig; 
-                DB.save(list); 
-                refreshDetail(p); 
-            } 
-            closeModal('configModal'); 
+
+        function renderConfigContainer() {
+            const container = document.getElementById('configContainer');
+            container.innerHTML = '';
+            Object.keys(NODE_CATEGORIES).forEach(cat => {
+                const catTitle = document.createElement('div');
+                catTitle.className = 'config-category-title';
+                catTitle.innerText = cat;
+                container.appendChild(catTitle);
+                const grid = document.createElement('div');
+                grid.className = 'config-node-grid';
+                NODE_CATEGORIES[cat].forEach(nodeName => {
+                    const nodeBtn = document.createElement('div');
+                    nodeBtn.className = 'config-node-item';
+                    nodeBtn.innerText = nodeName;
+                    nodeBtn.onclick = () => openNodeDetailEditor(nodeName);
+                    grid.appendChild(nodeBtn);
+                });
+                container.appendChild(grid);
+            });
+        }
+
+        let currentEditingNodeName = null;
+        function openNodeDetailEditor(nodeName) {
+            currentEditingNodeName = nodeName;
+            if (!GLOBAL_CONFIG[nodeName]) {
+                GLOBAL_CONFIG[nodeName] = JSON.parse(JSON.stringify(DEFAULT_CONFIG[nodeName] || []));
+                localStorage.setItem(DB_KEY_CONFIG, JSON.stringify(GLOBAL_CONFIG));
+            }
+            const config = GLOBAL_CONFIG[nodeName] || [];
+            const modal = document.getElementById('nodeDetailModal');
+            document.getElementById('nodeDetailTitle').innerText = nodeName;
+            const fieldList = document.getElementById('nodeFieldList');
+            fieldList.innerHTML = '';
+            config.forEach((field, idx) => {
+                const item = document.createElement('div');
+                item.className = 'node-field-item';
+                let optionsStr = '';
+                if (field.options && field.options.length > 0) {
+                    optionsStr = `<br><span class="node-field-type">选项: ${field.options.join(', ')}</span>`;
+                }
+                item.innerHTML = `<div class="node-field-info"><div class="node-field-name">${field.label}</div><div class="node-field-type">字段: ${field.key} | 类型: ${field.type}${optionsStr}</div></div><button class="btn-delete-icon" onclick="event.stopPropagation(); deleteConfigField('${nodeName}', ${idx})"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>`;
+                fieldList.appendChild(item);
+            });
+            modal.classList.add('open');
+        }
+
+        function closeNodeDetailEditor() {
+            document.getElementById('nodeDetailModal').classList.remove('open');
+            currentEditingNodeName = null;
+        }
+
+        function saveNodeDetailEditor() {
+            loadConfig();
+            DB.get();
+            debouncedSync();
+            closeNodeDetailEditor();
+            showToast('✅ 配置已保存');
+        }
+
+        function deleteConfigField(nodeName, fieldIdx) {
+            if (confirm('确定删除此字段吗？')) {
+                if (GLOBAL_CONFIG[nodeName]) {
+                    GLOBAL_CONFIG[nodeName].splice(fieldIdx, 1);
+                    localStorage.setItem(DB_KEY_CONFIG, JSON.stringify(GLOBAL_CONFIG));
+                    openNodeDetailEditor(nodeName);
+                    debouncedSync();
+                }
+            }
+        }
+
+        function addNewConfigField() {
+            const fieldLabel = prompt('请输入字段名称 (例如: 实际开工时间):');
+            if (!fieldLabel) return;
+            const fieldKey = 'custom_' + Date.now();
+            const typeInput = prompt('请输入字段类型编号:\n1 - 日期 (Date)\n2 - 金额/数字 (Number)\n3 - 文字 (Text)\n4 - 下拉选项 (Select)', '1');
+            let fieldType = 'text';
+            let options = [];
+            if (typeInput === '1') fieldType = 'date';
+            else if (typeInput === '2') fieldType = 'number';
+            else if (typeInput === '3') fieldType = 'text';
+            else if (typeInput === '4') {
+                fieldType = 'select';
+                const optStr = prompt('请输入选项，用逗号隔开:', '合格,不合格');
+                if(optStr) options = optStr.split(/[,，]/).map(s => s.trim());
+            } else { return; }
+            if (!GLOBAL_CONFIG[currentEditingNodeName]) { GLOBAL_CONFIG[currentEditingNodeName] = []; }
+            GLOBAL_CONFIG[currentEditingNodeName].push({ key: fieldKey, label: fieldLabel, type: fieldType, options: options });
+            localStorage.setItem(DB_KEY_CONFIG, JSON.stringify(GLOBAL_CONFIG));
+            openNodeDetailEditor(currentEditingNodeName);
+            debouncedSync();
+        }
+
+        function renderConfigFields(config) {
+            const fieldList = document.getElementById('nodeFieldList');
+            if (!fieldList) return;
+            fieldList.innerHTML = '';
+            if (!config || config.length === 0) { fieldList.innerHTML = '<div style="color:#999; padding:20px; text-align:center;">该节点暂无配置</div>'; return; }
+            config.forEach((field, idx) => {
+                const item = document.createElement('div');
+                item.className = 'node-field-item';
+                let optionsStr = '';
+                if (field.options && field.options.length > 0) { optionsStr = `<br><span class="node-field-type">选项: ${field.options.join(', ')}</span>`; }
+                item.innerHTML = `<div class="node-field-info"><div class="node-field-name">${field.label}</div><div class="node-field-type">字段: ${field.key} | 类型: ${field.type}${optionsStr}</div></div>`;
+                fieldList.appendChild(item);
+            });
+        }
+
+        function handleConfigSave() {
+            if (configMode === 'global') {
+                localStorage.setItem(DB_KEY_CONFIG, JSON.stringify(GLOBAL_CONFIG));
+                debouncedSync();
+                alert('✅ 全局配置已保存');
+                closeModal('configModal');
+            } else if (configMode === 'local') {
+                const list = DB.get();
+                const p = list.find(x => x.id === currentProjectId);
+                if (p && p.stages[currentStageIndex]) {
+                    p.stages[currentStageIndex].config = tempLocalConfig;
+                    DB.save(list);
+                    alert('✅ 节点配置已保存');
+                    closeModal('configModal');
+                    refreshDetail(p);
+                }
+            }
         }
 
         function createProject() { const n=document.getElementById('newProjectName').value; if(!n)return alert("请输入名称"); DB.save([{id:Date.now(),name:n,type:document.getElementById('newProjectType').value,createDate:new Date().toLocaleDateString(),stages:[]},...DB.get()]); closeModal('createModal'); goToPage('projectList'); }
-        function openNodeLibrary() { document.getElementById('nodeLibraryGrid').innerHTML = Object.keys(GLOBAL_CONFIG).map(n => `<div class="node-option" onclick="addStage('${n}')">+ ${n}</div>`).join(''); openModal('nodeLibraryModal'); }
-        function addStage(nodeName) { const list = DB.get(); const p = list.find(x => x.id === currentProjectId); const configCopy = JSON.parse(JSON.stringify(GLOBAL_CONFIG[nodeName] || [])); p.stages.push({ name: nodeName, status: 'waiting', data: {}, config: configCopy }); DB.save(list); closeModal('nodeLibraryModal'); refreshDetail(p); setTimeout(() => { document.querySelector('.page-container').scrollTop = 99999; }, 100); }
-        function openStageEdit(index) {
-            currentStageIndex = index; const project = DB.get().find(p => p.id === currentProjectId); const stage = project.stages[index]; const config = stage.config; 
-            document.getElementById('formTitle').innerText = stage.name; const container = document.getElementById('dynamicFormContainer'); container.innerHTML = '';
-            let minD = ""; for(let i=index-1; i>=0; i--) { const ps = project.stages[i]; if(ps.config && ps.data) { const ds = ps.config.filter(f=>f.type==='date'&&ps.data[f.key]).map(f=>ps.data[f.key]); if(ds.length) { ds.sort(); minD = ds[ds.length-1]; break; } } }
-            config.forEach(f => {
-                const w = document.createElement('div'); w.id = 'w_' + f.key; w.innerHTML = `<label class="form-label">${f.label}</label>`; if(f.key === 'otherContent') w.style.display = 'none';
-                let inp; const v = stage.data[f.key] || '';
-                if(f.type === 'select') {
-                    inp = document.createElement('select'); inp.className = 'input-box';
-                    let ops = f.options || ["无选项"];
-                    if(stage.name==="签订合同"&&f.key==="contractType") ops=getDecisionTypes(project);
-                    if(stage.name==="付款"&&f.key==="linkContract") ops=getSignedContracts(project);
-                    ops.forEach(o => { let opt=document.createElement('option'); opt.value=o; opt.innerText=o; inp.appendChild(opt); }); inp.value = v;
-                    if(f.key === 'meetType' || f.key === 'contractSubType' || f.key === 'contractType') { inp.addEventListener('change', handleLinkage); }
-                } else {
-                    inp = document.createElement('input'); inp.type = f.type==='date'?'date':(f.type==='number'?'number':'text'); inp.className = 'input-box'; inp.value = v;
-                    // 只设置最小值，让浏览器自己变灰早于上一步的日期，绝不弹窗
-                    if(f.type==='date' && minD) { inp.min = minD; }
-                    if(f.key==='payAmount') inp.oninput = function() { calcPay(this.value, stage.data.linkContract, project); }
-                }
-                inp.id = `f_${f.key}`; w.appendChild(inp); if(f.key==='payAmount') w.innerHTML+='<div id="calcHint" style="font-size:12px;color:blue;margin-top:2px;"></div>'; container.appendChild(w);
+        function openNodeLibrary() {
+            const container = document.getElementById('nodeLibraryGrid');
+            container.innerHTML = '';
+            Object.keys(NODE_CATEGORIES).forEach(cat => {
+                const header = document.createElement('div');
+                header.style.cssText = "grid-column: 1 / -1; font-size: 13px; font-weight: bold; color: #888; margin: 15px 0 5px 0; padding-left: 5px; border-left: 3px solid var(--primary);";
+                header.innerText = cat;
+                container.appendChild(header);
+                NODE_CATEGORIES[cat].forEach(nodeName => {
+                    const btn = document.createElement('div');
+                    btn.className = 'node-option';
+                    btn.innerText = '+ ' + nodeName;
+                    btn.onclick = () => addStage(nodeName);
+                    container.appendChild(btn);
+                });
             });
-            handleLinkage(); openModal('dynamicFormModal');
+            openModal('nodeLibraryModal');
         }
 
-        // 🌟 V44.0 修复：使用宽松等于 (==)
-        function openDetail(id){ currentProjectId=id; const p=DB.get().find(x=>x.id==id); document.getElementById('detailTitle').innerText=p.name; document.getElementById('detailType').innerText={'special':'专项工程','odd':'零星工程','repair':'抢修工程'}[p.type]; goToPage('projectDetail'); refreshDetail(p); }
-        
-// 🌟 美化版：详情页渲染 (节点卡片使用新垃圾桶)
-function refreshDetail(p) {
-    const c = document.getElementById('stagesContainer'); 
-    c.innerHTML = ''; 
-    const prev = document.getElementById('previewFlow'); 
-    prev.innerHTML = '';
-    
-    p.stages.forEach((s, i) => {
-        const conf = s.config || [];
-        const getDisplayHtml = (mode) => {
-            return conf.map(f => {
-                if (!s.data[f.key]) return ''; 
-                if (f.key === 'otherContent' || f.key === 'otherContractName') return ''; 
-                let displayVal = s.data[f.key]; 
-                if (f.type === 'number') displayVal = '¥' + displayVal;
-                if ((f.key === 'meetType' || f.key === 'contractSubType' || f.key === 'contractType') && displayVal === '其他') { 
-                    if (s.data['otherContent']) displayVal = s.data['otherContent']; 
-                    if (s.data['otherContractName']) displayVal = s.data['otherContractName']; 
-                }
-                if (mode === 'preview') return `<div class="preview-kv"><span class="preview-k">${f.label}:</span><span class="preview-v">${displayVal}</span></div>`;
-                return `<div class="data-item"><span class="data-label">${f.label}</span><span class="data-value">${displayVal}</span></div>`;
-            }).join('');
-        };
-        
-        if(s.status === 'done') { 
-            prev.innerHTML += `<div class="preview-item done"><div class="preview-item-title"><span>${s.name}</span></div><div class="preview-data-table">${getDisplayHtml('preview')}</div></div>`; 
-        }
-        
-        let det = ''; 
-        if(s.status !== 'waiting') { det = '<div class="data-grid">' + getDisplayHtml('card') + '</div>'; }
-        
-        const ico = s.status==='done'?'✅':(s.status==='processing'?'🔥':'⏳');
-        
-        c.innerHTML += `
-        <div class="stage-card ${s.status}">
-            <div class="node-sort-zone">
-                <button class="node-sort-btn" onclick="moveStageUp(${i})">↑</button>
-                <button class="node-sort-btn" onclick="moveStageDown(${i})">↓</button>
-            </div>
-            <div class="card-content" onclick="openStageEdit(${i})">
-                <div class="card-actions-fixed">
-                    <button class="icon-btn-card btn-edit-struct" onclick="event.stopPropagation();openConfigModal('local', ${i})">⚙️</button>
-                    <button class="btn-delete-icon" style="margin-left:0;" onclick="event.stopPropagation();deleteStage(${i})">
-                        <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                    </button>
-                </div>
-                <div class="status-bar ${s.status}"></div>
-                <div class="card-header-row"><span class="card-title">${s.name}</span><span class="card-status-text">${ico}</span></div>
-                ${det}
-            </div>
-        </div>`;
-    });
-}
-        // 🌟 V44 节点排序逻辑
-        function moveStageUp(i) {
-            if (i === 0) return;
+        function addStage(nodeName) {
+            if (!currentProjectId) return alert('请先在工程详情页打开要添加节点的工程。');
             const list = DB.get();
             const p = list.find(x => x.id == currentProjectId);
+            if (!p) return alert('未找到当前工程');
+            const sourceCfg = (typeof GLOBAL_CONFIG === 'object' && GLOBAL_CONFIG[nodeName]) ? GLOBAL_CONFIG[nodeName] : (DEFAULT_CONFIG[nodeName] || []);
+            const cfg = JSON.parse(JSON.stringify(sourceCfg));
+            const newStage = { name: nodeName, status: 'waiting', config: cfg, data: {} };
+            p.stages.push(newStage);
+            DB.save(list);
+            closeModal('nodeLibraryModal');
+            refreshDetail(p);
+        }
+
+        function openDetail(id){ currentProjectId=id; const p=DB.get().find(x=>x.id==id); document.getElementById('detailTitle').innerText=p.name; document.getElementById('detailType').innerText={'special':'专项工程','odd':'零星工程','repair':'抢修工程'}[p.type]; goToPage('projectDetail'); refreshDetail(p); }
+        
+        function refreshDetail(p) {
+            const c = document.getElementById('stagesContainer'); c.innerHTML = '';
+            const prev = document.getElementById('previewFlow'); prev.innerHTML = '';
+            p.stages.forEach((s, i) => {
+                const conf = s.config || [];
+                const getDisplayHtml = (mode) => {
+                    return conf.map(f => {
+                        if (!s.data[f.key]) return '';
+                        let displayVal = s.data[f.key];
+                        if (f.type === 'number') displayVal = '¥' + displayVal;
+                        if (mode === 'preview') return `<div class="preview-kv"><span class="preview-k">${f.label}:</span><span class="preview-v">${displayVal}</span></div>`;
+                        return `<div class="data-item"><span class="data-label">${f.label}</span><span class="data-value">${displayVal}</span></div>`;
+                    }).join('');
+                };
+                if(s.status === 'done') { prev.innerHTML += `<div class="preview-item done"><div class="preview-item-title"><span>${s.name}</span></div><div class="preview-data-table">${getDisplayHtml('preview')}</div></div>`; }
+                let det = ''; if(s.status !== 'waiting') { det = '<div class="data-grid">' + getDisplayHtml('card') + '</div>'; }
+                const ico = s.status==='done'?'✅':(s.status==='processing'?'🔥':'⏳');
+                c.innerHTML += `<div class="stage-card ${s.status}"><div class="node-sort-zone"><button class="node-sort-btn" onclick="moveStageUp(${i})">↑</button><button class="node-sort-btn" onclick="moveStageDown(${i})">↓</button></div><div class="card-content" onclick="openStageEdit(${i})"><div class="card-actions-fixed"><button class="icon-btn-card btn-edit-struct" onclick="event.stopPropagation();openConfigModal('local', ${i})">⚙️</button><button class="btn-delete-icon" style="margin-left:0;" onclick="event.stopPropagation();deleteStage(${i})"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button></div><div class="status-bar ${s.status}"></div><div class="card-header-row"><span class="card-title">${s.name}</span><span class="card-status-text">${ico}</span></div>${det}</div></div>`;
+            });
+        }
+
+        function moveStageUp(i) {
+            if (i === 0) return;
+            const list = DB.get(); const p = list.find(x => x.id == currentProjectId);
             const temp = p.stages[i]; p.stages[i] = p.stages[i-1]; p.stages[i-1] = temp;
             DB.save(list); refreshDetail(p);
         }
         function moveStageDown(i) {
-            const list = DB.get();
-            const p = list.find(x => x.id == currentProjectId);
+            const list = DB.get(); const p = list.find(x => x.id == currentProjectId);
             if (i === p.stages.length - 1) return;
             const temp = p.stages[i]; p.stages[i] = p.stages[i+1]; p.stages[i+1] = temp;
             DB.save(list); refreshDetail(p);
         }
 
+        function openStageEdit(i) {
+            if (!currentProjectId) return alert('请先打开工程详情再编辑节点');
+            currentStageIndex = i;
+            const list = DB.get();
+            const p = list.find(x => x.id == currentProjectId);
+            if (!p) return alert('未找到工程');
+            const stage = p.stages[i];
+            document.getElementById('formTitle').innerText = `${stage.name} — 录入`;
+            const container = document.getElementById('dynamicFormContainer');
+            container.innerHTML = '';
+            const cfg = stage.config || [];
+            if (!cfg.length) { container.innerHTML = '<div style="color:#666;font-size:13px">该节点无可录入字段。</div>'; openModal('dynamicFormModal'); return; }
+            cfg.forEach(f => {
+                const wrap = document.createElement('div');
+                wrap.style.marginBottom = '10px';
+                const lbl = document.createElement('div');
+                lbl.style.fontSize = '13px'; lbl.style.marginBottom = '4px'; lbl.innerText = f.label;
+                wrap.appendChild(lbl);
+                let inputEl;
+                const curVal = (stage.data && stage.data[f.key]) ? stage.data[f.key] : '';
+                if (f.type === 'select') {
+                    inputEl = document.createElement('select');
+                    inputEl.id = `f_${f.key}`; inputEl.className = 'input-box';
+                    (f.options || []).forEach(opt => { const o = document.createElement('option'); o.value = opt; o.innerText = opt; if (opt === curVal) o.selected = true; inputEl.appendChild(o); });
+                } else {
+                    inputEl = document.createElement('input');
+                    inputEl.id = `f_${f.key}`; inputEl.className = 'input-box';
+                    if (f.type === 'date') { inputEl.type = 'date'; inputEl.max = '2099-12-31'; inputEl.oninput = function() { if(this.value.length > 10) this.value = this.value.slice(0, 10); }; }
+                    else if (f.type === 'number') inputEl.type = 'number';
+                    else inputEl.type = 'text';
+                    inputEl.value = curVal;
+                }
+                wrap.appendChild(inputEl);
+                container.appendChild(wrap);
+            });
+            openModal('dynamicFormModal');
+        }
+
         function editProjectName() { const p = DB.get().find(x => x.id === currentProjectId); const newName = prompt("修改工程名称:", p.name); if(newName && newName !== p.name) { const list = DB.get(); list.find(x => x.id === currentProjectId).name = newName; DB.save(list); document.getElementById('detailTitle').innerText = newName; } }
-        function handleLinkage() { const mt = document.getElementById('f_meetType')?.value; const cst = document.getElementById('f_contractSubType')?.value; const ct = document.getElementById('f_contractType')?.value; const w_cst = document.getElementById('w_contractSubType'); const w_other = document.getElementById('w_otherContent'); const w_otherContract = document.getElementById('w_otherContractName'); if(w_cst) w_cst.style.display = (mt === '合同签订') ? 'block' : 'none'; if(w_other) { w_other.style.display = ((mt === '其他') || (mt === '合同签订' && cst === '其他')) ? 'block' : 'none'; } if(w_otherContract) { w_otherContract.style.display = (ct === '其他') ? 'block' : 'none'; } }
-        function getDecisionTypes(p) { const s=new Set(); p.stages.forEach(x=>{if(x.name==='管理处决策'&&x.data.contractSubType)s.add(x.data.contractSubType)}); return s.size?[...s]:['无']; }
-        function getSignedContracts(p) { const c=[]; p.stages.forEach(x=>{if(x.name==='签订合同'&&x.status==='done')c.push(x.data.contractType)}); return c.length?c:['无']; }
-        function calcPay(val, link, p) { const s=p.stages.find(x=>x.name==='签订合同'&&x.data.contractType===link); const tot=s?s.data.contractAmount:0; if(tot&&val) document.getElementById('calcHint').innerText=`比例:${((val/tot)*100).toFixed(2)}% | 剩:${tot-val}`; }
-        function saveDynamicData() { const list = DB.get(); const p = list.find(x => x.id === currentProjectId); const stage = p.stages[currentStageIndex]; let nd = {}; let full = true; stage.config.forEach(f => { const el = document.getElementById(`f_${f.key}`); const wrapper = document.getElementById('w_' + f.key); if(wrapper && wrapper.style.display !== 'none') { if(el) { nd[f.key] = el.value; if(el.value==='') full=false; } } else { nd[f.key] = ''; } }); stage.data = {...stage.data, ...nd}; stage.status = Object.values(nd).some(v=>v) ? (full?'done':'processing') : 'waiting'; DB.save(list); closeModal('dynamicFormModal'); refreshDetail(p); }
         
+        function saveDynamicData() {
+            const list = DB.get();
+            const p = list.find(x => x.id === currentProjectId);
+            const stage = p.stages[currentStageIndex];
+            let nd = {}; let full = true;
+            stage.config.forEach(f => {
+                const el = document.getElementById(`f_${f.key}`);
+                if(el) { nd[f.key] = el.value; if(el.value==='') full=false; }
+            });
+            stage.data = {...stage.data, ...nd};
+            stage.status = Object.values(nd).some(v=>v) ? (full?'done':'processing') : 'waiting';
+            DB.save(list); closeModal('dynamicFormModal'); refreshDetail(p);
+        }
         function deleteStage(i){ if(confirm("删节点？")){ const l=DB.get(); const p=l.find(x=>x.id==currentProjectId); p.stages.splice(i,1); DB.save(l); refreshDetail(p); } }
-        
-// 🌟 V46 美化版：精致图标 + 窄排序条
-function renderProjects() {
-    const list = DB.get(); 
-    const cs = document.getElementById('container_special'); 
-    const co = document.getElementById('container_odd'); 
-    const cr = document.getElementById('container_repair');
-    
-    cs.innerHTML=''; co.innerHTML=''; cr.innerHTML=''; 
-    let c1=0, c2=0, c3=0;
 
-    list.forEach((p, i) => {
-        const d = document.createElement('div'); 
-        d.className='list-item';
-        d.innerHTML = `
-            <div class="list-item-content" onclick="openDetail(${p.id})">
-                <div style="display:flex; flex-direction:column; overflow:hidden;">
-                    <div class="list-item-title" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${p.name}</div>
-                    <div class="list-item-date">${p.createDate}</div>
-                </div>
-                <button class="btn-delete-icon" onclick="deleteProject(event, ${p.id})">
-                    <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
-                        <polyline points="3 6 5 6 21 6"></polyline>
-                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                    </svg>
-                </button>
-            </div>
-            <div class="list-sort-zone">
-                <button class="sort-btn up" onclick="moveProjUp(${i}, '${p.type}')">↑</button>
-                <button class="sort-btn down" onclick="moveProjDown(${i}, '${p.type}')">↓</button>
-            </div>`;
-        
-        if(p.type==='special'){cs.appendChild(d);c1++;} 
-        else if(p.type==='odd'){co.appendChild(d);c2++;} 
-        else{cr.appendChild(d);c3++;}
-    });
-    
-    document.getElementById('c_s').innerText=c1; 
-    document.getElementById('c_o').innerText=c2; 
-    document.getElementById('c_r').innerText=c3;
-}
-        
-// 🗑️ 删除工程函数
-function deleteProject(e, id) {
-    // 阻止点击穿透（防止点删除按钮时误触打开详情页）
-    e.stopPropagation();
-    
-    if (confirm('⚠️ 确定要彻底删除这个工程吗？\n删除后无法恢复！')) {
-        let list = DB.get();
-        // 过滤掉这个 ID 的工程
-        list = list.filter(p => p.id !== id);
-        
-        // 保存并触发云同步
-        DB.save(list);
-        
-        // 刷新列表
-        renderProjects();
-    }
-}
-        // 🌟 智能排序：只在同类型工程之间交换位置 (精准跳跃版)
-function moveProjUp(i, type) {
-    const list = DB.get();
-    // 往前找，找到【上一个同类型】的工程在哪里
-    let targetIndex = -1;
-    for (let k = i - 1; k >= 0; k--) {
-        if (list[k].type === type) {
-            targetIndex = k;
-            break;
+        function renderProjects() {
+            const list = DB.get();
+            const cs = document.getElementById('container_special');
+            const co = document.getElementById('container_odd');
+            const cr = document.getElementById('container_repair');
+            cs.innerHTML=''; co.innerHTML=''; cr.innerHTML='';
+            let c1=0, c2=0, c3=0;
+            list.forEach((p, i) => {
+                const d = document.createElement('div');
+                d.className='list-item';
+                d.innerHTML = `<div class="list-item-content" onclick="openDetail(${p.id})"><div style="display:flex; flex-direction:column; overflow:hidden;"><div class="list-item-title" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${p.name}</div><div class="list-item-date">${p.createDate}</div></div><button class="btn-delete-icon" onclick="deleteProject(event, ${p.id})"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button></div><div class="list-sort-zone"><button class="sort-btn up" onclick="moveProjUp(${i}, '${p.type}')">↑</button><button class="sort-btn down" onclick="moveProjDown(${i}, '${p.type}')">↓</button></div>`;
+                if(p.type==='special'){cs.appendChild(d);c1++;} else if(p.type==='odd'){co.appendChild(d);c2++;} else{cr.appendChild(d);c3++;}
+            });
+            document.getElementById('c_s').innerText=c1; document.getElementById('c_o').innerText=c2; document.getElementById('c_r').innerText=c3;
         }
-    }
-    // 如果找到了兄弟，就交换位置
-    if (targetIndex !== -1) {
-        const temp = list[i];
-        list[i] = list[targetIndex];
-        list[targetIndex] = temp;
-        DB.save(list);
-        renderProjects();
-    }
-}
 
-function moveProjDown(i, type) {
-    const list = DB.get();
-    // 往后找，找到【下一个同类型】的工程在哪里
-    let targetIndex = -1;
-    for (let k = i + 1; k < list.length; k++) {
-        if (list[k].type === type) {
-            targetIndex = k;
-            break;
+        function deleteProject(e, id) {
+            e.stopPropagation();
+            if (confirm('⚠️ 确定要彻底删除这个工程吗？\n删除后无法恢复！')) {
+                let list = DB.get(); list = list.filter(p => p.id !== id);
+                DB.save(list); renderProjects();
+            }
         }
-    }
-    // 如果找到了兄弟，就交换位置
-    if (targetIndex !== -1) {
-        const temp = list[i];
-        list[i] = list[targetIndex];
-        list[targetIndex] = temp;
-        DB.save(list);
-        renderProjects();
-    }
-}
+        function moveProjUp(i, type) {
+            const list = DB.get();
+            let targetIndex = -1;
+            for (let k = i - 1; k >= 0; k--) { if (list[k].type === type) { targetIndex = k; break; } }
+            if (targetIndex !== -1) { const temp = list[i]; list[i] = list[targetIndex]; list[targetIndex] = temp; DB.save(list); renderProjects(); }
+        }
+        function moveProjDown(i, type) {
+            const list = DB.get();
+            let targetIndex = -1;
+            for (let k = i + 1; k < list.length; k++) { if (list[k].type === type) { targetIndex = k; break; } }
+            if (targetIndex !== -1) { const temp = list[i]; list[i] = list[targetIndex]; list[targetIndex] = temp; DB.save(list); renderProjects(); }
+        }
 
         function exportData(){ const d={v:"44.0",d:new Date(),p:DB.get(),c:GLOBAL_CONFIG, ot:DB_OT.get(), todo:DB_TODO.get(), cal:DB_CAL.get()}; const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([JSON.stringify(d)],{type:"json"})); a.download=`backup_${Date.now()}.json`; a.click(); }
         function triggerImport(){ document.getElementById('importFile').click(); }
-        // 【修复版】带提示的导入功能
-// 🧠 智能去重版导入：防止工程重复
-function importData(i) {
-    if (!i.files || !i.files[0]) return alert("❌ 没选文件！");
-
-    const r = new FileReader();
-    r.onload = async (e) => {
-        try {
-            alert("🔍 正在解析并去重...");
-            const b = JSON.parse(e.target.result);
-            
-            const impP = b.p || b.projects || [];
-            const impConf = b.c || b.config || {};
-            const impOt = b.ot || b.attendance || { records: [], leaveRecords: [] };
-            const impTodo = b.todo || [];
-            const impCal = b.cal || b.calendar || {};
-
-            // 读取现有数据
-            const currP = JSON.parse(localStorage.getItem(DB_KEY_DATA) || '[]');
-            const currConf = JSON.parse(localStorage.getItem(DB_KEY_CONFIG) || '{}');
-            const currOt = JSON.parse(localStorage.getItem(DB_KEY_OT) || '{"records":[], "leaveRecords":[]}');
-            const currTodo = JSON.parse(localStorage.getItem(DB_KEY_TODO) || '[]');
-            const currCal = JSON.parse(localStorage.getItem(DB_KEY_CAL) || '{}');
-
-            // --- 🧠 核心修改：工程列表智能去重 ---
-            // 逻辑：创建一个 Map，以 ID 为身份证。
-            // 1. 先把现有的放进去
-            const projectMap = new Map();
-            currP.forEach(p => projectMap.set(p.id, p));
-            
-            // 2. 再把导入的放进去（如果有相同 ID，导入的会覆盖现有的，实现更新；如果是新 ID，就添加）
-            impP.forEach(p => projectMap.set(p.id, p));
-            
-            // 3. 转回数组
-            const mergedProjects = Array.from(projectMap.values());
-
-            // 其他数据保持合并逻辑...
-            const mergedOt = {
-                annual: currOt.annual || impOt.annual,
-                saved: currOt.saved || impOt.saved,
-                records: [...(currOt.records || []), ...(impOt.records || [])], // 考勤记录稍微复杂，暂时保持追加
-                leaveRecords: [...(currOt.leaveRecords || []), ...(impOt.leaveRecords || [])]
+        function importData(i) {
+            if (!i.files || !i.files[0]) return alert("❌ 没选文件！");
+            const r = new FileReader();
+            r.onload = async (e) => {
+                try {
+                    alert("🔍 正在解析并去重...");
+                    const b = JSON.parse(e.target.result);
+                    const impP = b.p || b.projects || []; const impConf = b.c || b.config || {}; const impOt = b.ot || b.attendance || {}; const impTodo = b.todo || []; const impCal = b.cal || b.calendar || {};
+                    const currP = JSON.parse(localStorage.getItem(DB_KEY_DATA) || '[]');
+                    const currConf = JSON.parse(localStorage.getItem(DB_KEY_CONFIG) || '{}');
+                    const currOt = JSON.parse(localStorage.getItem(DB_KEY_OT) || '{"records":[], "leaveRecords":[]}');
+                    const projectMap = new Map(); currP.forEach(p => projectMap.set(p.id, p)); impP.forEach(p => projectMap.set(p.id, p));
+                    const mergedProjects = Array.from(projectMap.values());
+                    const mergedOt = { annual: currOt.annual || impOt.annual, saved: currOt.saved || impOt.saved, records: [...(currOt.records || []), ...(impOt.records || [])], leaveRecords: [...(currOt.leaveRecords || []), ...(impOt.leaveRecords || [])] };
+                    const mergedTodo = [...(JSON.parse(localStorage.getItem(DB_KEY_TODO) || '[]')), ...impTodo];
+                    const mergedCal = { ...impCal, ...JSON.parse(localStorage.getItem(DB_KEY_CAL) || '{}') };
+                    const mergedConfig = { ...impConf, ...currConf };
+                    localStorage.setItem(DB_KEY_DATA, JSON.stringify(mergedProjects)); localStorage.setItem(DB_KEY_CONFIG, JSON.stringify(mergedConfig)); localStorage.setItem(DB_KEY_OT, JSON.stringify(mergedOt)); localStorage.setItem(DB_KEY_TODO, JSON.stringify(mergedTodo)); localStorage.setItem(DB_KEY_CAL, JSON.stringify(mergedCal));
+                    if (currentUser) {
+                        const payload = { projects: mergedProjects, config: mergedConfig, attendance: mergedOt, todo: mergedTodo, calendar: mergedCal, updated_at: new Date().toISOString() };
+                        await _supabase.from('user_data').upsert({ user_id: currentUser.id, content: payload });
+                    }
+                    alert(`✅ 导入完成！`); location.reload();
+                } catch (err) { alert("💥 出错: " + err.message); }
             };
-            const mergedTodo = [...currTodo, ...impTodo];
-            const mergedCal = { ...impCal, ...currCal };
-            const mergedConfig = { ...impConf, ...currConf };
-
-            // 存入本地
-            localStorage.setItem(DB_KEY_DATA, JSON.stringify(mergedProjects));
-            localStorage.setItem(DB_KEY_CONFIG, JSON.stringify(mergedConfig));
-            localStorage.setItem(DB_KEY_OT, JSON.stringify(mergedOt));
-            localStorage.setItem(DB_KEY_TODO, JSON.stringify(mergedTodo));
-            localStorage.setItem(DB_KEY_CAL, JSON.stringify(mergedCal));
-
-            // 上传云端
-            if (currentUser) {
-                const payload = {
-                    projects: mergedProjects,
-                    config: mergedConfig,
-                    attendance: mergedOt,
-                    todo: mergedTodo,
-                    calendar: mergedCal,
-                    updated_at: new Date().toISOString()
-                };
-                const { error } = await _supabase.from('user_data').upsert({ user_id: currentUser.id, content: payload });
-                if (error) throw error;
-            }
-
-            alert(`✅ 导入完成！\n已智能去重，现在共有 ${mergedProjects.length} 个工程。\n请刷新页面。`);
-            location.reload();
-
-        } catch (err) {
-            alert("💥 出错: " + err.message);
+            r.readAsText(i.files[0]); i.value = '';
         }
-    };
-    r.readAsText(i.files[0]);
-    i.value = '';
-}
 
-        function goHome(){ goToPage('homePage'); updateStats(); }
-        function updateStats(){  }
+        function calcDateDiff() {
+            const d1 = document.getElementById('toolStartDate').value;
+            const d2 = document.getElementById('toolEndDate').value;
+            const resBox = document.getElementById('dateResult');
+            if(!d1 || !d2) { alert("请先选择两个日期！"); return; }
+            const diffTime = Math.abs(new Date(d2) - new Date(d1));
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+            resBox.style.display = 'block'; resBox.innerText = `相差 ${diffDays} 天`;
+        }
         function openModal(id){ document.getElementById(id).classList.add('open'); }
         function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+        // 🌟 修复：左上角返回功能
+        function goHome() { 
+            // 隐藏所有页面，激活首页
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById('homePage').classList.add('active');
+            
+            // 隐藏返回按钮
+            document.getElementById('backBtn').style.display = 'none';
+            
+            // 显示用户头像
+            const userBadge = document.getElementById('userBadge');
+            if (userBadge) userBadge.style.display = 'block';
+            
+            // 隐藏配置按钮
+            const confBtn = document.getElementById('nodeConfigBtn');
+            if(confBtn) confBtn.style.display = 'none';
+            
+            // 刷新首页数据
+            initHome(); 
+        }
     </script>
 </body>
-
-
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
