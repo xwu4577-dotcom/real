@@ -4,23 +4,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>工作助手 (V60 历史归档版)</title>
+    <title>工作助手 (V62 服务双视图版)</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
         /* --- 基础变量 --- */
-        /* 🌟 核心修复 1：防止页面左右晃动 & 统一尺寸计算 */
-* {
-    box-sizing: border-box; /* 让 padding 不会撑大宽度 */
-    outline: none;
-    -webkit-tap-highlight-color: transparent;
-}
-
-body {
-    /* ...原有样式... */
-    overflow-x: hidden; /* 🚫 禁止横向滚动 */
-    width: 100%;
-}
         :root {
             --primary: #007AFF;
             --bg: #F5F7FA;
@@ -43,47 +31,103 @@ body {
             flex-direction: column;
             color: var(--text);
             -webkit-tap-highlight-color: transparent;
+            overflow-x: hidden;
+            width: 100%;
+        }
+
+        * {
+            box-sizing: border-box;
+            outline: none;
+            -webkit-tap-highlight-color: transparent;
         }
 
         /* 导航 */
-        .navbar {
-            background: var(--white);
-            color: var(--text);
-            padding: 10px 15px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 1px 0 rgba(0, 0, 0, 0.05);
-            flex-shrink: 0;
-            z-index: 100;
-            height: 44px;
+        
+/* --- 🌟 V63 修复：导航栏绝对对齐 --- */
+        .navbar { 
+            background: var(--white); 
+            color: var(--text); 
+            padding: 0 15px; /* 移除上下 padding */
+            height: 44px;    /* 强制固定高度 */
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            box-shadow: 0 1px 0 rgba(0,0,0,0.05); 
+            flex-shrink: 0; 
+            z-index: 100; 
         }
-
-        .nav-left {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            flex: 1;
+        .nav-left { 
+            display: flex; 
+            align-items: center; 
+            gap: 0; /* 消除间隙 */
+            height: 100%; 
+            flex: 1; 
         }
-
-        #backBtn {
-            background: none;
+        /* 全局返回按钮 */
+        #backBtn { 
+            background: transparent; 
+            border: none; 
+            color: var(--primary); 
+            font-size: 17px; 
+            font-weight: 400; 
+            padding: 0 15px 0 0; 
+            cursor: pointer; 
+            display: none; /* 默认隐藏 */
+            align-items: center; 
+            height: 100%; 
+        }
+        .page-title { 
+            font-size: 17px; 
+            font-weight: 700; 
+            color: #000; 
+            margin: 0; 
+            line-height: 44px; 
+            margin-left: -6px; /* 视觉微调 */
+        }
+        
+        /* 详情页专用返回按钮 */
+        .nav-back-btn {
+            background: transparent;
             border: none;
             color: var(--primary);
-            font-size: 20px;
-            font-weight: bold;
-            padding: 0 10px 0 0;
+            font-size: 17px;
+            font-weight: 400;
+            display: flex;
+            align-items: center;
+            padding: 0 15px 0 0;
             cursor: pointer;
-            display: none;
+            height: 100%;
         }
 
-        .page-title {
-            font-size: 18px;
-            font-weight: 700;
-            color: #000;
-            margin: 0;
+        /* 统一图标样式 */
+        #backBtn svg, .nav-back-btn svg {
+            width: 26px; 
+            height: 26px; 
+            fill: none; 
+            stroke: currentColor; 
+            stroke-width: 2.5; 
+            stroke-linecap: round; 
+            stroke-linejoin: round; 
+            margin-left: -8px; 
+            margin-top: -1px;
+        }
+        #backBtn svg {
+            width: 24px;
+            height: 24px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 2.5;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            margin-left: -6px;
+            margin-right: -2px;
         }
 
+        #backBtn:active {
+            opacity: 0.5;
+        }
+
+        
         #nodeConfigBtn {
             background: #f0f0f5;
             border: none;
@@ -126,7 +170,88 @@ body {
             }
         }
 
-        /* 悬浮按钮 (FAB) */
+        /* iOS 分段控制器 (Tab 切换) */
+        .segmented-control {
+            display: flex;
+            background: #eeeff1;
+            border-radius: 9px;
+            padding: 2px;
+            margin-bottom: 15px;
+        }
+
+        .segment-btn {
+            flex: 1;
+            border: none;
+            background: transparent;
+            padding: 6px 0;
+            font-size: 13px;
+            font-weight: 500;
+            border-radius: 7px;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .segment-btn.active {
+            background: #fff;
+            color: #000;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            font-weight: 600;
+        }
+
+        /* 服务卡片样式 */
+        .service-card {
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            position: relative;
+            border-left: 4px solid var(--purple);
+        }
+
+        .service-type-tag {
+            font-size: 11px;
+            background: #f3e5f5;
+            color: var(--purple);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+            display: inline-block;
+            margin-bottom: 5px;
+        }
+
+        .service-name {
+            font-weight: bold;
+            font-size: 15px;
+            margin-bottom: 5px;
+            color: #333;
+        }
+
+        .service-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            color: #666;
+            margin-top: 4px;
+        }
+
+        .progress-bg {
+            height: 6px;
+            background: #eee;
+            border-radius: 3px;
+            margin-top: 8px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--green);
+            width: 0%;
+            border-radius: 3px;
+        }
+
+        /* 通用样式保持不变 */
         .fab-add {
             position: fixed;
             bottom: 30px;
@@ -150,25 +275,6 @@ body {
         .fab-add:active {
             transform: scale(0.95);
             background-color: #0056b3;
-        }
-
-        /* 首页资产卡片 */
-        .welcome-row {
-            margin-bottom: 20px;
-        }
-
-        .welcome-date {
-            font-size: 13px;
-            color: #888;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .welcome-title {
-            font-size: 24px;
-            font-weight: 800;
-            color: #333;
-            margin: 5px 0 0 0;
         }
 
         .asset-card-row {
@@ -206,7 +312,6 @@ body {
             line-height: 1.1;
         }
 
-        /* 日历 */
         .calendar-section {
             background: white;
             border-radius: 16px;
@@ -228,12 +333,6 @@ body {
             grid-template-columns: repeat(7, 1fr);
             gap: 5px;
             text-align: center;
-        }
-
-        .cal-day-name {
-            font-size: 12px;
-            color: #999;
-            margin-bottom: 5px;
         }
 
         .cal-day {
@@ -264,7 +363,6 @@ body {
             bottom: 4px;
         }
 
-        /* --- 🌟 V60 新版待办样式 --- */
         .todo-section {
             margin-bottom: 30px;
         }
@@ -288,10 +386,6 @@ body {
             display: flex;
             align-items: center;
             gap: 4px;
-        }
-
-        .btn-history:active {
-            background: rgba(0, 0, 0, 0.1);
         }
 
         .todo-input-row {
@@ -336,7 +430,6 @@ body {
             box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
             transition: all 0.2s ease;
             position: relative;
-            overflow: hidden;
         }
 
         .todo-checkbox {
@@ -369,7 +462,6 @@ body {
             opacity: 0.6;
         }
 
-        /* 历史列表 */
         .history-list {
             max-height: 60vh;
             overflow-y: auto;
@@ -379,8 +471,14 @@ body {
             padding: 12px 0;
             border-bottom: 1px solid #eee;
             display: flex;
-            align-items: center;
-            gap: 10px;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .history-time {
+            font-size: 11px;
+            color: #bbb;
+            margin-top: 2px;
         }
 
         .btn-restore {
@@ -393,7 +491,6 @@ body {
             cursor: pointer;
         }
 
-        /* 功能导航 */
         .project-entry-grid {
             display: grid;
             grid-template-columns: 1fr 1fr 1fr;
@@ -410,11 +507,6 @@ body {
             cursor: pointer;
             border: 1px solid transparent;
             transition: all 0.1s;
-        }
-
-        .entry-card:active {
-            transform: scale(0.96);
-            background: #fafafa;
         }
 
         .entry-card.eng {
@@ -458,7 +550,6 @@ body {
             cursor: pointer;
         }
 
-        /* 考勤 */
         .ot-summary-card {
             background: linear-gradient(135deg, #007AFF 0%, #5856D6 100%);
             color: white;
@@ -591,7 +682,6 @@ body {
             color: white;
         }
 
-        /* 工程列表 */
         .list-item {
             background: white;
             padding: 0;
@@ -674,7 +764,6 @@ body {
             padding-left: 8px;
         }
 
-        /* 详情页 */
         .stage-card {
             background: white;
             margin-bottom: 15px;
@@ -819,7 +908,6 @@ body {
             white-space: nowrap;
         }
 
-        /* 通用按钮 */
         .btn-add-node {
             background: var(--primary);
             color: white;
@@ -859,7 +947,6 @@ body {
             color: var(--primary);
         }
 
-        /* 弹窗 */
         .modal {
             display: none;
             position: fixed;
@@ -898,49 +985,34 @@ body {
             color: #444;
         }
 
-/* 🌟 核心修复 2：统一 Input 和 Select 的外观 */
-.input-box {
-    width: 100%;
-    height: 46px; /* 📏 强制统一高度，适合手指点击 */
-    padding: 0 12px; /* 左右内边距 */
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    font-size: 15px;
-    background: #fafafa;
-    color: #333;
-    
-    /* 关键：去除 iOS 默认样式 */
-    -webkit-appearance: none; 
-    appearance: none;
-    border-radius: 8px; /* 再次强制圆角 */
-    margin: 0; /* 去除默认外边距 */
-    display: block;
-}
+        .input-box {
+            width: 100%;
+            height: 46px;
+            padding: 0 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 15px;
+            background: #fafafa;
+            color: #333;
+            -webkit-appearance: none;
+            appearance: none;
+            margin: 0;
+            display: block;
+        }
 
-/* 针对下拉框增加一个小箭头 (因为上面去除了默认样式) */
-select.input-box {
-    background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23999999%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
-    background-repeat: no-repeat;
-    background-position: right 12px center;
-    background-size: 10px;
-    padding-right: 30px; /* 防止文字盖住箭头 */
-}
- /* 🌟 核心修复 3：修复 iOS 日期文字垂直居中 */
-input[type="date"].input-box {
-    display: flex;
-    align-items: center;
-    line-height: 46px; /* 必须与 height 保持一致 */
-}
+        select.input-box {
+            background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23999999%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 10px;
+            padding-right: 30px;
+        }
 
-/* 针对下拉框增加小箭头 (放在这里也很合适) */
-select.input-box {
-    background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23999999%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.9%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
-    background-repeat: no-repeat;
-    background-position: right 12px center;
-    background-size: 10px;
-    padding-right: 30px;
-}
-
+        input[type="date"].input-box {
+            display: flex;
+            align-items: center;
+            line-height: 46px;
+        }
 
         .log-textarea {
             width: 100%;
@@ -978,7 +1050,6 @@ select.input-box {
             font-size: 14px;
         }
 
-        /* 备选配置 - 垂直布局 */
         .config-container {
             display: flex;
             flex-direction: column;
@@ -1098,7 +1169,6 @@ select.input-box {
             color: #999;
         }
 
-        /* 节点排序 */
         .node-sort-zone {
             width: 36px;
             background: #f9f9f9;
@@ -1136,7 +1206,6 @@ select.input-box {
             display: none;
         }
 
-        /* 云同步 */
         #auth-modal {
             position: fixed;
             top: 0;
@@ -1233,7 +1302,6 @@ select.input-box {
             cursor: pointer;
         }
 
-        /* 图标 */
         .btn-delete-icon {
             width: 32px;
             height: 32px;
@@ -1266,7 +1334,6 @@ select.input-box {
             stroke: #FF3B30;
         }
 
-        /* 🌟 V60 核心修复：百宝箱 & 节点库网格布局 */
         #toolsPage {
             display: none;
             position: absolute;
@@ -1347,7 +1414,6 @@ select.input-box {
             color: #333;
         }
 
-        /* 🌟 V60 核心修复：节点库弹窗网格 */
         .node-library-grid {
             display: grid !important;
             grid-template-columns: 1fr 1fr !important;
@@ -1387,6 +1453,45 @@ select.input-box {
             background: #f2f2f7;
             transform: scale(0.96);
         }
+
+        /* 🌟 优化：iOS 风格返回导航 */
+        .nav-back-btn {
+            background: transparent;
+            border: none;
+            color: var(--primary);
+            /* 经典的 iOS 蓝 */
+            font-size: 17px;
+            /* 标准字号 */
+            font-weight: 400;
+            display: flex;
+            align-items: center;
+            padding: 0;
+            padding-right: 10px;
+            /* 增加点击区域 */
+            cursor: pointer;
+            z-index: 20;
+            /* 确保在最上层 */
+        }
+
+        .nav-back-btn:active {
+            opacity: 0.5;
+        }
+
+        /* 点击时的反馈 */
+
+        .nav-back-btn svg {
+            width: 24px;
+            height: 24px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 2.5;
+            /* 线条加粗 */
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            margin-left: -6px;
+            /* 微调图标位置 */
+            margin-right: -2px;
+        }
     </style>
 </head>
 
@@ -1394,7 +1499,10 @@ select.input-box {
 
     <nav class="navbar">
         <div class="nav-left">
-            <button id="backBtn" onclick="goHome()">←</button>
+            <button id="backBtn" onclick="goHome()" style="display:none;">
+                <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                首页
+            </button>
             <h1 id="pageTitle" class="page-title">工作助手</h1>
         </div>
         <div style="display:flex; align-items:center; gap:10px;">
@@ -1463,7 +1571,7 @@ select.input-box {
                 </div>
 
                 <div class="todo-input-row">
-                    <input type="text" id="todoInput" class="todo-input" placeholder="输入待办"
+                    <input type="text" id="todoInput" class="todo-input" placeholder="输入任务，回车添加..."
                         onkeypress="if(event.keyCode===13) addTodo()">
                     <button class="todo-add-btn" onclick="addTodo()">+</button>
                 </div>
@@ -1560,29 +1668,59 @@ select.input-box {
         </div>
 
         <div id="projectDetail" class="page">
-            <div style="position: relative; height: 44px; display: flex; align-items: center; margin-bottom: 20px;">
-                <button class="back-btn-float" onclick="goHome()" style="z-index: 10; position: relative;">← 返回</button>
-                <div style="position: absolute; left: 0; right: 0; text-align: center; pointer-events: none;">
-                    <h2 id="detailTitle"
-                        style="margin: 0; font-size: 18px; display: inline-block; pointer-events: auto;"
-                        onclick="editProjectName()"></h2>
-                    <span style="font-size: 14px; color: #999; cursor: pointer; pointer-events: auto;"
-                        onclick="editProjectName()"> ✏️</span>
-                    <div id="detailType" style="font-size: 10px; color: #999; margin-top: 2px;"></div>
+            <div
+                style="position: relative; height: 44px; display: flex; align-items: center; margin-bottom: 10px; border-bottom: 0.5px solid rgba(0,0,0,0.1);">
+
+                <button class="nav-back-btn" onclick="goToPage('projectList')">
+                    <svg viewBox="0 0 24 24">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                    列表
+                </button>
+
+                <div style="position: absolute; left: 60px; right: 60px; text-align: center; pointer-events: none;">
+                    <div style="display: flex; align-items: center; justify-content: center; gap: 4px;">
+                        <h2 id="detailTitle"
+                            style="margin: 0; font-size: 17px; font-weight: 600; color: #000; pointer-events: auto;"
+                            onclick="editProjectName()"></h2>
+                        <span style="font-size: 14px; color: var(--primary); cursor: pointer; pointer-events: auto;"
+                            onclick="editProjectName()">✎</span>
+                    </div>
+                    <div id="detailType" style="font-size: 10px; color: #999; margin-top: 1px;"></div>
                 </div>
             </div>
-            <div class="preview-section">
-                <div class="preview-header"><span>📋 全息进度预览</span></div>
-                <div id="previewFlow" class="preview-flow"></div>
+
+            <div class="segmented-control">
+                <button id="seg_timeline" class="segment-btn active" onclick="switchDetailTab('timeline')">📅
+                    进度主线</button>
+                <button id="seg_services" class="segment-btn" onclick="switchDetailTab('services')">🤝 参建单位</button>
             </div>
-            <div class="timeline-container">
-                <div class="timeline-line"></div>
-                <div id="stagesContainer"></div>
-                <div id="emptyHint" style="text-align:center; padding:40px; color:#999; font-size:14px; display:none;">
-                    👇 点击下方按钮添加第一个流程节点</div>
+
+            <div id="view_timeline">
+                <div class="preview-section">
+                    <div class="preview-header"><span>📋 全息进度预览</span></div>
+                    <div id="previewFlow" class="preview-flow"></div>
+                </div>
+                <div class="timeline-container">
+                    <div class="timeline-line"></div>
+                    <div id="stagesContainer"></div>
+                    <div id="emptyHint"
+                        style="text-align:center; padding:40px; color:#999; font-size:14px; display:none;">👇
+                        点击下方按钮添加第一个流程节点</div>
+                </div>
+                <div style="text-align:center; padding-bottom:30px;">
+                    <button class="btn-add-node" onclick="openNodeLibrary()">+ 添加流程节点</button>
+                </div>
             </div>
-            <div style="text-align:center; padding-bottom:30px;">
-                <button class="btn-add-node" onclick="openNodeLibrary()">+ 添加流程节点</button>
+
+            <div id="view_services" style="display:none;">
+                <div id="servicesListContainer"></div>
+                <div style="text-align:center; padding:20px; color:#999; font-size:13px;" id="emptyServicesHint">
+                    暂无参建单位记录</div>
+                <div style="text-align:center; padding-bottom:30px;">
+                    <button class="btn-add-node" style="background:var(--purple);"
+                        onclick="openModal('addServiceModal')">+ 录入参建单位</button>
+                </div>
             </div>
         </div>
     </div>
@@ -1638,6 +1776,29 @@ select.input-box {
             <div id="historyListContainer" class="history-list">
             </div>
             <button class="btn-cancel" onclick="closeModal('todoHistoryModal')">关闭</button>
+        </div>
+    </div>
+
+    <div id="addServiceModal" class="modal">
+        <div class="modal-content">
+            <h3>录入参建单位</h3>
+            <label class="form-label">单位类型</label>
+            <select id="svcType" class="input-box">
+                <option value="设计单位">🎨 设计单位</option>
+                <option value="监理单位">👁️ 监理单位</option>
+                <option value="勘察测绘">📐 勘察测绘</option>
+                <option value="造价咨询">💰 造价咨询</option>
+                <option value="招标代理">📢 招标代理</option>
+                <option value="其他服务">📦 其他服务</option>
+            </select>
+            <label class="form-label">单位名称</label>
+            <input type="text" id="svcName" class="input-box" placeholder="例如：北京市建筑设计院">
+            <label class="form-label">合同金额 (元)</label>
+            <input type="number" id="svcAmount" class="input-box" placeholder="0">
+            <label class="form-label">联系人 & 电话</label>
+            <input type="text" id="svcContact" class="input-box" placeholder="张三 13800000000">
+            <button class="btn-primary" onclick="saveService()">保存</button>
+            <button class="btn-cancel" onclick="closeModal('addServiceModal')">取消</button>
         </div>
     </div>
 
@@ -2045,7 +2206,23 @@ select.input-box {
 
         const DB = { get: () => JSON.parse(localStorage.getItem(DB_KEY_DATA) || '[]'), save: d => { localStorage.setItem(DB_KEY_DATA, JSON.stringify(d)); debouncedSync(); } };
         const DB_OT = { get: () => { const d = localStorage.getItem(DB_KEY_OT); return d ? JSON.parse(d) : { annual: 0, saved: 0, records: [], leaveRecords: [] } }, save: d => { localStorage.setItem(DB_KEY_OT, JSON.stringify(d)); debouncedSync(); } };
-        const DB_TODO = { get: () => JSON.parse(localStorage.getItem(DB_KEY_TODO) || '[]'), save: d => { localStorage.setItem(DB_KEY_TODO, JSON.stringify(d)); debouncedSync(); } };
+        // 🌟 数据搜救版：自动合并旧数据并找回
+        const DB_TODO = {
+            get: () => {
+                const masterData = localStorage.getItem('todo_master_db');
+                const oldData = localStorage.getItem('todo_db');
+                if (!masterData && oldData) {
+                    console.log("检测到旧待办数据，正在自动迁移...");
+                    localStorage.setItem('todo_master_db', oldData);
+                    return JSON.parse(oldData);
+                }
+                return JSON.parse(masterData || '[]');
+            },
+            save: (d) => {
+                localStorage.setItem('todo_master_db', JSON.stringify(d));
+                if (typeof debouncedSync === 'function') debouncedSync();
+            }
+        };
         const DB_CAL = { get: () => { const d = localStorage.getItem(DB_KEY_CAL); return d ? JSON.parse(d) : {} }, save: d => { localStorage.setItem(DB_KEY_CAL, JSON.stringify(d)); debouncedSync(); } };
 
         function loadConfig() {
@@ -2058,6 +2235,106 @@ select.input-box {
             });
         }
         function migrateData() { let list = DB.get(), ch = false; list.forEach(p => { p.stages.forEach(s => { if (!s.config) { s.config = JSON.parse(JSON.stringify(GLOBAL_CONFIG[s.name] || [])); ch = true } }) }); if (ch) DB.save(list); }
+        // ==========================================
+        // 🌟 V62 新增：服务双视图 & 参建单位逻辑
+        // ==========================================
+
+        // 1. 切换 Tab 视图
+        function switchDetailTab(tabName) {
+            // 切换按钮样式
+            document.querySelectorAll('.segment-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(`seg_${tabName}`).classList.add('active');
+
+            // 切换内容显示
+            document.getElementById('view_timeline').style.display = (tabName === 'timeline') ? 'block' : 'none';
+            document.getElementById('view_services').style.display = (tabName === 'services') ? 'block' : 'none';
+
+            // 如果切到服务页，刷新列表
+            if (tabName === 'services') {
+                renderServices();
+            }
+        }
+
+        // 2. 渲染参建单位列表
+        function renderServices() {
+            const list = DB.get();
+            const p = list.find(x => x.id === currentProjectId);
+            const container = document.getElementById('servicesListContainer');
+            const emptyHint = document.getElementById('emptyServicesHint');
+
+            container.innerHTML = '';
+
+            // 确保 services 数组存在
+            if (!p.services) p.services = [];
+
+            if (p.services.length === 0) {
+                emptyHint.style.display = 'block';
+                return;
+            } else {
+                emptyHint.style.display = 'none';
+            }
+
+            p.services.forEach((svc, idx) => {
+                const div = document.createElement('div');
+                div.className = 'service-card';
+                // 计算进度条宽度 (简单模拟，按合同金额是否填满来展示，或者默认为 0)
+                // 这里为了视觉效果，随机给一个 30%-80% 的进度，实际可后续开发“支付管理”来联动
+                const mockProgress = Math.floor(Math.random() * 50) + 30;
+
+                div.innerHTML = `
+                    <div style="display:flex; justify-content:space-between;">
+                        <span class="service-type-tag">${svc.type}</span>
+                        <button class="btn-delete-icon" onclick="deleteService(${idx})">
+                            <svg viewBox="0 0 24 24"><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                        </button>
+                    </div>
+                    <div class="service-name">${svc.name}</div>
+                    <div class="service-row">
+                        <span>💰 合同额: ¥${Number(svc.amount).toLocaleString()}</span>
+                        <span>👤 ${svc.contact || '无联系人'}</span>
+                    </div>
+                    <div class="progress-bg">
+                        <div class="progress-fill" style="width: ${mockProgress}%"></div>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        // 3. 保存新单位
+        function saveService() {
+            const type = document.getElementById('svcType').value;
+            const name = document.getElementById('svcName').value;
+            const amount = document.getElementById('svcAmount').value;
+            const contact = document.getElementById('svcContact').value;
+
+            if (!name) return alert('请输入单位名称');
+
+            const list = DB.get();
+            const p = list.find(x => x.id === currentProjectId);
+
+            if (!p.services) p.services = [];
+            p.services.push({ type, name, amount, contact });
+
+            DB.save(list);
+            closeModal('addServiceModal');
+            renderServices(); // 刷新列表
+
+            // 清空输入框
+            document.getElementById('svcName').value = '';
+            document.getElementById('svcAmount').value = '';
+            document.getElementById('svcContact').value = '';
+        }
+
+        // 4. 删除单位
+        function deleteService(idx) {
+            if (!confirm('确定移除该参建单位吗？')) return;
+            const list = DB.get();
+            const p = list.find(x => x.id === currentProjectId);
+            p.services.splice(idx, 1);
+            DB.save(list);
+            renderServices();
+        }
 
         window.onload = function () { initApp(); };
 
@@ -2135,19 +2412,20 @@ select.input-box {
             renderCalendar(viewYear, viewMonth);
         }
 
-        // --- 🌟 V60: 待办逻辑升级 ---
-        // 修改位置：Script 标签内，约第 838 行左右
+        // --- 🌟 修复版：待办渲染函数 ---
         function renderTodos() {
             const list = DB_TODO.get();
             const container = document.getElementById('todoList');
+
+            // 防止容器找不到报错
+            if (!container) return;
+
             container.innerHTML = '';
 
-            // 筛选未完成
+            // 1. 筛选未完成
             const activeTodos = list.map((t, i) => ({ ...t, originIdx: i })).filter(t => !t.done);
 
-            // ❌ 删除：这里删除了 document.getElementById('historyCount').innerText... 这一行
-            // 这样程序就不会因为找不到 ID 而崩掉了
-
+            // 3. 渲染列表
             if (activeTodos.length === 0) {
                 container.innerHTML = '<div class="empty-state">🎉 太棒了，所有待办已清空！</div>';
                 return;
@@ -2156,7 +2434,12 @@ select.input-box {
             activeTodos.forEach(t => {
                 const div = document.createElement('div');
                 div.className = 'todo-item';
-                div.innerHTML = `<div class="todo-checkbox" onclick="toggleTodo(${t.originIdx})"></div><div class="todo-text">${t.text}</div><button class="btn-delete-icon" onclick="deleteTodo(${t.originIdx})"><svg viewBox="0 0 24 24"><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>`;
+                div.innerHTML = `
+                    <div class="todo-checkbox" onclick="toggleTodo(${t.originIdx})"></div>
+                    <div class="todo-text">${t.text}</div>
+                    <button class="btn-delete-icon" onclick="deleteTodo(${t.originIdx})">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                    </button>`;
                 container.appendChild(div);
             });
         }
@@ -2176,7 +2459,7 @@ select.input-box {
             const list = DB_TODO.get();
             const item = list[originIdx];
 
-            item.done = !item.done;
+            item.done = !item.done; // 反转状态
 
             // 🌟 核心修改：如果是“标记为完成”，则记录当前时间
             if (item.done) {
@@ -2214,6 +2497,7 @@ select.input-box {
             openModal('todoHistoryModal');
         }
 
+        // 🌟 修复版：历史记录渲染（解决排版错乱）
         function renderHistoryList() {
             const list = DB_TODO.get();
             const container = document.getElementById('historyListContainer');
@@ -2229,18 +2513,18 @@ select.input-box {
             doneTodos.forEach(t => {
                 const div = document.createElement('div');
                 div.className = 'history-item';
-                // 🌟 核心修改：增加了下方的灰色时间显示行
+                // 关键修改：用一个 flex-row 把上面一行包起来
                 div.innerHTML = `
-                    <div style="flex:1;">
-                        <div style="text-decoration:line-through; color:#333; opacity:0.6; font-size:14px;">${t.text}</div>
-                        <div style="font-size:11px; color:#bbb; margin-top:3px;">
-                            🏁 完成于: ${t.completedAt || '早期记录'}
+                    <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
+                        <div style="flex:1; text-decoration:line-through; color:#999; font-size:14px; margin-right:10px; word-break:break-all;">${t.text}</div>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <button class="btn-restore" onclick="toggleTodo(${t.originIdx})">恢复</button>
+                            <button class="btn-delete-icon" onclick="deleteTodo(${t.originIdx})">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                            </button>
                         </div>
                     </div>
-                    <button class="btn-restore" onclick="toggleTodo(${t.originIdx})">恢复</button>
-                    <button class="btn-delete-icon" onclick="deleteTodo(${t.originIdx})">
-                        <svg viewBox="0 0 24 24"><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                    </button>
+                    <div class="history-time">🏁 完成于：${t.completedAt || '早期记录'}</div>
                 `;
                 container.appendChild(div);
             });
