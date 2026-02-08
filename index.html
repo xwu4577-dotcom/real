@@ -42,6 +42,7 @@
             }
 
             /* 核心布局 */
+            
             body {
                 font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
                 background: var(--bg);
@@ -53,6 +54,10 @@
                 -webkit-tap-highlight-color: transparent;
                 overflow: hidden;
                 width: 100%;
+
+                /* 👇👇👇 新增这两行，专门解决滑动冲突 👇👇👇 */
+                overscroll-behavior-x: none;  /* 禁止左右滑动的橡皮筋效果 */
+                touch-action: pan-y;          /* 告诉浏览器：手指只负责上下滑 */
             }
 
             * {
@@ -3235,73 +3240,86 @@
             openModal('personalCenterModal');
         }
 
-        // --- 📱 手势控制：左侧边缘右滑返回 ---
-    
-    let touchStartX = 0;
-    let touchStartY = 0;
+    // --- 🔙 核心修复：接管浏览器返回键 & 滑动返回 ---
 
-    // 1. 手指按下：记录起始位置
-    document.addEventListener('touchstart', function(evt) {
-        const firstTouch = evt.touches[0];
-        touchStartX = firstTouch.clientX;
-        touchStartY = firstTouch.clientY;
-    }, false);
-
-    // 2. 手指抬起：计算滑动距离和方向
-    document.addEventListener('touchend', function(evt) {
-        if (!touchStartX || !touchStartY) return;
-
-        let touchEndX = evt.changedTouches[0].clientX;
-        let touchEndY = evt.changedTouches[0].clientY;
-
-        let xDiff = touchEndX - touchStartX;
-        let yDiff = touchEndY - touchStartY;
-
-        // --- 核心判断逻辑 ---
-        // 1. 必须是从屏幕左侧边缘开始 (0px - 50px 区域内)，避免和中间的滑动冲突
-        // 2. 横向滑动距离要大于 60px (防止误触)
-        // 3. 横向移动必须大于纵向移动 (确保是水平滑，不是上下滚屏)
+    // 1. 监听浏览器的“后退”动作 (包括边缘滑动、物理返回键)
+    window.addEventListener('popstate', function(event) {
+        // 如果 history 状态里没有 ID，说明回到了原点（首页）
+        const state = event.state;
         
-        if (touchStartX < 50 && xDiff > 60 && Math.abs(xDiff) > Math.abs(yDiff)) {
-            // 触发返回逻辑
-            handleGestureBack();
+        if (state && state.pageId) {
+            // 如果历史记录里有页面ID，就跳过去（比如前进时）
+            // 这里我们通常只需要处理“回退”到首页的情况
+            // 但为了保险，还是留着
+            showPageSimple(state.pageId);
+        } else {
+            // 如果没有状态了，说明退到了最开始，强制回首页
+            goHomeSimple();
+        }
+    });
+
+    // 2. 改造页面跳转函数：每次跳转都“虚构”一条历史记录
+    // ⚠️ 注意：请用这个替换代码里原本的 goToPage 函数，或者覆盖它
+    const originalGoToPage = window.goToPage; // 备份一下旧逻辑如果有的话
+
+    window.goToPage = function(id) {
+        // 先执行原本的 UI 切换逻辑
+        showPageSimple(id);
+
+        // 📝 关键：往浏览器历史里塞一条记录
+        // 这样浏览器觉得如果你滑回去，就是撤销这条记录，而不是关闭网页
+        history.pushState({ pageId: id }, null, "#" + id);
+    };
+
+    // 3. 改造回首页函数
+    window.goHome = function() {
+        // 如果当前有历史记录（不是首页），就通过 history.back() 返回
+        // 这样可以模拟用户的“点击返回”操作
+        if (history.state && history.state.pageId) {
+            history.back(); 
+        } else {
+            goHomeSimple();
+        }
+    };
+
+    // --- 内部工具：纯粹的显示隐藏，不操作历史记录 ---
+    function showPageSimple(id) {
+        // 1. 隐藏所有页面
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        // 2. 显示目标页面
+        const target = document.getElementById(id);
+        if(target) target.classList.add('active');
+
+        // 3. 处理导航栏显示
+        if (id === 'projectDetail') {
+            document.getElementById('mainNavBar').style.display = 'none';
+            document.getElementById('detailNavBar').style.display = 'flex';
+        } else {
+            document.getElementById('mainNavBar').style.display = 'flex';
+            document.getElementById('detailNavBar').style.display = 'none';
+            
+            // 首页特殊处理
+            const isHome = (id === 'homePage');
+            document.getElementById('globalBackBtn').style.display = isHome ? 'none' : 'flex';
+            document.getElementById('userBadge').style.display = isHome ? 'block' : 'none';
+            document.getElementById('nodeConfigBtn').style.display = (id === 'projectList') ? 'block' : 'none';
+            document.getElementById('globalPageTitle').innerText = isHome ? '工作助手' : '';
         }
 
-        // 重置
-        touchStartX = 0;
-        touchStartY = 0;
-    }, false);
+        // 4. 触发页面特定的渲染逻辑
+        if (id === 'projectList') renderProjects();
+        if (id === 'attendancePage') renderOtPage();
+        if (id === 'homePage') initHome();
+    }
 
-    // 3. 执行返回动作
-    function handleGestureBack() {
-        // 获取当前激活的页面ID
-        const activePage = document.querySelector('.page.active');
-        if (!activePage) return;
-
-        const pageId = activePage.id;
-
-        // 如果在首页，什么都不做
-        if (pageId === 'homePage') return;
-
-        // 如果在详情页 -> 返回列表页
-        if (pageId === 'projectDetail') {
-            goToPage('projectList');
-            return;
-        }
-
-        // 其他页面 (列表页、考勤页、工具页) -> 统统返回首页
-        if (['projectList', 'attendancePage', 'toolsPage', 'nonProjectList'].includes(pageId)) {
-            goHome();
-            return;
-        }
-        
-        // 如果有其他情况，默认尝试点一下顶部的返回按钮
-        const backBtn = document.getElementById('globalBackBtn');
-        if(backBtn && backBtn.style.display !== 'none') {
-            backBtn.click();
-        }
+    // --- 内部工具：纯粹回首页 UI ---
+    function goHomeSimple() {
+        showPageSimple('homePage');
     }
     
+    // 初始化：刚打开网页时，把首页替换为当前状态，防止乱跑
+    history.replaceState({ pageId: 'homePage' }, null, "#home");
+
     </script>
     <div id="personalCenterModal" class="modal">
         <div class="modal-content" style="max-width: 320px; text-align: center;">
