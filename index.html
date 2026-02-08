@@ -3350,6 +3350,7 @@
     };
 
     // --- 内部工具：纯粹的显示隐藏，不操作历史记录 ---
+// --- 内部工具：纯粹的显示隐藏，不操作历史记录 ---
     function showPageSimple(id) {
         // 1. 隐藏所有页面
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -3376,7 +3377,9 @@
         // 4. 触发页面特定的渲染逻辑
         if (id === 'projectList') renderProjects();
         if (id === 'attendancePage') renderOtPage();
-        if (id === 'homePage') initHome();
+        
+        // ❌【关键修改】删掉了下面这一行 initHome()
+        // if (id === 'homePage') initHome();  <-- 原来这里有一行，现在去掉了！
     }
 
     // --- 内部工具：纯粹回首页 UI ---
