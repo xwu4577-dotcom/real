@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>工作助手 (V62 服务双视图版)</title>
+    <title>工作助手 (V65 终极防抖版)</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
@@ -22,6 +22,7 @@
             --gray: #8E8E93;
         }
 
+        /* 核心布局 */
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             background: var(--bg);
@@ -31,7 +32,7 @@
             flex-direction: column;
             color: var(--text);
             -webkit-tap-highlight-color: transparent;
-            overflow-x: hidden;
+            overflow: hidden;
             width: 100%;
         }
 
@@ -41,112 +42,152 @@
             -webkit-tap-highlight-color: transparent;
         }
 
-        /* 导航 */
-        
-/* --- 🌟 V63 修复：导航栏绝对对齐 --- */
-        .navbar { 
-            background: var(--white); 
-            color: var(--text); 
-            padding: 0 15px; /* 移除上下 padding */
-            height: 44px;    /* 强制固定高度 */
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            box-shadow: 0 1px 0 rgba(0,0,0,0.05); 
-            flex-shrink: 0; 
-            z-index: 100; 
+        /* --- 🌟 核心修复：通用导航栏 (固定高度，绝对对齐) --- */
+        .navbar-common {
+            background: var(--white);
+            color: var(--text);
+            height: 44px;
+            /* 🔒 锁死高度 */
+            padding: 0 15px;
+            /* 🔒 锁死左右间距 */
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 1px 0 rgba(0, 0, 0, 0.05);
+            flex-shrink: 0;
+            /* 禁止被压缩 */
+            z-index: 100;
+            /* 保证在最上层 */
+            width: 100%;
+            position: relative;
         }
-        .nav-left { 
-            display: flex; 
-            align-items: center; 
-            gap: 0; /* 消除间隙 */
-            height: 100%; 
-            flex: 1; 
+
+        .nav-left {
+            display: flex;
+            align-items: center;
+            gap: 0;
+            height: 100%;
+            flex: 1;
+            min-width: 0;
         }
-        /* 全局返回按钮 */
-        #backBtn { 
-            background: transparent; 
-            border: none; 
-            color: var(--primary); 
-            font-size: 17px; 
-            font-weight: 400; 
-            padding: 0 15px 0 0; 
-            cursor: pointer; 
-            display: none; /* 默认隐藏 */
-            align-items: center; 
-            height: 100%; 
+
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            height: 100%;
         }
-        .page-title { 
-            font-size: 17px; 
-            font-weight: 700; 
-            color: #000; 
-            margin: 0; 
-            line-height: 44px; 
-            margin-left: -6px; /* 视觉微调 */
-        }
-        
-        /* 详情页专用返回按钮 */
+
+        /* 返回按钮 (iOS风格) */
         .nav-back-btn {
             background: transparent;
             border: none;
             color: var(--primary);
             font-size: 17px;
             font-weight: 400;
+            padding: 0;
+            margin: 0;
+            margin-right: 2px;
+            cursor: pointer;
             display: flex;
             align-items: center;
-            padding: 0 15px 0 0;
-            cursor: pointer;
             height: 100%;
         }
 
-        /* 统一图标样式 */
-        #backBtn svg, .nav-back-btn svg {
-            width: 26px; 
-            height: 26px; 
-            fill: none; 
-            stroke: currentColor; 
-            stroke-width: 2.5; 
-            stroke-linecap: round; 
-            stroke-linejoin: round; 
-            margin-left: -8px; 
-            margin-top: -1px;
-        }
-        #backBtn svg {
-            width: 24px;
-            height: 24px;
+        .nav-back-btn svg {
+            width: 26px;
+            height: 26px;
             fill: none;
             stroke: currentColor;
             stroke-width: 2.5;
             stroke-linecap: round;
             stroke-linejoin: round;
-            margin-left: -6px;
-            margin-right: -2px;
+            margin-left: -8px;
+            margin-top: -1px;
         }
 
-        #backBtn:active {
+        .nav-back-btn:active {
             opacity: 0.5;
         }
 
-        
-        #nodeConfigBtn {
-            background: #f0f0f5;
+        /* 页面标题 */
+        .page-title {
+            font-size: 17px;
+            font-weight: 700;
+            color: #000;
+            margin: 0;
+            line-height: 44px;
+            margin-left: -4px;
+            /* 微调与箭头的距离 */
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* 详情页专用标题框 (垂直居中) */
+        .detail-header-center {
+            position: absolute;
+            left: 80px;
+            right: 80px;
+            top: 0;
+            bottom: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            pointer-events: none;
+            /* 防止遮挡点击 */
+        }
+
+        .detail-title-row {
+            display: flex;
+            align-items: center;
+            pointer-events: auto;
+        }
+
+        .detail-main-title {
+            font-size: 17px;
+            font-weight: 600;
+            color: #000;
+            line-height: 1.2;
+        }
+
+        .detail-sub-title {
+            font-size: 10px;
+            color: #999;
+            margin-top: 1px;
+            line-height: 1;
+        }
+
+        /* 配置按钮 */
+        /* 🌟 替换：配置按钮 & 右侧通用按钮样式 */
+        .nav-btn-right {
+            background: transparent;
             border: none;
             color: var(--primary);
-            padding: 6px 12px;
-            border-radius: 15px;
-            font-size: 13px;
+            padding: 0 10px 0 0;
+            font-size: 16px;
             cursor: pointer;
-            font-weight: 500;
+            font-weight: 400;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            height: 100%;
+        }
+
+        /* 兼容旧ID，防止JS报错 */
+        #nodeConfigBtn {
             display: none;
         }
 
-        /* 容器 */
+        /* --- 页面容器 --- */
         .page-container {
             flex: 1;
             overflow-y: auto;
             padding: 15px;
             padding-bottom: 80px;
             position: relative;
+            -webkit-overflow-scrolling: touch;
         }
 
         .page {
@@ -170,7 +211,7 @@
             }
         }
 
-        /* iOS 分段控制器 (Tab 切换) */
+        /* --- 业务样式 (保持不变) --- */
         .segmented-control {
             display: flex;
             background: #eeeff1;
@@ -199,7 +240,6 @@
             font-weight: 600;
         }
 
-        /* 服务卡片样式 */
         .service-card {
             background: white;
             border-radius: 12px;
@@ -251,7 +291,7 @@
             border-radius: 3px;
         }
 
-        /* 通用样式保持不变 */
+        /* 其余样式 (待办、日历、输入框等) */
         .fab-add {
             position: fixed;
             bottom: 30px;
@@ -1220,7 +1260,9 @@
             backdrop-filter: blur(5px);
         }
 
+        /* 🌟 核心：为白框增加相对定位 */
         .auth-box {
+            position: relative;
             background: white;
             padding: 30px;
             border-radius: 16px;
@@ -1228,6 +1270,24 @@
             max-width: 350px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
             text-align: center;
+        }
+
+        /* 🌟 核心：让叉号相对于白框绝对定位 */
+        .auth-close-btn {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 28px;
+            color: #ccc;
+            cursor: pointer;
+            line-height: 1;
+            z-index: 10;
+            padding: 10px;
+            /* 增加手机点击区域 */
+        }
+
+        .auth-close-btn:hover {
+            color: #333;
         }
 
         .auth-box h2 {
@@ -1337,10 +1397,12 @@
         #toolsPage {
             display: none;
             position: absolute;
-            top: 0;
+            top: 44px;
+            /* 从导航栏下方开始 */
             left: 0;
             width: 100%;
-            height: 100%;
+            height: calc(100% - 44px);
+            /* 扣除导航栏高度 */
             background: var(--bg);
             padding: 20px;
             box-sizing: border-box;
@@ -1355,7 +1417,7 @@
 
         #toolsPage .page-header-row {
             margin-top: 0 !important;
-            padding-top: 5px;
+            padding-top: 0;
         }
 
         .page-header-row {
@@ -1454,78 +1516,107 @@
             transform: scale(0.96);
         }
 
-        /* 🌟 优化：iOS 风格返回导航 */
-        .nav-back-btn {
-            background: transparent;
-            border: none;
-            color: var(--primary);
-            /* 经典的 iOS 蓝 */
-            font-size: 17px;
-            /* 标准字号 */
-            font-weight: 400;
-            display: flex;
-            align-items: center;
-            padding: 0;
-            padding-right: 10px;
-            /* 增加点击区域 */
-            cursor: pointer;
-            z-index: 20;
-            /* 确保在最上层 */
+        /* 管理员专用面板 */
+        .admin-float-btn {
+            position: fixed; bottom: 100px; left: 20px;
+            background: #000; color: #fff; width: 50px; height: 50px;
+            border-radius: 50%; display: none; /* 默认隐藏 */
+            align-items: center; justify-content: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3); font-size: 24px; cursor: pointer; z-index: 999;
         }
-
-        .nav-back-btn:active {
-            opacity: 0.5;
-        }
-
-        /* 点击时的反馈 */
-
-        .nav-back-btn svg {
-            width: 24px;
-            height: 24px;
-            fill: none;
-            stroke: currentColor;
-            stroke-width: 2.5;
-            /* 线条加粗 */
-            stroke-linecap: round;
-            stroke-linejoin: round;
-            margin-left: -6px;
-            /* 微调图标位置 */
-            margin-right: -2px;
-        }
+        .admin-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 10px; }
+        .admin-table th { text-align: left; background: #eee; padding: 8px; }
+        .admin-table td { border-bottom: 1px solid #eee; padding: 8px; }
+        .btn-del-user { color: white; background: red; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; }
     </style>
 </head>
 
 <body>
 
-    <nav class="navbar">
+    <nav id="mainNavBar" class="navbar-common">
         <div class="nav-left">
-            <button id="backBtn" onclick="goHome()" style="display:none;">
-                <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            <button class="nav-back-btn" id="globalBackBtn" onclick="goHome()" style="display:none;">
+                <svg viewBox="0 0 24 24">
+                    <polyline points="15 18 9 12 15 6"></polyline>
+                </svg>
                 首页
             </button>
-            <h1 id="pageTitle" class="page-title">工作助手</h1>
+            <h1 id="globalPageTitle" class="page-title">工作助手</h1>
         </div>
-        <div style="display:flex; align-items:center; gap:10px;">
+        <div class="nav-right">
             <span id="userBadge" class="user-badge" onclick="logout()" style="display:none;"></span>
-            <button id="nodeConfigBtn" onclick="openConfigModal('global')">⚙️ 备选节点配置</button>
+            <button id="nodeConfigBtn" class="nav-btn-right" onclick="openConfigModal('global')">
+                ⚙️ 节点库
+            </button>
         </div>
     </nav>
 
-    <div id="auth-modal" style="display:none;">
+    <nav id="detailNavBar" class="navbar-common" style="display:none; border-bottom: 0.5px solid rgba(0,0,0,0.1);">
+        <div class="nav-left">
+            <button class="nav-back-btn" onclick="goToPage('projectList')">
+                <svg viewBox="0 0 24 24">
+                    <polyline points="15 18 9 12 15 6"></polyline>
+                </svg>
+                列表
+            </button>
+        </div>
+
+        <div class="detail-header-center">
+            <div class="detail-title-row">
+                <span id="navDetailTitle" class="detail-main-title"></span>
+                <span style="font-size: 14px; color: var(--primary); cursor: pointer; margin-left: 4px;"
+                    onclick="editProjectName()">✎</span>
+            </div>
+            <div id="navDetailType" class="detail-sub-title"></div>
+        </div>
+
+        <div class="nav-right">
+            <button class="nav-btn-right" onclick="openConfigModal('global')">
+                ⚙️ 节点库
+            </button>
+        </div>
+        </div>
+    </nav>
+
+<div id="auth-modal" style="display:none;">
         <div class="auth-box">
             <h2 id="auth-title">个人账号登录</h2>
             <p style="font-size:12px;color:#666;margin-bottom:20px;">登录后可多端同步数据</p>
-            <input type="email" id="email" name="username" autocomplete="username" class="auth-input"
-                placeholder="任意邮箱格式的用户名">
-            <input type="password" id="password" name="password" autocomplete="current-password" class="auth-input"
-                placeholder="密码 (至少6位)">
+            
+            <input type="email" id="email" class="auth-input" placeholder="用户名 (邮箱格式)">
+            <input type="password" id="password" class="auth-input" placeholder="密码 (至少6位)">
+            
             <button class="auth-btn" id="auth-action-btn" onclick="handleAuth()">登录</button>
             <div id="auth-error" class="error-msg"></div>
             <div class="auth-switch" onclick="switchMode()">没有账号？点击注册</div>
         </div>
-    </div>
+    </div>  
 
     <div id="toast" class="toast">已同步到云端</div>
+
+<div id="adminBtn" class="admin-float-btn" onclick="openAdminPanel()">👮</div>
+
+    <div id="adminModal" class="modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <h3>👮 超级管理后台</h3>
+            <div style="margin: 10px 0; font-weight: bold;">
+                总注册并存储数据人数: <span id="adminTotalCount" style="color:red; font-size:20px;">0</span>
+            </div>
+            <div style="max-height: 60vh; overflow-y: auto;">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>用户ID (后4位)</th>
+                            <th>最后同步</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="adminUserList"></tbody>
+                </table>
+            </div>
+            <button class="btn-cancel" onclick="closeModal('adminModal')">关闭</button>
+        </div>
+    </div>
 
     <div class="page-container">
         <div id="homePage" class="page active">
@@ -1576,8 +1667,7 @@
                     <button class="todo-add-btn" onclick="addTodo()">+</button>
                 </div>
 
-                <div id="todoList" class="todo-list">
-                </div>
+                <div id="todoList" class="todo-list"></div>
             </div>
 
             <div class="section-head" style="margin-top:20px;">🚀 功能导航</div>
@@ -1668,28 +1758,6 @@
         </div>
 
         <div id="projectDetail" class="page">
-            <div
-                style="position: relative; height: 44px; display: flex; align-items: center; margin-bottom: 10px; border-bottom: 0.5px solid rgba(0,0,0,0.1);">
-
-                <button class="nav-back-btn" onclick="goToPage('projectList')">
-                    <svg viewBox="0 0 24 24">
-                        <polyline points="15 18 9 12 15 6"></polyline>
-                    </svg>
-                    列表
-                </button>
-
-                <div style="position: absolute; left: 60px; right: 60px; text-align: center; pointer-events: none;">
-                    <div style="display: flex; align-items: center; justify-content: center; gap: 4px;">
-                        <h2 id="detailTitle"
-                            style="margin: 0; font-size: 17px; font-weight: 600; color: #000; pointer-events: auto;"
-                            onclick="editProjectName()"></h2>
-                        <span style="font-size: 14px; color: var(--primary); cursor: pointer; pointer-events: auto;"
-                            onclick="editProjectName()">✎</span>
-                    </div>
-                    <div id="detailType" style="font-size: 10px; color: #999; margin-top: 1px;"></div>
-                </div>
-            </div>
-
             <div class="segmented-control">
                 <button id="seg_timeline" class="segment-btn active" onclick="switchDetailTab('timeline')">📅
                     进度主线</button>
@@ -1773,8 +1841,7 @@
         <div class="modal-content">
             <h3 style="margin-bottom: 5px;">📜 已完成任务</h3>
             <div style="font-size:12px; color:#999; margin-bottom:15px;">点击“恢复”可放回首页</div>
-            <div id="historyListContainer" class="history-list">
-            </div>
+            <div id="historyListContainer" class="history-list"></div>
             <button class="btn-cancel" onclick="closeModal('todoHistoryModal')">关闭</button>
         </div>
     </div>
@@ -1888,7 +1955,7 @@
 
     <div id="configModal" class="modal">
         <div class="modal-content" style="max-width:600px;">
-            <h3 id="configModalTitle">备选节点配置</h3>
+            <h3 id="configModalTitle">节点库</h3>
             <div class="config-container" id="configContainer"></div>
             <div style="display:flex; gap:10px; margin-top:15px;">
                 <button class="btn-primary" style="flex:1;" onclick="handleConfigSave()">保存</button>
@@ -1911,9 +1978,6 @@
     </div>
 
     <script>
-        // ==========================================
-        // ☁️ 核心配置：云同步模块
-        // ==========================================
         const SUPABASE_URL = 'https://api.9990088.xyz';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRkZGltYWR6cGJjdm10b3Vqb2VjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAxMTE3NTksImV4cCI6MjA4NTY4Nzc1OX0.dMJdVjjr3D0oGRli1DE2ohvl-5abwLGHSPAaS8wREG0';
 
@@ -1922,18 +1986,40 @@
             auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
         });
 
+// ⚠️ 把这个换成你自己的管理员邮箱
+const ADMIN_EMAIL = "liu@qq.com";
+
         let currentUser = null;
         let isRegisterMode = false;
         let syncTimer = null;
 
-        async function initApp() {
+async function initApp() {
             const { data: { session } } = await _supabase.auth.getSession();
             if (session) {
-                document.getElementById('auth-modal').style.display = 'none';
+                // 有账号 -> 走正常的登录流程（含数据清洗检查）
                 handleLoginSuccess(session.user);
             } else {
+                // 没账号 -> 加载背景，并强制显示登录框
+                initHome(); 
                 document.getElementById('auth-modal').style.display = 'flex';
             }
+        }
+        // 🌟 新增函数：进入访客模式
+        function enterGuestMode() {
+            // 1. 关闭登录弹窗
+            document.getElementById('auth-modal').style.display = 'none';
+
+            // 2. 提示用户
+            showToast('👀 访客模式：数据仅保存在本机');
+
+            // 3. 确保当前没有登录用户状态
+            currentUser = null;
+            document.getElementById('userBadge').style.display = 'none';
+
+            // 4. 加载本地缓存的数据（如果有的话）并渲染页面
+            loadConfig();
+            migrateData();
+            initHome();
         }
 
         async function handleAuth() {
@@ -1970,27 +2056,59 @@
             }
         }
 
-        function handleLoginSuccess(user) {
-            currentUser = user;
+// 1. 🌟 新增：访客模式点击叉号的逻辑
+        function enterGuestMode() {
             document.getElementById('auth-modal').style.display = 'none';
-            const userBadge = document.getElementById('userBadge');
-            userBadge.innerText = user.email.split('@')[0];
-            userBadge.style.display = 'block';
-
-            loadConfig();
-            migrateData();
-            initHome();
-
-            syncCloudToLocal().then(() => {
-                console.log("云端数据同步完成，刷新界面");
-                loadConfig();
-                migrateData();
-                initHome();
-            }).catch(err => {
-                console.error("后台同步失败:", err);
-            });
+            showToast('👀 访客模式：数据仅存在本机');
+            currentUser = null;
+            // 直接加载本地现有内容
+            loadConfig(); migrateData(); initHome();
         }
 
+        // 2. 🌟 终极修复：登录成功处理（防串号死循环）
+        async function handleLoginSuccess(user) {
+            currentUser = user;
+            document.getElementById('auth-modal').style.display = 'none';
+            
+            const userBadge = document.getElementById('userBadge');
+            userBadge.innerText = user.email.split('@')[0];
+            userBadge.style.display = 'block'; 
+            // 🌟 新增：如果是管理员，显示黑色管理按钮
+            if (user.email === ADMIN_EMAIL) {
+                document.getElementById('adminBtn').style.display = 'flex';
+                showToast('👮 管理员模式已激活');
+            } else {
+                document.getElementById('adminBtn').style.display = 'none';
+            }
+            showToast('☁️ 正在核验云端数据...');
+
+            try {
+                // 🔍 第一步：先不去读本地，直接问云端这个号有没有数据
+                const { data, error } = await _supabase.from('user_data').select('content').eq('user_id', currentUser.id).single();
+
+                if (data && data.content) {
+                    // 🟢 情况A：老用户，云端有东西，强行覆盖掉本地目前的脏数据
+                    const c = data.content;
+                    if(c.projects) localStorage.setItem(DB_KEY_DATA, JSON.stringify(c.projects));
+                    if(c.config) localStorage.setItem(DB_KEY_CONFIG, JSON.stringify(c.config));
+                    if(c.attendance) localStorage.setItem(DB_KEY_OT, JSON.stringify(c.attendance));
+                    if(c.todo) localStorage.setItem(DB_KEY_TODO, JSON.stringify(c.todo));
+                    if(c.calendar) localStorage.setItem(DB_KEY_CAL, JSON.stringify(c.calendar));
+                } else {
+                    // 🔴 情况B：新用户，云端是空的，立刻执行斩首行动：清空本地缓存！
+                    console.log("检测到新账号，正在清洗本地残留数据...");
+                    localStorage.clear(); 
+                }
+            } catch (err) {
+                console.log("该账号暂无云端备份");
+            }
+
+            // 🚀 第三步：数据洗干净了，再重新加载渲染页面
+            loadConfig(); 
+            migrateData(); 
+            initHome(); 
+            showToast('✅ 登录成功');
+        }
         function switchMode() {
             isRegisterMode = !isRegisterMode;
             document.getElementById('auth-title').innerText = isRegisterMode ? '注册新账号' : '云端账号登录';
@@ -2006,8 +2124,14 @@
         }
 
         async function logout() {
-            if (confirm('确定退出登录吗？')) {
+            if (confirm('确定退出登录吗？\n注意：请确保数据已同步，退出将清除本地缓存。')) {
+                // 🧹 1. 核心修复：暴力清空本地所有缓存数据
+                localStorage.clear();
+
+                // 2. 断开云端连接
                 await _supabase.auth.signOut();
+
+                // 3. 刷新页面，回到登录页
                 window.location.reload();
             }
         }
@@ -2050,21 +2174,23 @@
             setTimeout(() => t.style.opacity = '0', 2000);
         }
 
+        // --- 🌟 V64 核心修改：智能导航栏切换 logic ---
         function goHome() {
-            // 🌟 核心修复：返回首页时强制隐藏子页面，显示主页
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.getElementById('homePage').classList.add('active');
 
-            // 隐藏返回按钮，显示头像
-            document.getElementById('backBtn').style.display = 'none';
-            const userBadge = document.getElementById('userBadge');
-            if (userBadge) userBadge.style.display = 'block';
+            // 切换到主导航栏
+            document.getElementById('mainNavBar').style.display = 'flex';
+            document.getElementById('detailNavBar').style.display = 'none';
 
-            // 隐藏配置按钮
-            const confBtn = document.getElementById('nodeConfigBtn');
-            if (confBtn) confBtn.style.display = 'none';
+            // 恢复主导航状态
+            document.getElementById('globalBackBtn').style.display = 'none';
+            document.getElementById('userBadge').style.display = 'block';
+            document.getElementById('globalPageTitle').innerText = '工作助手';
 
-            // 刷新首页数据（包括待办、考勤等）
+            // 配置按钮隐藏
+            document.getElementById('nodeConfigBtn').style.display = 'none';
+
             initHome();
         }
 
@@ -2072,15 +2198,30 @@
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.getElementById(id).classList.add('active');
 
-            document.getElementById('backBtn').style.display = id === 'homePage' ? 'none' : 'block';
+            if (id === 'projectDetail') {
+                // 详情页：显示详情专用导航栏
+                document.getElementById('mainNavBar').style.display = 'none';
+                document.getElementById('detailNavBar').style.display = 'flex';
+            } else {
+                // 其他页面：显示主导航栏
+                document.getElementById('mainNavBar').style.display = 'flex';
+                document.getElementById('detailNavBar').style.display = 'none';
 
-            // 头像只在首页显示
-            const userBadge = document.getElementById('userBadge');
-            if (userBadge) userBadge.style.display = id === 'homePage' ? 'block' : 'none';
+                // 处理“列表页”等子页面的返回按钮
+                const isHome = (id === 'homePage');
+                document.getElementById('globalBackBtn').style.display = isHome ? 'none' : 'flex';
+                document.getElementById('userBadge').style.display = isHome ? 'block' : 'none';
 
-            // 配置按钮只在工程相关页显示
-            const confBtn = document.getElementById('nodeConfigBtn');
-            if (confBtn) confBtn.style.display = (id === 'projectList' || id === 'projectDetail') ? 'block' : 'none';
+                // 工程列表页显示“配置”按钮
+                document.getElementById('nodeConfigBtn').style.display = (id === 'projectList') ? 'block' : 'none';
+                // 🌟 修改：只有在首页显示标题，其他页面留空
+                if (id === 'homePage') {
+                    document.getElementById('globalPageTitle').innerText = '工作助手';
+                } else {
+                    document.getElementById('globalPageTitle').innerText = '';
+
+                }
+            }
 
             if (id === 'projectList') renderProjects();
             if (id === 'attendancePage') renderOtPage();
@@ -2097,106 +2238,33 @@
             "📌 项目前期手续": ["方案设计", "市局报审", "区政府会", "发改委立项", "事前评估", "财政评审", "自定义新增"],
             "💰 采购手续": ["委托代理签合同", "编制采购文件", "意向公开", "发布公告", "完成评标", "发布中标公示"],
             "🏢 管理处内部手续": ["党组会", "主任办公会", "纸质请示", "付款"],
-            "🏗️ 工程实施过程手续": ["开工备案", "设计交底", "施工入场", "竣工验收", "结算审核", "资料归档"]
+            "🏗️ 工程实施过程及后续手续": ["开工备案", "设计交底", "施工入场", "竣工验收", "结算审核", "资料归档"]
         };
 
-        // 🌟 核心：精简版业务字段库 (V59)
         const DEFAULT_CONFIG = {
-            "方案设计": [
-                { key: "finishDate", label: "图纸完成时间", type: "date" },
-                { key: "designUnit", label: "设计单位", type: "text" }
-            ],
-            "市局报审": [
-                { key: "submitDate", label: "报送时间", type: "date" },
-                { key: "replyDate", label: "批复时间", type: "date" }
-            ],
-            "区政府会": [
-                { key: "meetDate", label: "上会时间", type: "date" },
-                { key: "minutesNo", label: "纪要文号", type: "text" }
-            ],
-            "发改委立项": [
-                { key: "submitDate", label: "申报时间", type: "date" },
-                { key: "approvalDate", label: "批复时间", type: "date" },
-                { key: "approvalAmount", label: "批复金额(元)", type: "number" },
-                { key: "projectCode", label: "项目代码", type: "text" }
-            ],
-            "事前评估": [
-                { key: "evalDate", label: "评估会议时间", type: "date" },
-                { key: "reportDate", label: "报告出具时间", type: "date" }
-            ],
-            "财政评审": [
-                { key: "sendDate", label: "送审时间", type: "date" },
-                { key: "reportDate", label: "评审报告时间", type: "date" },
-                { key: "auditAmount", label: "审定金额(元)", type: "number" }
-            ],
-            "自定义新增": [
-                { key: "taskName", label: "事项名称", type: "text" },
-                { key: "finishDate", label: "完成时间", type: "date" },
-                { key: "remark", label: "备注", type: "text" }
-            ],
-            "委托代理签合同": [
-                { key: "signDate", label: "签订时间", type: "date" },
-                { key: "agencyName", label: "代理机构名称", type: "text" }
-            ],
-            "编制采购文件": [
-                { key: "finishDate", label: "编制完成时间", type: "date" },
-                { key: "controlPrice", label: "控制价/预算(元)", type: "number" },
-                { key: "purchaseMode", label: "采购方式", type: "select", options: ["公开招标", "竞争性磋商", "单一来源", "询价"] }
-            ],
-            "意向公开": [
-                { key: "publicDate", label: "挂网时间", type: "date" },
-                { key: "link", label: "公告链接", type: "text" }
-            ],
-            "发布公告": [
-                { key: "publishDate", label: "发布时间", type: "date" },
-                { key: "openDate", label: "预计开标时间", type: "date" }
-            ],
-            "完成评标": [
-                { key: "evalDate", label: "评标时间", type: "date" },
-                { key: "evalLocation", label: "评标地点", type: "text" }
-            ],
-            "发布中标公示": [
-                { key: "noticeDate", label: "公示发布时间", type: "date" },
-                { key: "winner", label: "中标单位", type: "text" },
-                { key: "winAmount", label: "中标金额(元)", type: "number" }
-            ],
-            "党组会": [
-                { key: "meetDate", label: "会议时间", type: "date" },
-                { key: "topic", label: "议题名称", type: "text" }
-            ],
-            "主任办公会": [
-                { key: "meetDate", label: "会议时间", type: "date" },
-                { key: "topic", label: "议题名称", type: "text" }
-            ],
-            "纸质请示": [
-                { key: "approveDate", label: "批准时间", type: "date" }
-            ],
-            "付款": [
-                { key: "submitFinanceDate", label: "提交财务日期", type: "date" },
-                { key: "payAmount", label: "支付金额(元)", type: "number" },
-                { key: "payType", label: "款项性质", type: "select", options: ["首笔款", "进度款", "尾款", "质保金"] }
-            ],
-            "开工备案": [
-                { key: "submitDate", label: "备案时间", type: "date" },
-                { key: "recordType", label: "备案类型", type: "select", options: ["监督站备案", "工程科备案"] }
-            ],
-            "设计交底": [
-                { key: "meetDate", label: "交底时间", type: "date" }
-            ],
-            "施工入场": [
-                { key: "entryDate", label: "进场日期", type: "date" }
-            ],
-            "竣工验收": [
-                { key: "checkDate", label: "竣工验收日期", type: "date" }
-            ],
-            "结算审核": [
-                { key: "finishAuditDate", label: "审定日期", type: "date" },
-                { key: "finalAmount", label: "审定金额(元)", type: "number" },
-                { key: "reduceAmount", label: "核减金额(元)", type: "number" }
-            ],
-            "资料归档": [
-                { key: "archiveDate", label: "归档日期", type: "date" }
-            ]
+            "方案设计": [{ key: "finishDate", label: "图纸完成时间", type: "date" }, { key: "designUnit", label: "设计单位", type: "text" }],
+            "市局报审": [{ key: "submitDate", label: "报送时间", type: "date" }, { key: "replyDate", label: "批复时间", type: "date" }],
+            "区政府会": [{ key: "meetDate", label: "上会时间", type: "date" }, { key: "minutesNo", label: "纪要文号", type: "text" }],
+            "发改委立项": [{ key: "submitDate", label: "申报时间", type: "date" }, { key: "approvalDate", label: "批复时间", type: "date" }, { key: "approvalAmount", label: "批复金额(元)", type: "number" }, { key: "projectCode", label: "项目代码", type: "text" }],
+            "事前评估": [{ key: "evalDate", label: "评估会议时间", type: "date" }, { key: "reportDate", label: "报告出具时间", type: "date" }],
+            "财政评审": [{ key: "sendDate", label: "送审时间", type: "date" }, { key: "reportDate", label: "评审报告时间", type: "date" }, { key: "auditAmount", label: "审定金额(元)", type: "number" }],
+            "自定义新增": [{ key: "taskName", label: "事项名称", type: "text" }, { key: "finishDate", label: "完成时间", type: "date" }, { key: "remark", label: "备注", type: "text" }],
+            "委托代理签合同": [{ key: "signDate", label: "签订时间", type: "date" }, { key: "agencyName", label: "代理机构名称", type: "text" }],
+            "编制采购文件": [{ key: "finishDate", label: "编制完成时间", type: "date" }, { key: "controlPrice", label: "控制价/预算(元)", type: "number" }, { key: "purchaseMode", label: "采购方式", type: "select", options: ["公开招标", "竞争性磋商", "单一来源", "询价"] }],
+            "意向公开": [{ key: "publicDate", label: "挂网时间", type: "date" }, { key: "link", label: "公告链接", type: "text" }],
+            "发布公告": [{ key: "publishDate", label: "发布时间", type: "date" }, { key: "openDate", label: "预计开标时间", type: "date" }],
+            "完成评标": [{ key: "evalDate", label: "评标时间", type: "date" }, { key: "evalLocation", label: "评标地点", type: "text" }],
+            "发布中标公示": [{ key: "noticeDate", label: "公示发布时间", type: "date" }, { key: "winner", label: "中标单位", type: "text" }, { key: "winAmount", label: "中标金额(元)", type: "number" }],
+            "党组会": [{ key: "meetDate", label: "会议时间", type: "date" }, { key: "topic", label: "议题名称", type: "text" }],
+            "主任办公会": [{ key: "meetDate", label: "会议时间", type: "date" }, { key: "topic", label: "议题名称", type: "text" }],
+            "纸质请示": [{ key: "approveDate", label: "批准时间", type: "date" }],
+            "付款": [{ key: "submitFinanceDate", label: "提交财务日期", type: "date" }, { key: "payAmount", label: "支付金额(元)", type: "number" }, { key: "payType", label: "款项性质", type: "select", options: ["首笔款", "进度款", "尾款", "质保金"] }],
+            "开工备案": [{ key: "submitDate", label: "备案时间", type: "date" }, { key: "recordType", label: "备案类型", type: "select", options: ["监督站备案", "工程科备案"] }],
+            "设计交底": [{ key: "meetDate", label: "交底时间", type: "date" }],
+            "施工入场": [{ key: "entryDate", label: "进场日期", type: "date" }],
+            "竣工验收": [{ key: "checkDate", label: "竣工验收日期", type: "date" }],
+            "结算审核": [{ key: "finishAuditDate", label: "审定日期", type: "date" }, { key: "finalAmount", label: "审定金额(元)", type: "number" }, { key: "reduceAmount", label: "核减金额(元)", type: "number" }],
+            "资料归档": [{ key: "archiveDate", label: "归档日期", type: "date" }]
         };
 
         let GLOBAL_CONFIG = {}, currentProjectId = null, currentStageIndex = null, draggedItemIndex = null, draggedProjectIndex = null, configMode = 'global', tempLocalConfig = null, editingKey = null, dragSrcType = null;
@@ -2206,7 +2274,6 @@
 
         const DB = { get: () => JSON.parse(localStorage.getItem(DB_KEY_DATA) || '[]'), save: d => { localStorage.setItem(DB_KEY_DATA, JSON.stringify(d)); debouncedSync(); } };
         const DB_OT = { get: () => { const d = localStorage.getItem(DB_KEY_OT); return d ? JSON.parse(d) : { annual: 0, saved: 0, records: [], leaveRecords: [] } }, save: d => { localStorage.setItem(DB_KEY_OT, JSON.stringify(d)); debouncedSync(); } };
-        // 🌟 数据搜救版：自动合并旧数据并找回
         const DB_TODO = {
             get: () => {
                 const masterData = localStorage.getItem('todo_master_db');
@@ -2235,106 +2302,6 @@
             });
         }
         function migrateData() { let list = DB.get(), ch = false; list.forEach(p => { p.stages.forEach(s => { if (!s.config) { s.config = JSON.parse(JSON.stringify(GLOBAL_CONFIG[s.name] || [])); ch = true } }) }); if (ch) DB.save(list); }
-        // ==========================================
-        // 🌟 V62 新增：服务双视图 & 参建单位逻辑
-        // ==========================================
-
-        // 1. 切换 Tab 视图
-        function switchDetailTab(tabName) {
-            // 切换按钮样式
-            document.querySelectorAll('.segment-btn').forEach(btn => btn.classList.remove('active'));
-            document.getElementById(`seg_${tabName}`).classList.add('active');
-
-            // 切换内容显示
-            document.getElementById('view_timeline').style.display = (tabName === 'timeline') ? 'block' : 'none';
-            document.getElementById('view_services').style.display = (tabName === 'services') ? 'block' : 'none';
-
-            // 如果切到服务页，刷新列表
-            if (tabName === 'services') {
-                renderServices();
-            }
-        }
-
-        // 2. 渲染参建单位列表
-        function renderServices() {
-            const list = DB.get();
-            const p = list.find(x => x.id === currentProjectId);
-            const container = document.getElementById('servicesListContainer');
-            const emptyHint = document.getElementById('emptyServicesHint');
-
-            container.innerHTML = '';
-
-            // 确保 services 数组存在
-            if (!p.services) p.services = [];
-
-            if (p.services.length === 0) {
-                emptyHint.style.display = 'block';
-                return;
-            } else {
-                emptyHint.style.display = 'none';
-            }
-
-            p.services.forEach((svc, idx) => {
-                const div = document.createElement('div');
-                div.className = 'service-card';
-                // 计算进度条宽度 (简单模拟，按合同金额是否填满来展示，或者默认为 0)
-                // 这里为了视觉效果，随机给一个 30%-80% 的进度，实际可后续开发“支付管理”来联动
-                const mockProgress = Math.floor(Math.random() * 50) + 30;
-
-                div.innerHTML = `
-                    <div style="display:flex; justify-content:space-between;">
-                        <span class="service-type-tag">${svc.type}</span>
-                        <button class="btn-delete-icon" onclick="deleteService(${idx})">
-                            <svg viewBox="0 0 24 24"><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                        </button>
-                    </div>
-                    <div class="service-name">${svc.name}</div>
-                    <div class="service-row">
-                        <span>💰 合同额: ¥${Number(svc.amount).toLocaleString()}</span>
-                        <span>👤 ${svc.contact || '无联系人'}</span>
-                    </div>
-                    <div class="progress-bg">
-                        <div class="progress-fill" style="width: ${mockProgress}%"></div>
-                    </div>
-                `;
-                container.appendChild(div);
-            });
-        }
-
-        // 3. 保存新单位
-        function saveService() {
-            const type = document.getElementById('svcType').value;
-            const name = document.getElementById('svcName').value;
-            const amount = document.getElementById('svcAmount').value;
-            const contact = document.getElementById('svcContact').value;
-
-            if (!name) return alert('请输入单位名称');
-
-            const list = DB.get();
-            const p = list.find(x => x.id === currentProjectId);
-
-            if (!p.services) p.services = [];
-            p.services.push({ type, name, amount, contact });
-
-            DB.save(list);
-            closeModal('addServiceModal');
-            renderServices(); // 刷新列表
-
-            // 清空输入框
-            document.getElementById('svcName').value = '';
-            document.getElementById('svcAmount').value = '';
-            document.getElementById('svcContact').value = '';
-        }
-
-        // 4. 删除单位
-        function deleteService(idx) {
-            if (!confirm('确定移除该参建单位吗？')) return;
-            const list = DB.get();
-            const p = list.find(x => x.id === currentProjectId);
-            p.services.splice(idx, 1);
-            DB.save(list);
-            renderServices();
-        }
 
         window.onload = function () { initApp(); };
 
@@ -2412,25 +2379,16 @@
             renderCalendar(viewYear, viewMonth);
         }
 
-        // --- 🌟 修复版：待办渲染函数 ---
         function renderTodos() {
             const list = DB_TODO.get();
             const container = document.getElementById('todoList');
-
-            // 防止容器找不到报错
             if (!container) return;
-
             container.innerHTML = '';
-
-            // 1. 筛选未完成
             const activeTodos = list.map((t, i) => ({ ...t, originIdx: i })).filter(t => !t.done);
-
-            // 3. 渲染列表
             if (activeTodos.length === 0) {
                 container.innerHTML = '<div class="empty-state">🎉 太棒了，所有待办已清空！</div>';
                 return;
             }
-
             activeTodos.forEach(t => {
                 const div = document.createElement('div');
                 div.className = 'todo-item';
@@ -2458,24 +2416,16 @@
         function toggleTodo(originIdx) {
             const list = DB_TODO.get();
             const item = list[originIdx];
-
-            item.done = !item.done; // 反转状态
-
-            // 🌟 核心修改：如果是“标记为完成”，则记录当前时间
+            item.done = !item.done;
             if (item.done) {
                 const now = new Date();
-                // 格式示例：2月7日 14:30
                 const timeStr = `${now.getMonth() + 1}月${now.getDate()}日 ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
                 item.completedAt = timeStr;
             } else {
-                // 如果是“恢复未完成”，则清除时间
                 delete item.completedAt;
             }
-
             DB_TODO.save(list);
             renderTodos();
-
-            // 如果历史弹窗是打开的，立即刷新它以便看到变化
             if (document.getElementById('todoHistoryModal').classList.contains('open')) {
                 renderHistoryList();
             }
@@ -2497,23 +2447,18 @@
             openModal('todoHistoryModal');
         }
 
-        // 🌟 修复版：历史记录渲染（解决排版错乱）
         function renderHistoryList() {
             const list = DB_TODO.get();
             const container = document.getElementById('historyListContainer');
             container.innerHTML = '';
-
             const doneTodos = list.map((t, i) => ({ ...t, originIdx: i })).filter(t => t.done);
-
             if (doneTodos.length === 0) {
                 container.innerHTML = '<div class="empty-state">暂无归档记录</div>';
                 return;
             }
-
             doneTodos.forEach(t => {
                 const div = document.createElement('div');
                 div.className = 'history-item';
-                // 关键修改：用一个 flex-row 把上面一行包起来
                 div.innerHTML = `
                     <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
                         <div style="flex:1; text-decoration:line-through; color:#999; font-size:14px; margin-right:10px; word-break:break-all;">${t.text}</div>
@@ -2547,7 +2492,7 @@
                 const div = document.createElement('div');
                 div.className = 'ot-list-item';
                 div.style.cursor = 'pointer';
-                div.innerHTML = `<div style="flex:1;"><div style="font-weight:600"><span class="leave-type-tag" style="background:${typeColor}">${l.type || '休假'}</span>${l.date} <span style="color:#FF3B30">-${days}天</span></div><div style="font-size:12px;color:#999;margin-left:5px;">${l.note || '-'}</div></div><button class="btn-delete-icon" onclick="event.stopPropagation(); delLeaveItem(${idx})"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>`;
+                div.innerHTML = `<div style="flex:1;"><div style="font-weight:600"><span class="leave-type-tag" style="background:${typeColor}">${l.type || '休假'}</span>${l.date} <span style="color:#FF3B30">-${days}天</span></div><div style="font-size:12px;color:#999;margin-left:5px;">${l.note || '-'}</div></div><button class="btn-delete-icon" onclick="event.stopPropagation(); delLeaveItem(${idx})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>`;
                 div.onclick = () => editLeave(idx);
                 lvContainer.appendChild(div);
             });
@@ -2558,7 +2503,7 @@
                 div.className = `ot-card ${r.status === 'used' ? 'used' : ''}`;
                 let actionHtml = '';
                 let statusBadge = '';
-                const trashIcon = `<button class="btn-delete-icon" onclick="delOtItem('${r.id}')" style="margin-left:0;"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>`;
+                const trashIcon = `<button class="btn-delete-icon" onclick="delOtItem('${r.id}')" style="margin-left:0;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>`;
                 if (r.status === 'used') {
                     statusBadge = `<span class="ot-badge">已休</span>`;
                     actionHtml = `<div style="display:flex;justify-content:flex-end;align-items:center;margin-top:5px;"><span style="font-size:12px;margin-right:10px;">归档: ${r.usedDate}</span> ${trashIcon}</div>`;
@@ -2637,13 +2582,21 @@
         function renderConfigContainer() {
             const container = document.getElementById('configContainer');
             container.innerHTML = '';
+
+            // 读取私有节点映射表 (格式: { "项目前期手续": ["我的私有节点A"], "采购手续": [] })
+            const customMap = GLOBAL_CONFIG._customNodeMap || {};
+
             Object.keys(NODE_CATEGORIES).forEach(cat => {
+                // 1. 渲染分类标题
                 const catTitle = document.createElement('div');
                 catTitle.className = 'config-category-title';
                 catTitle.innerText = cat;
                 container.appendChild(catTitle);
+
                 const grid = document.createElement('div');
                 grid.className = 'config-node-grid';
+
+                // 2. 渲染【公共节点】 (黑色)
                 NODE_CATEGORIES[cat].forEach(nodeName => {
                     const nodeBtn = document.createElement('div');
                     nodeBtn.className = 'config-node-item';
@@ -2651,6 +2604,70 @@
                     nodeBtn.onclick = () => openNodeDetailEditor(nodeName);
                     grid.appendChild(nodeBtn);
                 });
+
+                // 3. 渲染【私有节点】 (紫色，仅属于当前分类)
+                if (customMap[cat] && Array.isArray(customMap[cat])) {
+                    customMap[cat].forEach(nodeName => {
+                        const nodeBtn = document.createElement('div');
+                        nodeBtn.className = 'config-node-item';
+                        nodeBtn.innerText = nodeName;
+                        // 🌟 视觉区分：私有节点带紫色边框
+                        nodeBtn.style.border = '1px solid var(--purple)';
+                        nodeBtn.style.color = 'var(--purple)';
+                        nodeBtn.style.position = 'relative';
+
+                        // 增加一个小角标表示私有
+                        const badge = document.createElement('span');
+                        badge.innerText = '私';
+                        badge.style.cssText = 'position:absolute; top:2px; right:2px; font-size:8px; background:var(--purple); color:white; padding:1px 3px; border-radius:4px;';
+                        nodeBtn.appendChild(badge);
+
+                        nodeBtn.onclick = () => openNodeDetailEditor(nodeName);
+                        grid.appendChild(nodeBtn);
+                    });
+                }
+                // 🌟 新增函数：分门别类新建私有节点
+                function createNewNodeDefinition(categoryName) {
+                    const name = prompt(`要在【${categoryName}】下新建什么节点？\n(例如: 文物局审批)`);
+                    if (!name) return;
+
+                    // 检查重名
+                    if (GLOBAL_CONFIG[name] || DEFAULT_CONFIG[name]) {
+                        return alert("该节点名称已存在！");
+                    }
+
+                    // 1. 初始化节点字段配置 (默认给两个通用字段)
+                    GLOBAL_CONFIG[name] = [
+                        { key: "finishDate", label: "完成时间", type: "date" },
+                        { key: "remark", label: "备注", type: "text" }
+                    ];
+
+                    // 2. 记录到私有映射表 (Key是分类名, Value是节点数组)
+                    // 结构示例: { "项目前期手续": ["文物审批", "绿化迁移"], "采购手续": [] }
+                    if (!GLOBAL_CONFIG._customNodeMap) GLOBAL_CONFIG._customNodeMap = {};
+                    if (!GLOBAL_CONFIG._customNodeMap[categoryName]) GLOBAL_CONFIG._customNodeMap[categoryName] = [];
+
+                    GLOBAL_CONFIG._customNodeMap[categoryName].push(name);
+
+                    // 3. 保存并刷新
+                    localStorage.setItem(DB_KEY_CONFIG, JSON.stringify(GLOBAL_CONFIG));
+                    debouncedSync();
+                    renderConfigContainer(); // 刷新界面，你就能看到新加的按钮了
+
+                    // 4. 自动打开编辑窗口，方便立刻加字段
+                    openNodeDetailEditor(name);
+                }
+                // 4. 渲染【+ 自定义新增】按钮 (就在当前分类里)
+                const addBtn = document.createElement('div');
+                addBtn.className = 'config-node-item';
+                addBtn.style.border = '1px dashed #999';
+                addBtn.style.color = '#999';
+                addBtn.style.fontSize = '12px';
+                addBtn.innerHTML = '+ 自定义<br>新增';
+                // 🌟 关键：点击时把当前分类名 cat 传进去
+                addBtn.onclick = () => createNewNodeDefinition(cat);
+                grid.appendChild(addBtn);
+
                 container.appendChild(grid);
             });
         }
@@ -2674,7 +2691,7 @@
                 if (field.options && field.options.length > 0) {
                     optionsStr = `<br><span class="node-field-type">选项: ${field.options.join(', ')}</span>`;
                 }
-                item.innerHTML = `<div class="node-field-info"><div class="node-field-name">${field.label}</div><div class="node-field-type">字段: ${field.key} | 类型: ${field.type}${optionsStr}</div></div><button class="btn-delete-icon" onclick="event.stopPropagation(); deleteConfigField('${nodeName}', ${idx})"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>`;
+                item.innerHTML = `<div class="node-field-info"><div class="node-field-name">${field.label}</div><div class="node-field-type">字段: ${field.key} | 类型: ${field.type}${optionsStr}</div></div><button class="btn-delete-icon" onclick="event.stopPropagation(); deleteConfigField('${nodeName}', ${idx})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>`;
                 fieldList.appendChild(item);
             });
             modal.classList.add('open');
@@ -2764,11 +2781,18 @@
         function openNodeLibrary() {
             const container = document.getElementById('nodeLibraryGrid');
             container.innerHTML = '';
+
+            // 读取私有映射
+            const customMap = GLOBAL_CONFIG._customNodeMap || {};
+
             Object.keys(NODE_CATEGORIES).forEach(cat => {
+                // 渲染分类头
                 const header = document.createElement('div');
                 header.style.cssText = "grid-column: 1 / -1; font-size: 13px; font-weight: bold; color: #888; margin: 15px 0 5px 0; padding-left: 5px; border-left: 3px solid var(--primary);";
                 header.innerText = cat;
                 container.appendChild(header);
+
+                // 1. 先列出公共节点
                 NODE_CATEGORIES[cat].forEach(nodeName => {
                     const btn = document.createElement('div');
                     btn.className = 'node-option';
@@ -2776,7 +2800,22 @@
                     btn.onclick = () => addStage(nodeName);
                     container.appendChild(btn);
                 });
+
+                // 2. 🌟 紧接着列出该分类下的【私有节点】
+                if (customMap[cat] && Array.isArray(customMap[cat])) {
+                    customMap[cat].forEach(nodeName => {
+                        const btn = document.createElement('div');
+                        btn.className = 'node-option';
+                        btn.innerText = '+ ' + nodeName;
+                        // 样式区分：紫色文字
+                        btn.style.color = 'var(--purple)';
+                        btn.style.borderColor = 'var(--purple)';
+                        btn.onclick = () => addStage(nodeName);
+                        container.appendChild(btn);
+                    });
+                }
             });
+
             openModal('nodeLibraryModal');
         }
 
@@ -2794,7 +2833,16 @@
             refreshDetail(p);
         }
 
-        function openDetail(id) { currentProjectId = id; const p = DB.get().find(x => x.id == id); document.getElementById('detailTitle').innerText = p.name; document.getElementById('detailType').innerText = { 'special': '专项工程', 'odd': '零星工程', 'repair': '抢修工程' }[p.type]; goToPage('projectDetail'); refreshDetail(p); }
+        function openDetail(id) {
+            currentProjectId = id;
+            const p = DB.get().find(x => x.id == id);
+            // 🌟 核心修复：更新详情页顶部导航数据
+            document.getElementById('navDetailTitle').innerText = p.name;
+            const typeMap = { 'special': '专项工程', 'odd': '零星工程', 'repair': '抢修工程' };
+            document.getElementById('navDetailType').innerText = typeMap[p.type];
+            goToPage('projectDetail');
+            refreshDetail(p);
+        }
 
         function refreshDetail(p) {
             const c = document.getElementById('stagesContainer'); c.innerHTML = '';
@@ -2813,7 +2861,7 @@
                 if (s.status === 'done') { prev.innerHTML += `<div class="preview-item done"><div class="preview-item-title"><span>${s.name}</span></div><div class="preview-data-table">${getDisplayHtml('preview')}</div></div>`; }
                 let det = ''; if (s.status !== 'waiting') { det = '<div class="data-grid">' + getDisplayHtml('card') + '</div>'; }
                 const ico = s.status === 'done' ? '✅' : (s.status === 'processing' ? '🔥' : '⏳');
-                c.innerHTML += `<div class="stage-card ${s.status}"><div class="node-sort-zone"><button class="node-sort-btn" onclick="moveStageUp(${i})">↑</button><button class="node-sort-btn" onclick="moveStageDown(${i})">↓</button></div><div class="card-content" onclick="openStageEdit(${i})"><div class="card-actions-fixed"><button class="icon-btn-card btn-edit-struct" onclick="event.stopPropagation();openConfigModal('local', ${i})">⚙️</button><button class="btn-delete-icon" style="margin-left:0;" onclick="event.stopPropagation();deleteStage(${i})"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button></div><div class="status-bar ${s.status}"></div><div class="card-header-row"><span class="card-title">${s.name}</span><span class="card-status-text">${ico}</span></div>${det}</div></div>`;
+                c.innerHTML += `<div class="stage-card ${s.status}"><div class="node-sort-zone"><button class="node-sort-btn" onclick="moveStageUp(${i})">↑</button><button class="node-sort-btn" onclick="moveStageDown(${i})">↓</button></div><div class="card-content" onclick="openStageEdit(${i})"><div class="card-actions-fixed"><button class="icon-btn-card btn-edit-struct" onclick="event.stopPropagation();openConfigModal('local', ${i})">⚙️</button><button class="btn-delete-icon" style="margin-left:0;" onclick="event.stopPropagation();deleteStage(${i})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button></div><div class="status-bar ${s.status}"></div><div class="card-header-row"><span class="card-title">${s.name}</span><span class="card-status-text">${ico}</span></div>${det}</div></div>`;
             });
         }
 
@@ -2868,7 +2916,17 @@
             openModal('dynamicFormModal');
         }
 
-        function editProjectName() { const p = DB.get().find(x => x.id === currentProjectId); const newName = prompt("修改工程名称:", p.name); if (newName && newName !== p.name) { const list = DB.get(); list.find(x => x.id === currentProjectId).name = newName; DB.save(list); document.getElementById('detailTitle').innerText = newName; } }
+        function editProjectName() {
+            const p = DB.get().find(x => x.id === currentProjectId);
+            const newName = prompt("修改工程名称:", p.name);
+            if (newName && newName !== p.name) {
+                const list = DB.get();
+                list.find(x => x.id === currentProjectId).name = newName;
+                DB.save(list);
+                // 更新顶部标题
+                document.getElementById('navDetailTitle').innerText = newName;
+            }
+        }
 
         function saveDynamicData() {
             const list = DB.get();
@@ -2895,7 +2953,7 @@
             list.forEach((p, i) => {
                 const d = document.createElement('div');
                 d.className = 'list-item';
-                d.innerHTML = `<div class="list-item-content" onclick="openDetail(${p.id})"><div style="display:flex; flex-direction:column; overflow:hidden;"><div class="list-item-title" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${p.name}</div><div class="list-item-date">${p.createDate}</div></div><button class="btn-delete-icon" onclick="deleteProject(event, ${p.id})"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button></div><div class="list-sort-zone"><button class="sort-btn up" onclick="moveProjUp(${i}, '${p.type}')">↑</button><button class="sort-btn down" onclick="moveProjDown(${i}, '${p.type}')">↓</button></div>`;
+                d.innerHTML = `<div class="list-item-content" onclick="openDetail(${p.id})"><div style="display:flex; flex-direction:column; overflow:hidden;"><div class="list-item-title" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${p.name}</div><div class="list-item-date">${p.createDate}</div></div><button class="btn-delete-icon" onclick="deleteProject(event, ${p.id})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button></div><div class="list-sort-zone"><button class="sort-btn up" onclick="moveProjUp(${i}, '${p.type}')">↑</button><button class="sort-btn down" onclick="moveProjDown(${i}, '${p.type}')">↓</button></div>`;
                 if (p.type === 'special') { cs.appendChild(d); c1++; } else if (p.type === 'odd') { co.appendChild(d); c2++; } else { cr.appendChild(d); c3++; }
             });
             document.getElementById('c_s').innerText = c1; document.getElementById('c_o').innerText = c2; document.getElementById('c_r').innerText = c3;
@@ -2962,6 +3020,149 @@
         }
         function openModal(id) { document.getElementById(id).classList.add('open'); }
         function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+        // 🌟 补充：渲染参建单位
+        function renderServices() {
+            const list = DB.get();
+            const p = list.find(x => x.id === currentProjectId);
+            const container = document.getElementById('servicesListContainer');
+            const emptyHint = document.getElementById('emptyServicesHint');
+
+            container.innerHTML = '';
+
+            if (!p.services) p.services = [];
+            if (p.services.length === 0) {
+                emptyHint.style.display = 'block';
+                return;
+            } else {
+                emptyHint.style.display = 'none';
+            }
+
+            p.services.forEach((svc, idx) => {
+                const div = document.createElement('div');
+                div.className = 'service-card';
+                // 模拟进度条
+                const mockProgress = Math.floor(Math.random() * 50) + 30;
+                div.innerHTML = `
+                    <div style="display:flex; justify-content:space-between;">
+                        <span class="service-type-tag">${svc.type}</span>
+                        <button class="btn-delete-icon" onclick="deleteService(${idx})">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                        </button>
+                    </div>
+                    <div class="service-name">${svc.name}</div>
+                    <div class="service-row">
+                        <span>💰 合同额: ¥${Number(svc.amount).toLocaleString()}</span>
+                        <span>👤 ${svc.contact || '无联系人'}</span>
+                    </div>
+                    <div class="progress-bg">
+                        <div class="progress-fill" style="width: ${mockProgress}%"></div>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+        function saveService() {
+            const type = document.getElementById('svcType').value;
+            const name = document.getElementById('svcName').value;
+            const amount = document.getElementById('svcAmount').value;
+            const contact = document.getElementById('svcContact').value;
+            if (!name) return alert('请输入单位名称');
+            const list = DB.get();
+            const p = list.find(x => x.id === currentProjectId);
+            if (!p.services) p.services = [];
+            p.services.push({ type, name, amount, contact });
+            DB.save(list);
+            closeModal('addServiceModal');
+            renderServices();
+            document.getElementById('svcName').value = '';
+            document.getElementById('svcAmount').value = '';
+            document.getElementById('svcContact').value = '';
+        }
+        function deleteService(idx) {
+            if (!confirm('确定移除该参建单位吗？')) return;
+            const list = DB.get();
+            const p = list.find(x => x.id === currentProjectId);
+            p.services.splice(idx, 1);
+            DB.save(list);
+            renderServices();
+        }
+        function switchDetailTab(tabName) {
+            document.querySelectorAll('.segment-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(`seg_${tabName}`).classList.add('active');
+            document.getElementById('view_timeline').style.display = (tabName === 'timeline') ? 'block' : 'none';
+            document.getElementById('view_services').style.display = (tabName === 'services') ? 'block' : 'none';
+            if (tabName === 'services') { renderServices(); }
+        }
+
+
+// --- 👮 管理员功能 (修复版) ---
+
+        async function openAdminPanel() {
+            openModal('adminModal');
+            document.getElementById('adminUserList').innerHTML = '<tr><td colspan="3" style="text-align:center; padding:20px;">正在加载数据...</td></tr>';
+            
+            // 1. 修复点：去掉 'updated_at'，只查询存在的列
+            const { data, error } = await _supabase
+                .from('user_data')
+                .select('user_id, content');
+
+            if (error) {
+                // 如果还是报错，可能是权限问题，或者表名不对
+                alert("加载失败: " + error.message);
+                return;
+            }
+
+            document.getElementById('adminTotalCount').innerText = data.length;
+            const tbody = document.getElementById('adminUserList');
+            tbody.innerHTML = '';
+
+            if (data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:20px; color:#999;">暂无用户数据</td></tr>';
+                return;
+            }
+
+            data.forEach(row => {
+                // 2. 尝试解析 ID (只显示前8位)
+                let displayName = row.user_id.slice(0, 8) + '...';
+                
+                // 3. 修复点：从 content (JSON) 内部读取时间
+                let dateStr = '未知时间';
+                if (row.content && row.content.updated_at) {
+                    dateStr = new Date(row.content.updated_at).toLocaleString();
+                } else if (row.content && row.content.d) {
+                    // 兼容旧数据的导出时间字段
+                    dateStr = new Date(row.content.d).toLocaleString();
+                }
+                
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><span style="font-family:monospace; color:#333;">${displayName}</span></td>
+                    <td style="font-size:11px; color:#666;">${dateStr}</td>
+                    <td>
+                        <button class="btn-del-user" onclick="adminDeleteUser('${row.user_id}')">删除</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        async function adminDeleteUser(targetUserId) {
+            if(!confirm('⚠️ 警告：确定要删除该用户的所有云端数据吗？\n此操作不可恢复！')) return;
+
+            const { error } = await _supabase
+                .from('user_data')
+                .delete()
+                .eq('user_id', targetUserId);
+
+            if (error) {
+                alert('删除失败: ' + error.message);
+            } else {
+                alert('✅ 数据已删除');
+                openAdminPanel(); // 刷新列表
+            }
+        }
+
     </script>
 </body>
 
