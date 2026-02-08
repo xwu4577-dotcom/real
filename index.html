@@ -3307,58 +3307,70 @@
             openModal('personalCenterModal');
         }
 
-    // --- 🔙 核心修复：接管浏览器返回键 & 滑动返回 ---
+   // --- 🔙 终极修复：完美保留位置的路由系统 ---
 
-    // 1. 监听浏览器的“后退”动作 (包括边缘滑动、物理返回键)
-    window.addEventListener('popstate', function(event) {
-        // 如果 history 状态里没有 ID，说明回到了原点（首页）
-        const state = event.state;
+    // 1. 🛑 告诉浏览器：历史记录的滚动条你别管，设为手动模式！
+    // (这行代码最关键，解决了右滑自动跳回顶部的问题)
+    if ('scrollRestoration' in history) {
+        history.scrollRestoration = 'manual';
+    }
+
+    // 2. 📍 定义一个全局变量，专门死记硬背首页的位置
+    // 放在 window 对象上，防止被局部变量覆盖
+    window.homeScrollMemory = 0;
+
+    // 3. 🔄 页面跳转函数 (去新页面)
+    window.goToPage = function(id) {
+        const container = document.querySelector('.page-container');
         
+        // A. 离开前检查：如果是从首页离开，赶紧把位置记在全局变量里！
+        if (document.getElementById('homePage').classList.contains('active')) {
+            window.homeScrollMemory = container.scrollTop;
+            console.log("已记录首页位置:", window.homeScrollMemory); // 调试用
+        }
+
+        // B. 执行跳转
+        showPageSimple(id); 
+
+        // C. 历史记录处理 (加入历史堆栈)
+        history.pushState({ pageId: id }, null, "#" + id);
+    };
+
+    // 4. 🏠 返回首页函数 (滑动/点击返回)
+    window.goHome = function() {
+        // 如果有历史记录，优先触发浏览器的“后退”，让它去触发 popstate
+        if (history.state && history.state.pageId) {
+            history.back(); 
+        } else {
+            // 如果没有历史，强制手动切换回首页
+            goHomeSimple();
+        }
+    };
+
+    // 5. 👂 监听浏览器自带的返回（包括右滑手势、安卓物理返回键）
+    window.addEventListener('popstate', function(event) {
+        const state = event.state;
         if (state && state.pageId) {
-            // 如果历史记录里有页面ID，就跳过去（比如前进时）
-            // 这里我们通常只需要处理“回退”到首页的情况
-            // 但为了保险，还是留着
+            // 如果回退到了某个子页面（极少情况）
             showPageSimple(state.pageId);
         } else {
-            // 如果没有状态了，说明退到了最开始，强制回首页
+            // 如果状态为空，说明回退到了最开始 -> 也就是首页
             goHomeSimple();
         }
     });
 
-    // 2. 改造页面跳转函数：每次跳转都“虚构”一条历史记录
-    // ⚠️ 注意：请用这个替换代码里原本的 goToPage 函数，或者覆盖它
-    const originalGoToPage = window.goToPage; // 备份一下旧逻辑如果有的话
-
-    window.goToPage = function(id) {
-        // 先执行原本的 UI 切换逻辑
-        showPageSimple(id);
-
-        // 📝 关键：往浏览器历史里塞一条记录
-        // 这样浏览器觉得如果你滑回去，就是撤销这条记录，而不是关闭网页
-        history.pushState({ pageId: id }, null, "#" + id);
-    };
-
-    // 3. 改造回首页函数
-    window.goHome = function() {
-        // 如果当前有历史记录（不是首页），就通过 history.back() 返回
-        // 这样可以模拟用户的“点击返回”操作
-        if (history.state && history.state.pageId) {
-            history.back(); 
-        } else {
-            goHomeSimple();
-        }
-    };
-
-    // --- 内部工具：纯粹的显示隐藏，不操作历史记录 ---
-// --- 内部工具：纯粹的显示隐藏，不操作历史记录 ---
+    // 6. 🛠️ 纯净的页面切换工具 (不涉及历史记录)
     function showPageSimple(id) {
-        // 1. 隐藏所有页面
+        const container = document.querySelector('.page-container');
+
+        // 第一步：隐藏所有页面
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-        // 2. 显示目标页面
+        
+        // 第二步：显示目标页面
         const target = document.getElementById(id);
         if(target) target.classList.add('active');
 
-        // 3. 处理导航栏显示
+        // 第三步：处理导航栏显隐
         if (id === 'projectDetail') {
             document.getElementById('mainNavBar').style.display = 'none';
             document.getElementById('detailNavBar').style.display = 'flex';
@@ -3366,7 +3378,6 @@
             document.getElementById('mainNavBar').style.display = 'flex';
             document.getElementById('detailNavBar').style.display = 'none';
             
-            // 首页特殊处理
             const isHome = (id === 'homePage');
             document.getElementById('globalBackBtn').style.display = isHome ? 'none' : 'flex';
             document.getElementById('userBadge').style.display = isHome ? 'block' : 'none';
@@ -3374,20 +3385,31 @@
             document.getElementById('globalPageTitle').innerText = isHome ? '工作助手' : '';
         }
 
-        // 4. 触发页面特定的渲染逻辑
+        // 第四步：数据渲染 (⚠️注意：千万不要在这里调用 initHome，否则会重置位置)
         if (id === 'projectList') renderProjects();
         if (id === 'attendancePage') renderOtPage();
-        
-        // ❌【关键修改】删掉了下面这一行 initHome()
-        // if (id === 'homePage') initHome();  <-- 原来这里有一行，现在去掉了！
+
+        // 🌟 第五步：位置恢复的核心逻辑 (立即执行 + 延时双保险)
+        if (id === 'homePage') {
+            // 立即尝试恢复
+            container.scrollTop = window.homeScrollMemory;
+            
+            // 稍微等一下再恢复一次 (防止页面渲染延迟导致的复位)
+            requestAnimationFrame(() => {
+                container.scrollTop = window.homeScrollMemory;
+            });
+        } else {
+            // 去其他页面，默认滚到顶部
+            container.scrollTop = 0;
+        }
     }
 
-    // --- 内部工具：纯粹回首页 UI ---
+    // 内部工具：纯粹回首页
     function goHomeSimple() {
         showPageSimple('homePage');
     }
     
-    // 初始化：刚打开网页时，把首页替换为当前状态，防止乱跑
+    // 初始化：刚打开网页时，把首页替换为当前状态
     history.replaceState({ pageId: 'homePage' }, null, "#home");
 
     </script>
