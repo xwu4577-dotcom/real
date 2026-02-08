@@ -2683,7 +2683,7 @@
                 }
                 // 🌟 新增函数：分门别类新建私有节点
                 function createNewNodeDefinition(categoryName) {
-                    const name = prompt(`要在【${categoryName}】下新建什么节点？\n(例如: 文物局审批)`);
+                    const name = prompt(`要在【${categoryName}】下新建什么节点？`);
                     if (!name) return;
 
                     // 检查重名
@@ -3234,6 +3234,74 @@
             // 3. 打开弹窗
             openModal('personalCenterModal');
         }
+
+        // --- 📱 手势控制：左侧边缘右滑返回 ---
+    
+    let touchStartX = 0;
+    let touchStartY = 0;
+
+    // 1. 手指按下：记录起始位置
+    document.addEventListener('touchstart', function(evt) {
+        const firstTouch = evt.touches[0];
+        touchStartX = firstTouch.clientX;
+        touchStartY = firstTouch.clientY;
+    }, false);
+
+    // 2. 手指抬起：计算滑动距离和方向
+    document.addEventListener('touchend', function(evt) {
+        if (!touchStartX || !touchStartY) return;
+
+        let touchEndX = evt.changedTouches[0].clientX;
+        let touchEndY = evt.changedTouches[0].clientY;
+
+        let xDiff = touchEndX - touchStartX;
+        let yDiff = touchEndY - touchStartY;
+
+        // --- 核心判断逻辑 ---
+        // 1. 必须是从屏幕左侧边缘开始 (0px - 50px 区域内)，避免和中间的滑动冲突
+        // 2. 横向滑动距离要大于 60px (防止误触)
+        // 3. 横向移动必须大于纵向移动 (确保是水平滑，不是上下滚屏)
+        
+        if (touchStartX < 50 && xDiff > 60 && Math.abs(xDiff) > Math.abs(yDiff)) {
+            // 触发返回逻辑
+            handleGestureBack();
+        }
+
+        // 重置
+        touchStartX = 0;
+        touchStartY = 0;
+    }, false);
+
+    // 3. 执行返回动作
+    function handleGestureBack() {
+        // 获取当前激活的页面ID
+        const activePage = document.querySelector('.page.active');
+        if (!activePage) return;
+
+        const pageId = activePage.id;
+
+        // 如果在首页，什么都不做
+        if (pageId === 'homePage') return;
+
+        // 如果在详情页 -> 返回列表页
+        if (pageId === 'projectDetail') {
+            goToPage('projectList');
+            return;
+        }
+
+        // 其他页面 (列表页、考勤页、工具页) -> 统统返回首页
+        if (['projectList', 'attendancePage', 'toolsPage', 'nonProjectList'].includes(pageId)) {
+            goHome();
+            return;
+        }
+        
+        // 如果有其他情况，默认尝试点一下顶部的返回按钮
+        const backBtn = document.getElementById('globalBackBtn');
+        if(backBtn && backBtn.style.display !== 'none') {
+            backBtn.click();
+        }
+    }
+    
     </script>
     <div id="personalCenterModal" class="modal">
         <div class="modal-content" style="max-width: 320px; text-align: center;">
