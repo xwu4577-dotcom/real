@@ -4,7 +4,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>工作助手 (V65 终极防抖版)</title>
+    <title>工作助手</title>
+
+    <head>
+        <link rel="manifest" href="manifest.json">
+
+        <link rel="apple-touch-icon" href="icon.png">
+
+        <link rel="icon" type="image/png" href="icon.png">
+
+    </head>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
@@ -1518,16 +1527,50 @@
 
         /* 管理员专用面板 */
         .admin-float-btn {
-            position: fixed; bottom: 100px; left: 20px;
-            background: #000; color: #fff; width: 50px; height: 50px;
-            border-radius: 50%; display: none; /* 默认隐藏 */
-            align-items: center; justify-content: center;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3); font-size: 24px; cursor: pointer; z-index: 999;
+            position: fixed;
+            bottom: 100px;
+            left: 20px;
+            background: #000;
+            color: #fff;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: none;
+            /* 默认隐藏 */
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            font-size: 24px;
+            cursor: pointer;
+            z-index: 999;
         }
-        .admin-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 10px; }
-        .admin-table th { text-align: left; background: #eee; padding: 8px; }
-        .admin-table td { border-bottom: 1px solid #eee; padding: 8px; }
-        .btn-del-user { color: white; background: red; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; }
+
+        .admin-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+            margin-top: 10px;
+        }
+
+        .admin-table th {
+            text-align: left;
+            background: #eee;
+            padding: 8px;
+        }
+
+        .admin-table td {
+            border-bottom: 1px solid #eee;
+            padding: 8px;
+        }
+
+        .btn-del-user {
+            color: white;
+            background: red;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
     </style>
 </head>
 
@@ -1544,8 +1587,8 @@
             <h1 id="globalPageTitle" class="page-title">工作助手</h1>
         </div>
         <div class="nav-right">
-            <span id="userBadge" class="user-badge" onclick="logout()" style="display:none;"></span>
-            <button id="nodeConfigBtn" class="nav-btn-right" onclick="openConfigModal('global')">
+            <span id="userBadge" class="user-badge" onclick="openPersonalCenter()" style="display:none;"></span> <button
+                id="nodeConfigBtn" class="nav-btn-right" onclick="openConfigModal('global')">
                 ⚙️ 节点库
             </button>
         </div>
@@ -1578,23 +1621,23 @@
         </div>
     </nav>
 
-<div id="auth-modal" style="display:none;">
+    <div id="auth-modal" style="display:none;">
         <div class="auth-box">
             <h2 id="auth-title">个人账号登录</h2>
             <p style="font-size:12px;color:#666;margin-bottom:20px;">登录后可多端同步数据</p>
-            
+
             <input type="email" id="email" class="auth-input" placeholder="用户名 (邮箱格式)">
             <input type="password" id="password" class="auth-input" placeholder="密码 (至少6位)">
-            
+
             <button class="auth-btn" id="auth-action-btn" onclick="handleAuth()">登录</button>
             <div id="auth-error" class="error-msg"></div>
             <div class="auth-switch" onclick="switchMode()">没有账号？点击注册</div>
         </div>
-    </div>  
+    </div>
 
     <div id="toast" class="toast">已同步到云端</div>
 
-<div id="adminBtn" class="admin-float-btn" onclick="openAdminPanel()">👮</div>
+    <div id="adminBtn" class="admin-float-btn" onclick="openAdminPanel()">👮</div>
 
     <div id="adminModal" class="modal">
         <div class="modal-content" style="max-width: 600px;">
@@ -1986,21 +2029,21 @@
             auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
         });
 
-// ⚠️ 把这个换成你自己的管理员邮箱
-const ADMIN_EMAIL = "liu@qq.com";
+        // ⚠️ 把这个换成你自己的管理员邮箱
+        const ADMIN_EMAIL = "liu@qq.com";
 
         let currentUser = null;
         let isRegisterMode = false;
         let syncTimer = null;
 
-async function initApp() {
+        async function initApp() {
             const { data: { session } } = await _supabase.auth.getSession();
             if (session) {
                 // 有账号 -> 走正常的登录流程（含数据清洗检查）
                 handleLoginSuccess(session.user);
             } else {
                 // 没账号 -> 加载背景，并强制显示登录框
-                initHome(); 
+                initHome();
                 document.getElementById('auth-modal').style.display = 'flex';
             }
         }
@@ -2056,7 +2099,7 @@ async function initApp() {
             }
         }
 
-// 1. 🌟 新增：访客模式点击叉号的逻辑
+        // 1. 🌟 新增：访客模式点击叉号的逻辑
         function enterGuestMode() {
             document.getElementById('auth-modal').style.display = 'none';
             showToast('👀 访客模式：数据仅存在本机');
@@ -2069,10 +2112,10 @@ async function initApp() {
         async function handleLoginSuccess(user) {
             currentUser = user;
             document.getElementById('auth-modal').style.display = 'none';
-            
+
             const userBadge = document.getElementById('userBadge');
             userBadge.innerText = user.email.split('@')[0];
-            userBadge.style.display = 'block'; 
+            userBadge.style.display = 'block';
             // 🌟 新增：如果是管理员，显示黑色管理按钮
             if (user.email === ADMIN_EMAIL) {
                 document.getElementById('adminBtn').style.display = 'flex';
@@ -2089,24 +2132,24 @@ async function initApp() {
                 if (data && data.content) {
                     // 🟢 情况A：老用户，云端有东西，强行覆盖掉本地目前的脏数据
                     const c = data.content;
-                    if(c.projects) localStorage.setItem(DB_KEY_DATA, JSON.stringify(c.projects));
-                    if(c.config) localStorage.setItem(DB_KEY_CONFIG, JSON.stringify(c.config));
-                    if(c.attendance) localStorage.setItem(DB_KEY_OT, JSON.stringify(c.attendance));
-                    if(c.todo) localStorage.setItem(DB_KEY_TODO, JSON.stringify(c.todo));
-                    if(c.calendar) localStorage.setItem(DB_KEY_CAL, JSON.stringify(c.calendar));
+                    if (c.projects) localStorage.setItem(DB_KEY_DATA, JSON.stringify(c.projects));
+                    if (c.config) localStorage.setItem(DB_KEY_CONFIG, JSON.stringify(c.config));
+                    if (c.attendance) localStorage.setItem(DB_KEY_OT, JSON.stringify(c.attendance));
+                    if (c.todo) localStorage.setItem(DB_KEY_TODO, JSON.stringify(c.todo));
+                    if (c.calendar) localStorage.setItem(DB_KEY_CAL, JSON.stringify(c.calendar));
                 } else {
                     // 🔴 情况B：新用户，云端是空的，立刻执行斩首行动：清空本地缓存！
                     console.log("检测到新账号，正在清洗本地残留数据...");
-                    localStorage.clear(); 
+                    localStorage.clear();
                 }
             } catch (err) {
                 console.log("该账号暂无云端备份");
             }
 
             // 🚀 第三步：数据洗干净了，再重新加载渲染页面
-            loadConfig(); 
-            migrateData(); 
-            initHome(); 
+            loadConfig();
+            migrateData();
+            initHome();
             showToast('✅ 登录成功');
         }
         function switchMode() {
@@ -2124,14 +2167,15 @@ async function initApp() {
         }
 
         async function logout() {
-            if (confirm('确定退出登录吗？\n注意：请确保数据已同步，退出将清除本地缓存。')) {
-                // 🧹 1. 核心修复：暴力清空本地所有缓存数据
+            // 🌟 简洁提示，不再废话
+            if (confirm('确定要退出当前账号吗？')) {
+                // 1. 动作：直接清空本地，不留痕迹
                 localStorage.clear();
 
-                // 2. 断开云端连接
+                // 2. 动作：断开云端
                 await _supabase.auth.signOut();
 
-                // 3. 刷新页面，回到登录页
+                // 3. 动作：刷新重启
                 window.location.reload();
             }
         }
@@ -3096,12 +3140,12 @@ async function initApp() {
         }
 
 
-// --- 👮 管理员功能 (修复版) ---
+        // --- 👮 管理员功能 (修复版) ---
 
         async function openAdminPanel() {
             openModal('adminModal');
             document.getElementById('adminUserList').innerHTML = '<tr><td colspan="3" style="text-align:center; padding:20px;">正在加载数据...</td></tr>';
-            
+
             // 1. 修复点：去掉 'updated_at'，只查询存在的列
             const { data, error } = await _supabase
                 .from('user_data')
@@ -3125,7 +3169,7 @@ async function initApp() {
             data.forEach(row => {
                 // 2. 尝试解析 ID (只显示前8位)
                 let displayName = row.user_id.slice(0, 8) + '...';
-                
+
                 // 3. 修复点：从 content (JSON) 内部读取时间
                 let dateStr = '未知时间';
                 if (row.content && row.content.updated_at) {
@@ -3134,7 +3178,7 @@ async function initApp() {
                     // 兼容旧数据的导出时间字段
                     dateStr = new Date(row.content.d).toLocaleString();
                 }
-                
+
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td><span style="font-family:monospace; color:#333;">${displayName}</span></td>
@@ -3148,7 +3192,7 @@ async function initApp() {
         }
 
         async function adminDeleteUser(targetUserId) {
-            if(!confirm('⚠️ 警告：确定要删除该用户的所有云端数据吗？\n此操作不可恢复！')) return;
+            if (!confirm('⚠️ 警告：确定要删除该用户的所有云端数据吗？\n此操作不可恢复！')) return;
 
             const { error } = await _supabase
                 .from('user_data')
@@ -3162,8 +3206,53 @@ async function initApp() {
                 openAdminPanel(); // 刷新列表
             }
         }
+        // 👤 打开个人中心
+        function openPersonalCenter() {
+            if (!currentUser) return;
 
+            // 1. 填入邮箱
+            document.getElementById('centerEmail').innerText = currentUser.email;
+
+            // 2. 顺便统计一下数据（显得高级）
+            const projs = JSON.parse(localStorage.getItem(DB_KEY_DATA) || '[]');
+            const todos = JSON.parse(localStorage.getItem(DB_KEY_TODO) || '[]');
+
+            document.getElementById('centerProjCount').innerText = projs.length;
+            document.getElementById('centerTodoCount').innerText = todos.length;
+
+            // 3. 打开弹窗
+            openModal('personalCenterModal');
+        }
     </script>
+    <div id="personalCenterModal" class="modal">
+        <div class="modal-content" style="max-width: 320px; text-align: center;">
+            <h3 style="margin-bottom: 5px;">个人中心</h3>
+
+            <div style="font-size: 48px; margin: 15px 0;">🤠</div>
+
+            <div style="color: #666; font-size: 13px;">当前登录账号</div>
+            <div id="centerEmail"
+                style="font-size: 18px; font-weight: bold; color: #333; margin-bottom: 25px; word-break: break-all;">
+                loading...
+            </div>
+
+            <div
+                style="display: flex; justify-content: space-around; margin-bottom: 25px; background: #f9f9f9; padding: 10px; border-radius: 8px;">
+                <div>
+                    <div style="font-size: 12px; color: #999;">项目数</div>
+                    <div style="font-size: 16px; font-weight: bold;" id="centerProjCount">0</div>
+                </div>
+                <div>
+                    <div style="font-size: 12px; color: #999;">待办数</div>
+                    <div style="font-size: 16px; font-weight: bold;" id="centerTodoCount">0</div>
+                </div>
+            </div>
+
+            <button class="btn-primary" style="background: #FF3B30; margin-bottom: 10px;"
+                onclick="logout()">退出登录</button>
+            <button class="btn-cancel" onclick="closeModal('personalCenterModal')">关闭</button>
+        </div>
+    </div>
 </body>
 
 </html>
