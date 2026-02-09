@@ -2137,63 +2137,55 @@
         function updateLocalStorage(cloudContent) {
             if (!cloudContent) return;
 
-            // 1. 合并工程项目
+            // 1. 合并工程项目 (使用 id 唯一标识)
             const localProjects = JSON.parse(localStorage.getItem(DB_KEY_DATA) || '[]');
             const cloudProjects = cloudContent.projects || [];
-            const mergedProjects = mergeLists(localProjects, cloudProjects, 'id');
-            localStorage.setItem(DB_KEY_DATA, JSON.stringify(mergedProjects));
+            localStorage.setItem(DB_KEY_DATA, JSON.stringify(mergeLists(localProjects, cloudProjects, 'id')));
 
-            // 2. 合并待办事项 (Todo) - 🔴 重点修正这里
+            // 2. 合并待办事项 (使用 text 唯一标识)
             const localTodos = JSON.parse(localStorage.getItem(DB_KEY_TODO) || '[]');
             const cloudTodos = cloudContent.todo || [];
-            
-            // 先把两边的数据合并到一起
-            const mergedTodos = mergeLists(localTodos, cloudTodos, 'text');
+            localStorage.setItem(DB_KEY_TODO, JSON.stringify(mergeLists(localTodos, cloudTodos, 'text')));
 
-            // 🌟 核心：强制按 createDate (录入时间) 倒序排列
-            // b - a 表示：时间越晚(越新)的，排在越前面
-            mergedTodos.sort((a, b) => {
-                const timeA = new Date(a.createDate || 0).getTime();
-                const timeB = new Date(b.createDate || 0).getTime();
-                return timeB - timeA; 
-            });
-            
-            localStorage.setItem(DB_KEY_TODO, JSON.stringify(mergedTodos));
-
-            // 3. 合并加班记录
-            const localOt = JSON.parse(localStorage.getItem(DB_KEY_OT) || '{"records":[], "leaveRecords":[]}');
-            const cloudOt = cloudContent.attendance || {records:[], leaveRecords:[]};
-            
+            // 3. 合并加班记录 (使用 id 唯一标识)
+            const localOt = DB_OT.get();
+            const cloudOt = cloudContent.attendance || { records: [], leaveRecords: [] };
             const mergedRecords = mergeLists(localOt.records || [], cloudOt.records || [], 'id');
-            const finalOt = {
-                annual: cloudOt.annual || localOt.annual,
-                saved: cloudOt.saved || localOt.saved,
+            const mergedLeaves = mergeLists(localOt.leaveRecords || [], cloudOt.leaveRecords || [], (item) => item.date + item.type);
+            
+            localStorage.setItem(DB_KEY_OT, JSON.stringify({
+                ...localOt,
                 records: mergedRecords,
-                leaveRecords: cloudOt.leaveRecords || [] 
-            };
-            localStorage.setItem(DB_KEY_OT, JSON.stringify(finalOt));
+                leaveRecords: mergedLeaves
+            }));
 
-            // 4. 配置和日历
-            if(cloudContent.config) localStorage.setItem(DB_KEY_CONFIG, JSON.stringify(cloudContent.config));
-            if(cloudContent.calendar) localStorage.setItem(DB_KEY_CAL, JSON.stringify(cloudContent.calendar));
+            // 4. 日历日志 (对象合并)
+            const localCal = DB_CAL.get();
+            const cloudCal = cloudContent.calendar || {};
+            localStorage.setItem(DB_KEY_CAL, JSON.stringify({ ...cloudCal, ...localCal }));
         }
 
-        // 🔧 通用工具：合并两个列表 (A=本地, B=云端)
-        // 逻辑：把两边的东西倒在一个桶里，如果 ID 一样，保留本地原本的(防止正在输入的字被覆盖)
+        // 🔧 通用工具：智能合并两个列表 (基于时间戳去重)
         function mergeLists(listA, listB, keyField) {
             const map = new Map();
 
-            // 1. 先倒进去云端的
-            listB.forEach(item => {
+            // 将两个列表合并到一个桶里
+            [...listB, ...listA].forEach(item => {
                 const key = (typeof keyField === 'function') ? keyField(item) : item[keyField];
-                if(key) map.set(key, item);
-            });
+                if (!key) return;
 
-            // 2. 再倒进去本地的 (如果重复，本地会覆盖云端旧版，保留最新修改)
-            // 同时，如果本地有新创建的(云端没有)，也会被保留下来！-> 解决了丢失问题
-            listA.forEach(item => {
-                const key = (typeof keyField === 'function') ? keyField(item) : item[keyField];
-                if(key) map.set(key, item);
+                if (!map.has(key)) {
+                    map.set(key, item);
+                } else {
+                    const existing = map.get(key);
+                    // 🌟 核心：对比 lastModified (如果没有，回退到 createDate)
+                    const timeNew = new Date(item.lastModified || item.createDate || 0).getTime();
+                    const timeOld = new Date(existing.lastModified || existing.createDate || 0).getTime();
+                    
+                    if (timeNew > timeOld) {
+                        map.set(key, item);
+                    }
+                }
             });
 
             return Array.from(map.values());
@@ -2350,47 +2342,31 @@
 
         function debouncedSync() {
             if (!currentUser) return;
-            
             clearTimeout(syncTimer);
             syncTimer = setTimeout(async () => {
-                // 1. 🔥 关键修改：保存前，先尝试读一次云端最新版 (Read-Modify-Write)
                 try {
-                    const { data: cloudData } = await _supabase
-                        .from('user_data')
-                        .select('content')
-                        .eq('user_id', currentUser.id)
-                        .maybeSingle();
+                    // 1. 上传前先下载云端镜像
+                    const { data: cloud } = await _supabase.from('user_data').select('content').eq('user_id', currentUser.id).maybeSingle();
                     
-                    // 如果云端有数据，先把它和本地现在的合并一下
-                    if (cloudData && cloudData.content) {
-                        updateLocalStorage(cloudData.content);
-                        // 合并完可能会刷新界面（可选），但这里我们主要为了构建最新的payload
+                    // 2. 只有在云端有东西时，才进行本地合并
+                    if (cloud && cloud.content) {
+                        updateLocalStorage(cloud.content);
+                        // 合并完立刻刷新一下当前屏幕，保证用户看到的和即将上传的一致
+                        if (typeof refreshCurrentPage === 'function') refreshCurrentPage();
                     }
-                } catch (e) {
-                    console.log('保存前预读取失败，直接覆盖');
-                }
 
-                // 2. 构建 Payload (这时候 localStorage 里已经是合并后的全量数据了)
-                const payload = {
-                    projects: JSON.parse(localStorage.getItem(DB_KEY_DATA) || '[]'),
-                    config: JSON.parse(localStorage.getItem(DB_KEY_CONFIG) || '{}'),
-                    attendance: JSON.parse(localStorage.getItem(DB_KEY_OT) || '{}'),
-                    todo: JSON.parse(localStorage.getItem(DB_KEY_TODO) || '[]'),
-                    calendar: JSON.parse(localStorage.getItem(DB_KEY_CAL) || '{}'),
-                    updated_at: new Date().toISOString()
-                };
-
-                const { error } = await _supabase.from('user_data').upsert({ 
-                    user_id: currentUser.id, 
-                    content: payload 
-                });
-
-                if (error) {
-                    showToast('❌ 同步失败: ' + error.message);
-                } else {
-                    console.log('✅ 智能合并并同步完成');
-                }
-            }, 1000);
+                    // 3. 此时 localStorage 已经是“云端+本地”的最优解，放心上传
+                    const payload = {
+                        projects: JSON.parse(localStorage.getItem(DB_KEY_DATA) || '[]'),
+                        todo: JSON.parse(localStorage.getItem(DB_KEY_TODO) || '[]'),
+                        attendance: DB_OT.get(),
+                        calendar: DB_CAL.get(),
+                        updated_at: new Date().toISOString()
+                    };
+                    await _supabase.from('user_data').upsert({ user_id: currentUser.id, content: payload });
+                    console.log('🚀 多端冲突已处理并完成全量同步');
+                } catch (e) { console.error('同步异常:', e); }
+            }, 2000); 
         }
 
         async function syncCloudToLocal() {
@@ -2702,33 +2678,51 @@
         }
 
         function addTodo() {
-            const val = document.getElementById('todoInput').value.trim();
+            const inputEl = document.getElementById('todoInput');
+            const val = inputEl.value.trim();
             if (!val) return;
+
             const list = DB_TODO.get();
-            list.unshift({ text: val, done: false, createDate: new Date().toISOString() });
+            const now = new Date().toISOString();
+            
+            // 🌟 核心修改：将 push 改为 unshift
+            // unshift 会把新任务塞到数组的第 0 个位置，这样它就会出现在最上面
+            list.unshift({ 
+                text: val, 
+                done: false, 
+                createDate: now,
+                lastModified: now 
+            });
+            
+            // 保存并刷新界面
             DB_TODO.save(list);
-            document.getElementById('todoInput').value = '';
+            inputEl.value = '';
+            
+            // 立即重新渲染列表，让新任务直接出现在屏幕顶端
             renderTodos();
-            initHome();
+            
+            // 如果首页有统计或简易列表，也同步更新
+            if (typeof initHome === 'function') initHome();
         }
 
         function toggleTodo(originIdx) {
-            const list = DB_TODO.get();
-            const item = list[originIdx];
-            item.done = !item.done;
-            if (item.done) {
-                const now = new Date();
-                const timeStr = `${now.getMonth() + 1}月${now.getDate()}日 ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
-                item.completedAt = timeStr;
-            } else {
-                delete item.completedAt;
-            }
-            DB_TODO.save(list);
-            renderTodos();
-            if (document.getElementById('todoHistoryModal').classList.contains('open')) {
-                renderHistoryList();
-            }
-        }
+    const list = DB_TODO.get();
+    const item = list[originIdx];
+    item.done = !item.done;
+    
+    // 🌟 记录修改时间
+    item.lastModified = new Date().toISOString(); 
+
+    if (item.done) {
+        const now = new Date();
+        const timeStr = `${now.getMonth() + 1}月${now.getDate()}日 ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+        item.completedAt = timeStr;
+    } else {
+        delete item.completedAt;
+    }
+    DB_TODO.save(list);
+    renderTodos();
+}
 
         function deleteTodo(originIdx) {
             if (!confirm("彻底删除？")) return;
@@ -2824,8 +2818,23 @@
         }
 
         function saveBaseLeave() { const data = DB_OT.get(); data.annual = document.getElementById('inpAnnual').value || 0; data.saved = document.getElementById('inpSaved').value || 0; DB_OT.save(data); renderOtPage(); }
-        function addOvertime() { const date = document.getElementById('otDate').value; const days = document.getElementById('otDays').value; if (!date || !days) return alert("请填写完整"); const data = DB_OT.get(); data.records.push({ id: Date.now().toString(), date, days, note: document.getElementById('otNote').value, status: 'active' }); DB_OT.save(data); closeModal('addOtModal'); renderOtPage(); }
-        function preUseOt(id) { document.getElementById('useOtId').value = id; document.getElementById('useOtDate').value = new Date().toISOString().split('T')[0]; openModal('useOtModal'); }
+function addOvertime() {
+    const date = document.getElementById('otDate').value;
+    const days = document.getElementById('otDays').value;
+    if (!date || !days) return alert("请填写完整");
+    const data = DB_OT.get();
+    data.records.push({
+        id: Date.now().toString(),
+        date,
+        days,
+        note: document.getElementById('otNote').value,
+        status: 'active',
+        lastModified: new Date().toISOString() // 🌟 记录修改时间
+    });
+    DB_OT.save(data);
+    closeModal('addOtModal');
+    renderOtPage();
+}        function preUseOt(id) { document.getElementById('useOtId').value = id; document.getElementById('useOtDate').value = new Date().toISOString().split('T')[0]; openModal('useOtModal'); }
         function confirmUseOt() { const id = document.getElementById('useOtId').value; const date = document.getElementById('useOtDate').value; if (!date) return alert("请填写日期"); const data = DB_OT.get(); const item = data.records.find(r => r.id === id); if (item) { item.status = 'used'; item.usedDate = date; DB_OT.save(data); closeModal('useOtModal'); renderOtPage(); } }
         function delOtItem(id) { if (confirm("删除此记录？")) { const data = DB_OT.get(); data.records = data.records.filter(r => r.id !== id); DB_OT.save(data); renderOtPage(); } }
         function openNewLeave() { document.getElementById('lvEditIndex').value = ''; document.getElementById('leaveModalTitle').innerText = '录入休假'; document.getElementById('lvType').value = '年假'; document.getElementById('lvDate').value = new Date().toISOString().split('T')[0]; document.getElementById('lvDays').value = ''; document.getElementById('lvNote').value = ''; document.getElementById('lvSaveBtn').innerText = '确认'; openModal('addLeaveModal'); }
@@ -3076,8 +3085,21 @@
             }
         }
 
-        function createProject() { const n = document.getElementById('newProjectName').value; if (!n) return alert("请输入名称"); DB.save([{ id: Date.now(), name: n, type: document.getElementById('newProjectType').value, createDate: new Date().toLocaleDateString(), stages: [] }, ...DB.get()]); closeModal('createModal'); goToPage('projectList'); }
-        function openNodeLibrary() {
+function createProject() {
+    const n = document.getElementById('newProjectName').value;
+    if (!n) return alert("请输入名称");
+    const newProj = {
+        id: Date.now(),
+        name: n,
+        type: document.getElementById('newProjectType').value,
+        createDate: new Date().toLocaleDateString(),
+        lastModified: new Date().toISOString(), // 🌟 记录修改时间
+        stages: []
+    };
+    DB.save([newProj, ...DB.get()]);
+    closeModal('createModal');
+    goToPage('projectList');
+}        function openNodeLibrary() {
             const container = document.getElementById('nodeLibraryGrid');
             container.innerHTML = '';
 
@@ -3228,18 +3250,26 @@
         }
 
         function saveDynamicData() {
-            const list = DB.get();
-            const p = list.find(x => x.id === currentProjectId);
-            const stage = p.stages[currentStageIndex];
-            let nd = {}; let full = true;
-            stage.config.forEach(f => {
-                const el = document.getElementById(`f_${f.key}`);
-                if (el) { nd[f.key] = el.value; if (el.value === '') full = false; }
-            });
-            stage.data = { ...stage.data, ...nd };
-            stage.status = Object.values(nd).some(v => v) ? (full ? 'done' : 'processing') : 'waiting';
-            DB.save(list); closeModal('dynamicFormModal'); refreshDetail(p);
-        }
+    const list = DB.get();
+    const p = list.find(x => x.id === currentProjectId);
+    const stage = p.stages[currentStageIndex];
+    
+    let nd = {}; let full = true;
+    stage.config.forEach(f => {
+        const el = document.getElementById(`f_${f.key}`);
+        if (el) { nd[f.key] = el.value; if (el.value === '') full = false; }
+    });
+    
+    stage.data = { ...stage.data, ...nd };
+    stage.status = Object.values(nd).some(v => v) ? (full ? 'done' : 'processing') : 'waiting';
+    
+    // 🌟 核心：只要动了节点，整个工程的最后修改时间都要更新
+    p.lastModified = new Date().toISOString(); 
+    
+    DB.save(list);
+    closeModal('dynamicFormModal');
+    refreshDetail(p);
+}
         function deleteStage(i) { if (confirm("删节点？")) { const l = DB.get(); const p = l.find(x => x.id == currentProjectId); p.stages.splice(i, 1); DB.save(l); refreshDetail(p); } }
 
         function renderProjects() {
