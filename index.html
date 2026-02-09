@@ -16,7 +16,9 @@
     <link rel="apple-touch-icon" href="icon.png?v=3">
     <link rel="icon" type="image/png" href="icon.png?v=3">
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
+
+    </script>
 
     <style>
         /* --- 基础变量 --- */
@@ -1605,10 +1607,13 @@
             <h1 id="globalPageTitle" class="page-title">工作助手</h1>
         </div>
         <div class="nav-right">
-            <span id="userBadge" class="user-badge" onclick="openPersonalCenter()" style="display:none;"></span> <button
-                id="nodeConfigBtn" class="nav-btn-right" onclick="openConfigModal('global')">
+            <span id="userBadge" class="user-badge" onclick="openPersonalCenter()" style="display:none;"></span> 
+            
+            <button id="nodeConfigBtn" class="nav-btn-right" onclick="openConfigModal('global')" style="display:none;">
                 ⚙️ 节点库
             </button>
+
+            <button id="refreshBtnMain" class="btn-refresh" onclick="manualSyncData(this)">↻</button>
         </div>
     </nav>
 
@@ -1635,6 +1640,8 @@
             <button class="nav-btn-right" onclick="openConfigModal('global')">
                 ⚙️ 节点库
             </button>
+
+            <button id="refreshBtnDetail" class="btn-refresh" onclick="manualSyncData(this)">↻</button>
         </div>
         </div>
     </nav>
@@ -2121,6 +2128,80 @@
                 }, 0);
             }
         };
+        // ==========================================
+        // 👇 这里是新加的“智能合并”功能区
+        // ==========================================
+
+        // 🔧 核心函数：智能更新本地缓存 (已移除时间排序，防止乱跳)
+        // 🔧 核心函数：智能更新本地缓存 (已修正：严格按录入时间倒序排列)
+        function updateLocalStorage(cloudContent) {
+            if (!cloudContent) return;
+
+            // 1. 合并工程项目
+            const localProjects = JSON.parse(localStorage.getItem(DB_KEY_DATA) || '[]');
+            const cloudProjects = cloudContent.projects || [];
+            const mergedProjects = mergeLists(localProjects, cloudProjects, 'id');
+            localStorage.setItem(DB_KEY_DATA, JSON.stringify(mergedProjects));
+
+            // 2. 合并待办事项 (Todo) - 🔴 重点修正这里
+            const localTodos = JSON.parse(localStorage.getItem(DB_KEY_TODO) || '[]');
+            const cloudTodos = cloudContent.todo || [];
+            
+            // 先把两边的数据合并到一起
+            const mergedTodos = mergeLists(localTodos, cloudTodos, 'text');
+
+            // 🌟 核心：强制按 createDate (录入时间) 倒序排列
+            // b - a 表示：时间越晚(越新)的，排在越前面
+            mergedTodos.sort((a, b) => {
+                const timeA = new Date(a.createDate || 0).getTime();
+                const timeB = new Date(b.createDate || 0).getTime();
+                return timeB - timeA; 
+            });
+            
+            localStorage.setItem(DB_KEY_TODO, JSON.stringify(mergedTodos));
+
+            // 3. 合并加班记录
+            const localOt = JSON.parse(localStorage.getItem(DB_KEY_OT) || '{"records":[], "leaveRecords":[]}');
+            const cloudOt = cloudContent.attendance || {records:[], leaveRecords:[]};
+            
+            const mergedRecords = mergeLists(localOt.records || [], cloudOt.records || [], 'id');
+            const finalOt = {
+                annual: cloudOt.annual || localOt.annual,
+                saved: cloudOt.saved || localOt.saved,
+                records: mergedRecords,
+                leaveRecords: cloudOt.leaveRecords || [] 
+            };
+            localStorage.setItem(DB_KEY_OT, JSON.stringify(finalOt));
+
+            // 4. 配置和日历
+            if(cloudContent.config) localStorage.setItem(DB_KEY_CONFIG, JSON.stringify(cloudContent.config));
+            if(cloudContent.calendar) localStorage.setItem(DB_KEY_CAL, JSON.stringify(cloudContent.calendar));
+        }
+
+        // 🔧 通用工具：合并两个列表 (A=本地, B=云端)
+        // 逻辑：把两边的东西倒在一个桶里，如果 ID 一样，保留本地原本的(防止正在输入的字被覆盖)
+        function mergeLists(listA, listB, keyField) {
+            const map = new Map();
+
+            // 1. 先倒进去云端的
+            listB.forEach(item => {
+                const key = (typeof keyField === 'function') ? keyField(item) : item[keyField];
+                if(key) map.set(key, item);
+            });
+
+            // 2. 再倒进去本地的 (如果重复，本地会覆盖云端旧版，保留最新修改)
+            // 同时，如果本地有新创建的(云端没有)，也会被保留下来！-> 解决了丢失问题
+            listA.forEach(item => {
+                const key = (typeof keyField === 'function') ? keyField(item) : item[keyField];
+                if(key) map.set(key, item);
+            });
+
+            return Array.from(map.values());
+        }
+        
+        // ==========================================
+        // 👆 新加功能区结束
+        // ==========================================
         async function initApp() {
 
 
@@ -2269,9 +2350,27 @@
 
         function debouncedSync() {
             if (!currentUser) return;
-            showToast('🔄 正在同步...');
+            
             clearTimeout(syncTimer);
             syncTimer = setTimeout(async () => {
+                // 1. 🔥 关键修改：保存前，先尝试读一次云端最新版 (Read-Modify-Write)
+                try {
+                    const { data: cloudData } = await _supabase
+                        .from('user_data')
+                        .select('content')
+                        .eq('user_id', currentUser.id)
+                        .maybeSingle();
+                    
+                    // 如果云端有数据，先把它和本地现在的合并一下
+                    if (cloudData && cloudData.content) {
+                        updateLocalStorage(cloudData.content);
+                        // 合并完可能会刷新界面（可选），但这里我们主要为了构建最新的payload
+                    }
+                } catch (e) {
+                    console.log('保存前预读取失败，直接覆盖');
+                }
+
+                // 2. 构建 Payload (这时候 localStorage 里已经是合并后的全量数据了)
                 const payload = {
                     projects: JSON.parse(localStorage.getItem(DB_KEY_DATA) || '[]'),
                     config: JSON.parse(localStorage.getItem(DB_KEY_CONFIG) || '{}'),
@@ -2280,9 +2379,17 @@
                     calendar: JSON.parse(localStorage.getItem(DB_KEY_CAL) || '{}'),
                     updated_at: new Date().toISOString()
                 };
-                const { error } = await _supabase.from('user_data').upsert({ user_id: currentUser.id, content: payload });
-                if (!error) showToast('✅ 已同步到云端');
-                else showToast('❌ 同步失败: ' + error.message);
+
+                const { error } = await _supabase.from('user_data').upsert({ 
+                    user_id: currentUser.id, 
+                    content: payload 
+                });
+
+                if (error) {
+                    showToast('❌ 同步失败: ' + error.message);
+                } else {
+                    console.log('✅ 智能合并并同步完成');
+                }
             }, 1000);
         }
 
@@ -2303,6 +2410,68 @@
             t.innerText = msg;
             t.style.opacity = '1';
             setTimeout(() => t.style.opacity = '0', 2000);
+        }
+// 🎨 新增：专门负责在不刷新网页的情况下，更新屏幕上的文字
+        function refreshCurrentPage() {
+            const activePage = document.querySelector('.page.active');
+            if (!activePage) return;
+
+            // 根据你当前停留在哪个页面，执行对应的刷新逻辑
+            if (activePage.id === 'homePage') {
+                initHome();    // 刷新首页统计、日历、待办
+            }
+            else if (activePage.id === 'projectList') {
+                renderProjects(); // 刷新工程列表
+            }
+            else if (activePage.id === 'attendancePage') {
+                renderOtPage(); // 刷新加班考勤
+            }
+            else if (activePage.id === 'projectDetail' && currentProjectId) {
+                // 如果在详情页，重新查一下本地缓存并显示
+                const list = JSON.parse(localStorage.getItem(DB_KEY_DATA) || '[]');
+                const p = list.find(x => x.id == currentProjectId);
+                if (p) refreshDetail(p);
+            }
+        }
+
+        // 🔄 手动同步逻辑：点击右上角 ↻ 触发
+        async function manualSyncData(btnElement) {
+            if (!currentUser) return showToast('请先登录');
+
+            // 1. 让按钮转起来
+            if(btnElement) btnElement.classList.add('spin-anim');
+            const minTime = new Promise(resolve => setTimeout(resolve, 600));
+
+            try {
+                // 2. 从服务器拉取最新数据
+                const { data, error } = await _supabase
+                    .from('user_data')
+                    .select('content')
+                    .eq('user_id', currentUser.id)
+                    .maybeSingle();
+
+                await minTime; // 保证动画流畅
+
+                if (error) throw error;
+
+                if (data && data.content) {
+                    // 3. 将云端数据合并到本地缓存 (localStorage)
+                    updateLocalStorage(data.content);
+                    
+                    // 4. 🔥 最关键：立刻重绘界面！
+                    refreshCurrentPage();
+                    
+                    showToast('已刷新');
+                } else {
+                    showToast('云端暂无数据');
+                }
+            } catch (err) {
+                console.error(err);
+                showToast('❌ 同步失败');
+            } finally {
+                // 5. 停止转圈
+                if(btnElement) btnElement.classList.remove('spin-anim');
+            }
         }
 
         // --- 🌟 V64 核心修改：智能导航栏切换 logic ---
@@ -3407,6 +3576,7 @@
     history.replaceState({ pageId: 'homePage' }, null, "#home");
 
     </script>
+
     <div id="personalCenterModal" class="modal">
         <div class="modal-content" style="max-width: 320px; text-align: center;">
             <h3 style="margin-bottom: 5px;">个人中心</h3>
