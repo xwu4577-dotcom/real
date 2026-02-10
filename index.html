@@ -1586,6 +1586,38 @@
                 border-radius: 4px;
                 cursor: pointer;
             }
+
+            /* 刷新按钮样式 */
+#refreshBtnMain {
+    background: transparent;
+    border: none;
+    font-size: 20px;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary);
+    cursor: pointer;
+    border-radius: 50%;
+    transition: all 0.2s;
+}
+
+#refreshBtnMain:active {
+    background: rgba(0, 122, 255, 0.1);
+    transform: rotate(180deg);
+}
+
+/* 转圈动画（点击时） */
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+#refreshBtnMain.spin {
+    animation: spin 1s linear infinite;
+}
+
         </style>
     </head>
 
@@ -1601,12 +1633,19 @@
             </button>
             <h1 id="globalPageTitle" class="page-title">工作助手</h1>
         </div>
-        <div class="nav-right">
-            <span id="userBadge" class="user-badge" onclick="openPersonalCenter()" style="display:none;"></span> <button
-                id="nodeConfigBtn" class="nav-btn-right" onclick="openConfigModal('global')">
-                ⚙️ 节点库
-            </button>
-        </div>
+        <div class="nav-right" style="gap: 8px;">
+    <!-- 个人中心按钮向左靠一点 -->
+    <span id="userBadge" class="user-badge" onclick="openPersonalCenter()" style="display:none; margin-right: 4px;"></span>
+    
+    <!-- 新增：数据刷新按钮 -->
+    <button id="refreshBtnMain" class="nav-btn-right" onclick="manualSyncData(this)" title="刷新云端数据">
+        ↻
+    </button>
+    
+    <button id="nodeConfigBtn" class="nav-btn-right" onclick="openConfigModal('global')">
+        ⚙️ 节点库
+    </button>
+</div>
     </nav>
 
     <nav id="detailNavBar" class="navbar-common" style="display:none; border-bottom: 0.5px solid rgba(0,0,0,0.1);">
@@ -2282,6 +2321,55 @@
                 else showToast('❌ 同步失败: ' + error.message);
             }, 1000);
         }
+
+        // ==================== 数据刷新按钮调用函数 ====================
+async function manualSyncData(btnElement) {
+    if (!currentUser) {
+        showToast('请先登录账号才能同步云端数据');
+        return;
+    }
+
+    // 点击时显示转圈
+    if (btnElement) btnElement.classList.add('spin');
+
+    try {
+        const { data, error } = await _supabase
+            .from('user_data')
+            .select('content')
+            .eq('user_id', currentUser.id)
+            .maybeSingle();
+
+        if (error) throw error;
+
+        if (data && data.content) {
+            // 覆盖本地数据（以云端为准）
+            const c = data.content;
+            if (c.projects) localStorage.setItem(DB_KEY_DATA, JSON.stringify(c.projects));
+            if (c.config) localStorage.setItem(DB_KEY_CONFIG, JSON.stringify(c.config));
+            if (c.attendance) localStorage.setItem(DB_KEY_OT, JSON.stringify(c.attendance));
+            if (c.todo) localStorage.setItem(DB_KEY_TODO, JSON.stringify(c.todo));
+            if (c.calendar) localStorage.setItem(DB_KEY_CAL, JSON.stringify(c.calendar));
+
+            // 刷新当前页面显示
+            if (document.getElementById('homePage').classList.contains('active')) {
+                initHome();
+            } else if (document.getElementById('projectList').classList.contains('active')) {
+                renderProjects();
+            } else if (document.getElementById('attendancePage').classList.contains('active')) {
+                renderOtPage();
+            }
+
+            showToast('✅ 数据已从云端刷新');
+        } else {
+            showToast('云端暂无数据');
+        }
+    } catch (err) {
+        console.error(err);
+        showToast('❌ 刷新失败');
+    } finally {
+        if (btnElement) btnElement.classList.remove('spin');
+    }
+}
 
         async function syncCloudToLocal() {
             const { data, error } = await _supabase.from('user_data').select('content').eq('user_id', currentUser.id).single();
