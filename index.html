@@ -1633,6 +1633,40 @@
             #refreshBtnMain.spin {
                 animation: spin 1s linear infinite;
             }
+
+            /* 日历日志弹窗 iOS 风格优化 */
+#dayLogModal .modal-content {
+    max-width: 92% !important;
+    border-radius: 20px !important;
+    padding: 24px 20px !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+}
+
+#dayLogModal .log-textarea {
+    min-height: 180px !important;
+    font-size: 16px !important;
+    line-height: 1.55 !important;
+    padding: 16px !important;
+    border-radius: 14px !important;
+    border: 1px solid #ddd;
+    background: #f9f9f9;
+    resize: vertical;
+}
+
+#dayLogModal .btn-primary {
+    height: 52px !important;
+    font-size: 17px !important;
+    font-weight: 600 !important;
+    border-radius: 14px !important;
+    margin: 8px 0 12px 0 !important;
+}
+
+#dayLogModal .btn-cancel {
+    font-size: 16px !important;
+    color: #666 !important;
+    padding: 14px !important;
+}
+
         </style>
     </head>
 
@@ -1649,19 +1683,19 @@
             <h1 id="globalPageTitle" class="page-title">工作助手</h1>
         </div>
         <div class="nav-right" style="gap: 8px; align-items: center;">
-    <!-- 个人中心按钮（最左） -->
-    <span id="userBadge" class="user-badge" onclick="openPersonalCenter()" style="display:none;"></span>
-    
-    <!-- 节点库按钮 -->
-    <button id="nodeConfigBtn" class="nav-btn-right" onclick="openConfigModal('global')" style="display:none;">
-        ⚙️ 节点库
-    </button>
-    
-    <!-- 刷新按钮（最右端） -->
-    <button id="refreshBtnMain" class="nav-btn-right" onclick="manualSyncData(this)" title="刷新云端数据">
-        ↻
-    </button>
-</div>
+            <!-- 个人中心按钮（最左） -->
+            <span id="userBadge" class="user-badge" onclick="openPersonalCenter()" style="display:none;"></span>
+
+            <!-- 节点库按钮 -->
+            <button id="nodeConfigBtn" class="nav-btn-right" onclick="openConfigModal('global')" style="display:none;">
+                ⚙️ 节点库
+            </button>
+
+            <!-- 刷新按钮（最右端） -->
+            <button id="refreshBtnMain" class="nav-btn-right" onclick="manualSyncData(this)" title="刷新云端数据">
+                ↻
+            </button>
+        </div>
     </nav>
 
     <nav id="detailNavBar" class="navbar-common" style="display:none; border-bottom: 0.5px solid rgba(0,0,0,0.1);">
@@ -1950,12 +1984,31 @@
     </div>
 
     <div id="dayLogModal" class="modal">
-        <div class="modal-content">
-            <h3 id="logDateTitle">202X-XX-XX</h3>
-            <label class="form-label">工作日志</label>
-            <textarea id="logContent" class="log-textarea" placeholder="记录今天的工作重点..."></textarea>
-            <button class="btn-primary" onclick="saveDayLog()">保存日志</button>
-            <button class="btn-cancel" onclick="closeModal('dayLogModal')">关闭</button>
+        <div class="modal-content" style="max-width: 92%; border-radius: 20px; padding: 24px 20px;">
+            <!-- 日期标题（更大更醒目） -->
+            <div id="logDateTitle"
+                style="font-size: 22px; font-weight: 700; color: #000; text-align: center; margin-bottom: 20px;">
+                2026-02-10
+            </div>
+
+            <div style="margin-bottom: 18px;">
+                <div style="font-size: 15px; font-weight: 600; color: #333; margin-bottom: 8px;">工作日志</div>
+                <textarea id="logContent" class="log-textarea" placeholder="记录今天的工作重点、完成事项、待跟进内容..."
+                    style="min-height: 180px; font-size: 16px; line-height: 1.5; padding: 16px; border-radius: 14px;">
+            </textarea>
+            </div>
+
+            <!-- 主按钮（更大、更圆润） -->
+            <button class="btn-primary" onclick="saveDayLog()"
+                style="height: 52px; font-size: 17px; font-weight: 600; border-radius: 14px; margin-bottom: 10px;">
+                保存日志
+            </button>
+
+            <!-- 次要关闭按钮 -->
+            <button class="btn-cancel" onclick="closeModal('dayLogModal')"
+                style="font-size: 16px; padding: 14px; color: #666;">
+                取消
+            </button>
         </div>
     </div>
 
