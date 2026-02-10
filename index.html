@@ -5,1594 +5,1589 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>工作助手</title>
-    <link rel="preload" href="icon.png" as="image">
 
-    <meta name="theme-color" content="#ffffff">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-title" content="工作助手">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport"
+            content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 
-    <link rel="manifest" href="manifest.json">
-    <link rel="apple-touch-icon" href="icon.png?v=3">
-    <link rel="icon" type="image/png" href="icon.png?v=3">
+        <title>工作助手</title>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
+        <link rel="preload" href="icon.png" as="image">
 
-    </script>
+        <meta name="theme-color" content="#ffffff">
+        <meta name="apple-mobile-web-app-status-bar-style" content="default">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-title" content="工作助手">
 
-    <style>
-        /* --- 基础变量 --- */
-        :root {
-            --primary: #007AFF;
-            --bg: #F5F7FA;
-            --white: #FFFFFF;
-            --green: #34C759;
-            --orange: #FF9500;
-            --purple: #5856D6;
-            --text: #333;
-            --border: #E5E5EA;
-            --red: #FF3B30;
-            --gray: #8E8E93;
-        }
+        <link rel="manifest" href="manifest.json">
+        <link rel="apple-touch-icon" href="icon.png?v=3">
+        <link rel="icon" type="image/png" href="icon.png?v=3">
 
-        /* 核心布局 */
+        <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-        /* 👇 1. 替换 body 样式：加上 html 标签，彻底锁死橡皮筋效果 */
-        html,
-        body {
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            /* 💀 关键：禁止整个浏览器窗口滚动 */
-            margin: 0;
-            padding: 0;
-            position: fixed;
-            /* 💀 关键：像钉子一样钉在屏幕上 */
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            display: flex;
-            flex-direction: column;
-            /* 垂直布局 */
-            -webkit-tap-highlight-color: transparent;
-        }
+        <style>
+            /* --- 基础变量 --- */
+            :root {
+                --primary: #007AFF;
+                --bg: #F5F7FA;
+                --white: #FFFFFF;
+                --green: #34C759;
+                --orange: #FF9500;
+                --purple: #5856D6;
+                --text: #333;
+                --border: #E5E5EA;
+                --red: #FF3B30;
+                --gray: #8E8E93;
+            }
 
-        * {
-            box-sizing: border-box;
-            outline: none;
-            -webkit-tap-highlight-color: transparent;
-        }
+            /* 核心布局 */
+            
+            /* 👇 1. 替换 body 样式：加上 html 标签，彻底锁死橡皮筋效果 */
+            html, body {
+                width: 100%;
+                height: 100%;
+                overflow: hidden; /* 💀 关键：禁止整个浏览器窗口滚动 */
+                margin: 0;
+                padding: 0;
+                position: fixed; /* 💀 关键：像钉子一样钉在屏幕上 */
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+                background: var(--bg);
+                color: var(--text);
+                display: flex;
+                flex-direction: column; /* 垂直布局 */
+                -webkit-tap-highlight-color: transparent;
+            }
 
-        /* 👇 2. 替换导航栏样式：防止被挤压 */
-        .navbar-common {
-            background: var(--white);
-            color: var(--text);
-            height: 44px;
-            /* 🔒 高度写死 */
-            min-height: 44px;
-            /* 🔒 最小高度写死 */
-            padding: 0 15px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 1px 0 rgba(0, 0, 0, 0.05);
+            * {
+                box-sizing: border-box;
+                outline: none;
+                -webkit-tap-highlight-color: transparent;
+            }
 
-            flex-shrink: 0;
-            /* 💀 关键：禁止被内容挤扁 */
-            position: relative;
-            z-index: 999;
-            /* 保证在最上层 */
-            width: 100%;
-        }
+            /* 👇 2. 替换导航栏样式：防止被挤压 */
+            .navbar-common {
+                background: var(--white);
+                color: var(--text);
+                height: 44px;      /* 🔒 高度写死 */
+                min-height: 44px;  /* 🔒 最小高度写死 */
+                padding: 0 15px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                box-shadow: 0 1px 0 rgba(0, 0, 0, 0.05);
+                
+                flex-shrink: 0;    /* 💀 关键：禁止被内容挤扁 */
+                position: relative; 
+                z-index: 999;      /* 保证在最上层 */
+                width: 100%;
+            }
+            .nav-left {
+                display: flex;
+                align-items: center;
+                gap: 0;
+                height: 100%;
+                flex: 1;
+                min-width: 0;
+            }
 
-        .nav-left {
-            display: flex;
-            align-items: center;
-            gap: 0;
-            height: 100%;
-            flex: 1;
-            min-width: 0;
-        }
+            .nav-right {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                height: 100%;
+            }
 
-        .nav-right {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            height: 100%;
-        }
+            /* 返回按钮 (iOS风格) */
+            .nav-back-btn {
+                background: transparent;
+                border: none;
+                color: var(--primary);
+                font-size: 17px;
+                font-weight: 400;
+                padding: 0;
+                margin: 0;
+                margin-right: 2px;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                height: 100%;
+            }
 
-        /* 返回按钮 (iOS风格) */
-        .nav-back-btn {
-            background: transparent;
-            border: none;
-            color: var(--primary);
-            font-size: 17px;
-            font-weight: 400;
-            padding: 0;
-            margin: 0;
-            margin-right: 2px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            height: 100%;
-        }
+            .nav-back-btn svg {
+                width: 26px;
+                height: 26px;
+                fill: none;
+                stroke: currentColor;
+                stroke-width: 2.5;
+                stroke-linecap: round;
+                stroke-linejoin: round;
+                margin-left: -8px;
+                margin-top: -1px;
+            }
 
-        .nav-back-btn svg {
-            width: 26px;
-            height: 26px;
-            fill: none;
-            stroke: currentColor;
-            stroke-width: 2.5;
-            stroke-linecap: round;
-            stroke-linejoin: round;
-            margin-left: -8px;
-            margin-top: -1px;
-        }
+            .nav-back-btn:active {
+                opacity: 0.5;
+            }
 
-        .nav-back-btn:active {
-            opacity: 0.5;
-        }
+            /* 页面标题 */
+            .page-title {
+                font-size: 17px;
+                font-weight: 700;
+                color: #000;
+                margin: 0;
+                line-height: 44px;
+                margin-left: -4px;
+                /* 微调与箭头的距离 */
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
 
-        /* 页面标题 */
-        .page-title {
-            font-size: 17px;
-            font-weight: 700;
-            color: #000;
-            margin: 0;
-            line-height: 44px;
-            margin-left: -4px;
-            /* 微调与箭头的距离 */
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
+            /* 详情页专用标题框 (垂直居中) */
+            .detail-header-center {
+                position: absolute;
+                left: 80px;
+                right: 80px;
+                top: 0;
+                bottom: 0;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                pointer-events: none;
+                /* 防止遮挡点击 */
+            }
 
-        /* 详情页专用标题框 (垂直居中) */
-        .detail-header-center {
-            position: absolute;
-            left: 80px;
-            right: 80px;
-            top: 0;
-            bottom: 0;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            pointer-events: none;
-            /* 防止遮挡点击 */
-        }
+            .detail-title-row {
+                display: flex;
+                align-items: center;
+                pointer-events: auto;
+            }
 
-        .detail-title-row {
-            display: flex;
-            align-items: center;
-            pointer-events: auto;
-        }
+            .detail-main-title {
+                font-size: 17px;
+                font-weight: 600;
+                color: #000;
+                line-height: 1.2;
+            }
 
-        .detail-main-title {
-            font-size: 17px;
-            font-weight: 600;
-            color: #000;
-            line-height: 1.2;
-        }
+            .detail-sub-title {
+                font-size: 10px;
+                color: #999;
+                margin-top: 1px;
+                line-height: 1;
+            }
 
-        .detail-sub-title {
-            font-size: 10px;
-            color: #999;
-            margin-top: 1px;
-            line-height: 1;
-        }
+            /* 配置按钮 */
+            /* 🌟 替换：配置按钮 & 右侧通用按钮样式 */
+            .nav-btn-right {
+                background: transparent;
+                border: none;
+                color: var(--primary);
+                padding: 0 10px 0 0;
+                font-size: 16px;
+                cursor: pointer;
+                font-weight: 400;
+                display: flex;
+                align-items: center;
+                gap: 4px;
+                height: 100%;
+            }
 
-        /* 配置按钮 */
-        /* 🌟 替换：配置按钮 & 右侧通用按钮样式 */
-        .nav-btn-right {
-            background: transparent;
-            border: none;
-            color: var(--primary);
-            padding: 0 10px 0 0;
-            font-size: 16px;
-            cursor: pointer;
-            font-weight: 400;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            height: 100%;
-        }
+            /* 兼容旧ID，防止JS报错 */
+            #nodeConfigBtn {
+                display: none;
+            }
 
-        /* 兼容旧ID，防止JS报错 */
-        #nodeConfigBtn {
-            display: none;
-        }
+            /* 👇 3. 替换内容容器样式：只有这里能滚动 */
+            .page-container {
+                flex: 1;           /* 霸占剩余所有空间 */
+                overflow-y: auto;  /* 允许内部上下滚动 */
+                overflow-x: hidden;
+                width: 100%;
+                padding: 15px;
+                padding-bottom: 80px;
+                position: relative;
+                
+                /* iOS 丝滑滚动体验 */
+                -webkit-overflow-scrolling: touch; 
+            }
 
-        /* 👇 3. 替换内容容器样式：只有这里能滚动 */
-        .page-container {
-            flex: 1;
-            /* 霸占剩余所有空间 */
-            overflow-y: auto;
-            /* 允许内部上下滚动 */
-            overflow-x: hidden;
-            width: 100%;
-            padding: 15px;
-            padding-bottom: 80px;
-            position: relative;
+            .page {
+                display: none;
+            }
 
-            /* iOS 丝滑滚动体验 */
-            -webkit-overflow-scrolling: touch;
-        }
+            .page.active {
+                display: block;
+                animation: fadeIn 0.2s;
+            }
 
-        .page {
-            display: none;
-        }
+            @keyframes fadeIn {
+                from {
+                    opacity: 0;
+                    transform: translateY(5px);
+                }
 
-        .page.active {
-            display: block;
-            animation: fadeIn 0.2s;
-        }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
 
-        @keyframes fadeIn {
-            from {
+            /* --- 业务样式 (保持不变) --- */
+            .segmented-control {
+                display: flex;
+                background: #eeeff1;
+                border-radius: 9px;
+                padding: 2px;
+                margin-bottom: 15px;
+            }
+
+            .segment-btn {
+                flex: 1;
+                border: none;
+                background: transparent;
+                padding: 6px 0;
+                font-size: 13px;
+                font-weight: 500;
+                border-radius: 7px;
+                color: #666;
+                cursor: pointer;
+                transition: all 0.2s;
+            }
+
+            .segment-btn.active {
+                background: #fff;
+                color: #000;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+                font-weight: 600;
+            }
+
+            .service-card {
+                background: white;
+                border-radius: 12px;
+                padding: 15px;
+                margin-bottom: 12px;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+                position: relative;
+                border-left: 4px solid var(--purple);
+            }
+
+            .service-type-tag {
+                font-size: 11px;
+                background: #f3e5f5;
+                color: var(--purple);
+                padding: 2px 6px;
+                border-radius: 4px;
+                font-weight: bold;
+                display: inline-block;
+                margin-bottom: 5px;
+            }
+
+            .service-name {
+                font-weight: bold;
+                font-size: 15px;
+                margin-bottom: 5px;
+                color: #333;
+            }
+
+            .service-row {
+                display: flex;
+                justify-content: space-between;
+                font-size: 13px;
+                color: #666;
+                margin-top: 4px;
+            }
+
+            .progress-bg {
+                height: 6px;
+                background: #eee;
+                border-radius: 3px;
+                margin-top: 8px;
+                overflow: hidden;
+            }
+
+            .progress-fill {
+                height: 100%;
+                background: var(--green);
+                width: 0%;
+                border-radius: 3px;
+            }
+
+            /* 其余样式 (待办、日历、输入框等) */
+            .fab-add {
+                position: fixed;
+                bottom: 30px;
+                right: 20px;
+                width: 56px;
+                height: 56px;
+                background-color: var(--primary);
+                color: white;
+                border-radius: 50%;
+                border: none;
+                box-shadow: 0 4px 12px rgba(0, 122, 255, 0.4);
+                font-size: 28px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                z-index: 900;
+                transition: transform 0.1s;
+            }
+
+            .fab-add:active {
+                transform: scale(0.95);
+                background-color: #0056b3;
+            }
+
+            .asset-card-row {
+                display: flex;
+                flex-direction: column;
+                margin-bottom: 20px;
+            }
+
+            .asset-card {
+                width: 100%;
+                border-radius: 16px;
+                padding: 20px;
+                box-shadow: 0 4px 15px rgba(0, 122, 255, 0.2);
+                position: relative;
+                overflow: hidden;
+                cursor: pointer;
+                transition: transform 0.1s;
+                box-sizing: border-box;
+            }
+
+            .asset-card.blue {
+                background: linear-gradient(135deg, #007AFF 0%, #0056b3 100%);
+                color: white;
+            }
+
+            .asset-label {
+                font-size: 12px;
+                opacity: 0.8;
+                margin-bottom: 5px;
+            }
+
+            .asset-value {
+                font-size: 28px;
+                font-weight: 800;
+                line-height: 1.1;
+            }
+
+            .calendar-section {
+                background: white;
+                border-radius: 16px;
+                padding: 15px;
+                margin-bottom: 20px;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+            }
+
+            .cal-header {
+                font-weight: bold;
+                margin-bottom: 10px;
+                font-size: 15px;
+                display: flex;
+                justify-content: space-between;
+            }
+
+            .cal-grid {
+                display: grid;
+                grid-template-columns: repeat(7, 1fr);
+                gap: 5px;
+                text-align: center;
+            }
+
+            .cal-day {
+                font-size: 13px;
+                height: 32px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 50%;
+                color: #333;
+                position: relative;
+            }
+
+            .cal-day.today {
+                background: var(--primary);
+                color: white;
+                font-weight: bold;
+                box-shadow: 0 2px 5px rgba(0, 122, 255, 0.4);
+            }
+
+            .cal-day.has-log::after {
+                content: '';
+                width: 4px;
+                height: 4px;
+                background: var(--red);
+                border-radius: 50%;
+                position: absolute;
+                bottom: 4px;
+            }
+
+            .todo-section {
+                margin-bottom: 30px;
+            }
+
+            .todo-header-row {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 12px;
+            }
+
+            .btn-history {
+                background: rgba(0, 0, 0, 0.05);
+                color: var(--primary);
+                padding: 6px 12px;
+                border-radius: 15px;
+                font-size: 12px;
+                font-weight: 600;
+                border: none;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                gap: 4px;
+            }
+
+            .todo-input-row {
+                display: flex;
+                gap: 10px;
+                margin-bottom: 15px;
+            }
+
+            .todo-input {
+                flex: 1;
+                border: none;
+                background: #fff;
+                padding: 12px 15px;
+                border-radius: 10px;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+                font-size: 14px;
+            }
+
+            .todo-add-btn {
+                background: var(--text);
+                color: white;
+                border: none;
+                width: 44px;
+                border-radius: 10px;
+                font-size: 20px;
+                cursor: pointer;
+            }
+
+            .todo-list {
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .todo-item {
+                background: white;
+                padding: 14px 16px;
+                border-radius: 12px;
+                display: flex;
+                align-items: flex-start;
+                gap: 12px;
+                box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+                transition: all 0.2s ease;
+                position: relative;
+            }
+
+            .todo-checkbox {
+                width: 22px;
+                height: 22px;
+                border-radius: 50%;
+                border: 2px solid #ddd;
+                cursor: pointer;
+                flex-shrink: 0;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: all 0.2s;
+            }
+
+            .todo-text {
+                font-size: 15px;
+                line-height: 1.4;
+                color: #333;
+                flex: 1;
+                word-break: break-all;
+            }
+
+            .empty-state {
+                text-align: center;
+                color: #999;
+                font-size: 13px;
+                padding: 20px 0;
+                font-style: italic;
+                opacity: 0.6;
+            }
+
+            .history-list {
+                max-height: 60vh;
+                overflow-y: auto;
+            }
+
+            .history-item {
+                padding: 12px 0;
+                border-bottom: 1px solid #eee;
+                display: flex;
+                flex-direction: column;
+                gap: 4px;
+            }
+
+            .history-time {
+                font-size: 11px;
+                color: #bbb;
+                margin-top: 2px;
+            }
+
+            .btn-restore {
+                font-size: 12px;
+                color: var(--primary);
+                border: 1px solid var(--primary);
+                padding: 4px 8px;
+                border-radius: 6px;
+                background: none;
+                cursor: pointer;
+            }
+
+            .project-entry-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr 1fr;
+                gap: 15px;
+                margin-bottom: 30px;
+            }
+
+            .entry-card {
+                background: white;
+                border-radius: 16px;
+                padding: 20px;
+                text-align: center;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+                cursor: pointer;
+                border: 1px solid transparent;
+                transition: all 0.1s;
+            }
+
+            .entry-card.eng {
+                border-bottom: 4px solid var(--primary);
+            }
+
+            .entry-card.non-eng {
+                border-bottom: 4px solid var(--purple);
+            }
+
+            .entry-card.tools {
+                border-bottom: 4px solid var(--orange);
+            }
+
+            .entry-icon {
+                font-size: 32px;
+                margin-bottom: 10px;
+                display: block;
+            }
+
+            .entry-title {
+                font-weight: 700;
+                font-size: 15px;
+                color: #333;
+                display: block;
+            }
+
+            .footer-tools {
+                display: flex;
+                gap: 10px;
+                justify-content: center;
+                margin-bottom: 40px;
+            }
+
+            .tool-btn {
+                font-size: 12px;
+                color: #999;
+                padding: 8px 15px;
+                background: rgba(0, 0, 0, 0.03);
+                border-radius: 20px;
+                cursor: pointer;
+            }
+
+            .ot-summary-card {
+                background: linear-gradient(135deg, #007AFF 0%, #5856D6 100%);
+                color: white;
+                padding: 25px;
+                border-radius: 15px;
+                text-align: center;
+                margin-bottom: 15px;
+            }
+
+            .ot-big-num {
+                font-size: 48px;
+                font-weight: bold;
+                margin: 10px 0;
+            }
+
+            .ot-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr 1fr;
+                gap: 10px;
+                margin-top: 15px;
+                background: rgba(255, 255, 255, 0.15);
+                padding: 10px;
+                border-radius: 10px;
+            }
+
+            .ot-label {
+                font-size: 12px;
+                opacity: 0.9;
+            }
+
+            .ot-val {
+                font-size: 16px;
+                font-weight: bold;
+            }
+
+            .ot-settings-mini {
+                background: #fff;
+                padding: 10px 15px;
+                border-radius: 10px;
+                display: flex;
+                gap: 15px;
+                align-items: center;
+                font-size: 13px;
+                color: #666;
+                margin-bottom: 20px;
+                border: 1px solid #eee;
+            }
+
+            .ot-input-mini {
+                width: 60px;
+                padding: 4px;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                text-align: center;
+                font-weight: bold;
+                color: var(--primary);
+            }
+
+            .ot-card {
+                background: white;
+                padding: 15px;
+                border-radius: 10px;
+                margin-bottom: 10px;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+                border-left: 4px solid var(--green);
+                position: relative;
+            }
+
+            .ot-card.used {
+                border-left-color: #ccc;
+                background: #f9f9f9;
+                color: #999;
+            }
+
+            .ot-card-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 5px;
+            }
+
+            .ot-date {
+                font-weight: bold;
+                font-size: 16px;
+            }
+
+            .ot-badge {
+                background: #e8f5e9;
+                color: var(--green);
+                padding: 2px 8px;
+                border-radius: 4px;
+                font-size: 12px;
+                font-weight: bold;
+            }
+
+            .ot-card.used .ot-badge {
+                background: #eee;
+                color: #999;
+            }
+
+            .ot-desc {
+                font-size: 13px;
+                color: #666;
+                margin-bottom: 5px;
+            }
+
+            .ot-deadline {
+                font-size: 12px;
+                color: var(--orange);
+                margin-top: 5px;
+                font-weight: 500;
+            }
+
+            .ot-list-item {
+                background: white;
+                padding: 15px;
+                border-radius: 10px;
+                margin-bottom: 10px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            }
+
+            .leave-type-tag {
+                font-size: 12px;
+                padding: 2px 6px;
+                border-radius: 4px;
+                margin-right: 5px;
+                color: white;
+            }
+
+            .list-item {
+                background: white;
+                padding: 0;
+                margin-bottom: 10px;
+                border-radius: 10px;
+                display: flex;
+                align-items: stretch;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+                overflow: hidden;
+            }
+
+            .list-item-content {
+                flex: 1;
+                padding: 12px 15px;
+                cursor: pointer;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+            .list-sort-zone {
+                width: 32px;
+                background: #fcfcfc;
+                border-left: 1px solid #f0f0f0;
+                display: flex;
+                flex-direction: column;
+            }
+
+            .sort-btn {
+                flex: 1;
+                border: none;
+                background: transparent;
+                color: #ccc;
+                font-size: 14px;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: color 0.2s;
+            }
+
+            .sort-btn:active {
+                color: var(--primary);
+                background: #e0e0e0;
+            }
+
+            .sort-btn.up {
+                border-bottom: 1px solid #eee;
+            }
+
+            .list-item-title {
+                font-weight: 600;
+                font-size: 15px;
+                margin-bottom: 4px;
+                color: #333;
+            }
+
+            .list-item-date {
+                font-size: 12px;
+                color: #999;
+            }
+
+            .project-section-header {
+                font-size: 14px;
+                font-weight: bold;
+                color: #555;
+                margin: 15px 0 10px;
+                padding-left: 10px;
+                border-left: 4px solid var(--primary);
+                display: flex;
+                justify-content: space-between;
+            }
+
+            .home-section-title {
+                font-size: 14px;
+                font-weight: bold;
+                color: #666;
+                margin: 25px 0 10px 5px;
+                border-left: 3px solid var(--primary);
+                padding-left: 8px;
+            }
+
+            .stage-card {
+                background: white;
+                margin-bottom: 15px;
+                border-radius: 10px;
+                position: relative;
+                box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+                display: flex;
+                overflow: hidden;
+            }
+
+            .card-content {
+                flex: 1;
+                padding: 12px 15px;
+                position: relative;
+                min-width: 0;
+            }
+
+            .status-bar {
+                position: absolute;
+                left: 0;
+                top: 0;
+                bottom: 0;
+                width: 4px;
+            }
+
+            .status-bar.done {
+                background: var(--green);
+            }
+
+            .status-bar.processing {
+                background: var(--orange);
+            }
+
+            .status-bar.waiting {
+                background: #ddd;
+            }
+
+            .card-header-row {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 10px;
+                padding-right: 70px;
+            }
+
+            .card-title {
+                font-weight: bold;
+                font-size: 15px;
+                color: #333;
+            }
+
+            .card-status-text {
+                font-size: 12px;
+                color: #999;
+            }
+
+            .card-actions-fixed {
+                position: absolute;
+                top: 10px;
+                right: 10px;
+                display: flex;
+                gap: 8px;
+                z-index: 5;
+            }
+
+            .icon-btn-card {
+                width: 28px;
+                height: 28px;
+                border-radius: 50%;
+                border: none;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 14px;
+                font-weight: bold;
+                background: #f2f2f7;
+                color: #555;
+            }
+
+            .data-grid {
+                display: grid;
+                grid-template-columns: 1fr;
+                gap: 6px;
+                background: #f9f9f9;
+                padding: 8px;
+                border-radius: 6px;
+                font-size: 13px;
+            }
+
+            .data-item {
+                display: flex;
+                justify-content: space-between;
+                border-bottom: 1px dashed #eee;
+                padding-bottom: 4px;
+            }
+
+            .data-label {
+                color: #888;
+            }
+
+            .data-value {
+                font-weight: 500;
+                color: #333;
+                text-align: right;
+            }
+
+            .preview-section {
+                background: white;
+                border-radius: 10px;
+                padding: 12px;
+                margin-bottom: 20px;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            }
+
+            .preview-item.done {
+                background: #f0fdf4;
+                border-color: #bbf7d0;
+                color: #333;
+                padding: 8px 10px;
+                border-radius: 6px;
+                border: 1px solid #eee;
+                margin-bottom: 8px;
+                font-size: 12px;
+            }
+
+            .preview-data-table {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+                gap: 4px 8px;
+                margin-top: 5px;
+            }
+
+            .preview-kv {
+                display: flex;
+                align-items: center;
+            }
+
+            .preview-k {
+                color: #666;
+                margin-right: 6px;
+                white-space: nowrap;
+            }
+
+            .btn-add-node {
+                background: var(--primary);
+                color: white;
+                border: none;
+                padding: 12px 40px;
+                border-radius: 30px;
+                font-size: 16px;
+                font-weight: bold;
+                cursor: pointer;
+                box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+                width: 80%;
+            }
+
+            .back-btn-float {
+                padding: 5px 12px;
+                background: #e3f2fd;
+                border-radius: 15px;
+                color: var(--primary);
+                font-size: 13px;
+                border: 1px solid rgba(0, 122, 255, 0.1);
+                cursor: pointer;
+                font-weight: 500;
+            }
+
+            .btn-mini {
+                padding: 4px 10px;
+                border-radius: 15px;
+                border: 1px solid #ddd;
+                background: white;
+                font-size: 12px;
+                cursor: pointer;
+                color: #555;
+            }
+
+            .btn-mini.action {
+                border-color: var(--primary);
+                color: var(--primary);
+            }
+
+            .modal {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.5);
+                align-items: center;
+                justify-content: center;
+                z-index: 999;
+                backdrop-filter: blur(2px);
+            }
+
+            .modal.open {
+                display: flex;
+            }
+
+            .modal-content {
+                background: white;
+                width: 85%;
+                max-width: 450px;
+                padding: 25px 20px;
+                border-radius: 15px;
+                max-height: 80vh;
+                overflow-y: auto;
+                display: flex;
+                flex-direction: column;
+            }
+
+            .form-label {
+                display: block;
+                font-size: 14px;
+                font-weight: bold;
+                margin: 12px 0 6px;
+                color: #444;
+            }
+
+            .input-box {
+                width: 100%;
+                height: 46px;
+                padding: 0 12px;
+                border: 1px solid #ddd;
+                border-radius: 8px;
+                font-size: 15px;
+                background: #fafafa;
+                color: #333;
+                -webkit-appearance: none;
+                appearance: none;
+                margin: 0;
+                display: block;
+            }
+
+            select.input-box {
+                background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23999999%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+                background-repeat: no-repeat;
+                background-position: right 12px center;
+                background-size: 10px;
+                padding-right: 30px;
+            }
+
+            input[type="date"].input-box {
+                display: flex;
+                align-items: center;
+                line-height: 46px;
+            }
+
+            .log-textarea {
+                width: 100%;
+                padding: 12px;
+                border: 1px solid #ddd;
+                border-radius: 8px;
+                box-sizing: border-box;
+                font-size: 15px;
+                background: #fafafa;
+                min-height: 100px;
+                resize: vertical;
+            }
+
+            .btn-primary {
+                width: 100%;
+                padding: 14px;
+                background: var(--primary);
+                color: white;
+                border: none;
+                border-radius: 10px;
+                font-size: 16px;
+                margin-top: 25px;
+                cursor: pointer;
+                font-weight: 600;
+            }
+
+            .btn-cancel {
+                width: 100%;
+                margin-top: 10px;
+                border: none;
+                background: transparent;
+                color: #999;
+                cursor: pointer;
+                padding: 10px;
+                font-size: 14px;
+            }
+
+            .config-container {
+                display: flex;
+                flex-direction: column;
+                max-height: 70vh;
+                overflow-y: auto;
+                margin-top: 10px;
+            }
+
+            .config-category-title {
+                background: #f5f5f7;
+                border-left: 4px solid var(--primary);
+                padding: 12px 15px;
+                font-size: 14px;
+                font-weight: bold;
+                color: #333;
+                margin: 15px 0 10px 0;
+                width: 100%;
+                box-sizing: border-box;
+            }
+
+            .config-node-grid {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 12px;
+                padding: 0 10px;
+                margin-bottom: 10px;
+            }
+
+            .config-node-item {
+                background: white;
+                border: 1px solid #e0e0e0;
+                border-radius: 8px;
+                padding: 15px 10px;
+                text-align: center;
+                cursor: pointer;
+                font-size: 12px;
+                color: #333;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+                transition: all 0.2s;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                min-height: 60px;
+            }
+
+            .config-node-item:hover {
+                background: #f9f9f9;
+                border-color: var(--primary);
+                box-shadow: 0 4px 8px rgba(0, 122, 255, 0.1);
+            }
+
+            .node-detail-modal {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.5);
+                align-items: center;
+                justify-content: center;
+                z-index: 1000;
+                backdrop-filter: blur(2px);
+            }
+
+            .node-detail-modal.open {
+                display: flex;
+            }
+
+            .node-detail-content {
+                background: white;
+                width: 85%;
+                max-width: 500px;
+                padding: 25px 20px;
+                border-radius: 15px;
+                max-height: 80vh;
+                overflow-y: auto;
+                display: flex;
+                flex-direction: column;
+            }
+
+            .node-detail-header {
+                font-size: 16px;
+                font-weight: bold;
+                margin-bottom: 20px;
+                color: #333;
+            }
+
+            .node-field-list {
+                flex: 1;
+                margin-bottom: 15px;
+            }
+
+            .node-field-item {
+                background: #f9f9f9;
+                border: 1px solid #e0e0e0;
+                border-radius: 8px;
+                padding: 12px;
+                margin-bottom: 8px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+            .node-field-info {
+                flex: 1;
+            }
+
+            .node-field-name {
+                font-weight: bold;
+                color: #333;
+                margin-bottom: 4px;
+            }
+
+            .node-field-type {
+                font-size: 12px;
+                color: #999;
+            }
+
+            .node-sort-zone {
+                width: 36px;
+                background: #f9f9f9;
+                border-right: 1px solid #eee;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+            }
+
+            .node-sort-btn {
+                flex: 1;
+                width: 100%;
+                border: none;
+                background: transparent;
+                color: #ccc;
+                font-size: 14px;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 0;
+            }
+
+            .node-sort-btn:active {
+                color: var(--primary);
+                background: #eee;
+            }
+
+            .node-sort-btn:first-child {
+                border-bottom: 1px solid #eee;
+            }
+
+            .hidden {
+                display: none;
+            }
+
+            #auth-modal {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.6);
+                z-index: 9999;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                backdrop-filter: blur(5px);
+            }
+
+            /* 🌟 核心：为白框增加相对定位 */
+            .auth-box {
+                position: relative;
+                background: white;
+                padding: 30px;
+                border-radius: 16px;
+                width: 85%;
+                max-width: 350px;
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+                text-align: center;
+            }
+
+            /* 🌟 核心：让叉号相对于白框绝对定位 */
+            .auth-close-btn {
+                position: absolute;
+                top: 10px;
+                right: 15px;
+                font-size: 28px;
+                color: #ccc;
+                cursor: pointer;
+                line-height: 1;
+                z-index: 10;
+                padding: 10px;
+                /* 增加手机点击区域 */
+            }
+
+            .auth-close-btn:hover {
+                color: #333;
+            }
+
+            .auth-box h2 {
+                margin-top: 0;
+                color: #1d1d1f;
+            }
+
+            .auth-input {
+                width: 100%;
+                padding: 12px;
+                margin: 10px 0;
+                border: 1px solid #d2d2d7;
+                border-radius: 8px;
+                box-sizing: border-box;
+                font-size: 16px;
+            }
+
+            .auth-btn {
+                width: 100%;
+                padding: 12px;
+                background: #007aff;
+                color: white;
+                border: none;
+                border-radius: 8px;
+                font-size: 16px;
+                font-weight: bold;
+                cursor: pointer;
+                margin-top: 10px;
+            }
+
+            .auth-btn:active {
+                background: #005bb5;
+            }
+
+            .auth-switch {
+                margin-top: 15px;
+                font-size: 14px;
+                color: #007aff;
+                cursor: pointer;
+                text-decoration: underline;
+            }
+
+            .error-msg {
+                color: #ff3b30;
+                font-size: 14px;
+                margin-top: 10px;
+                display: none;
+            }
+
+            .toast {
+                position: fixed;
+                bottom: 80px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: rgba(0, 0, 0, 0.7);
+                color: white;
+                padding: 8px 16px;
+                border-radius: 20px;
+                font-size: 12px;
                 opacity: 0;
-                transform: translateY(5px);
+                transition: opacity 0.3s;
+                pointer-events: none;
+                z-index: 1000;
             }
 
-            to {
+            .user-badge {
+                font-size: 12px;
+                color: var(--primary);
+                background: #e3f2fd;
+                padding: 4px 8px;
+                border-radius: 10px;
+                cursor: pointer;
+            }
+
+            .btn-delete-icon {
+                width: 32px;
+                height: 32px;
+                background: transparent;
+                border: none;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                margin-left: 8px;
+                flex-shrink: 0;
+                opacity: 0.4;
+                transition: all 0.2s;
+            }
+
+            .btn-delete-icon:active {
+                transform: scale(0.9);
                 opacity: 1;
-                transform: translateY(0);
             }
-        }
 
-        /* --- 业务样式 (保持不变) --- */
-        .segmented-control {
-            display: flex;
-            background: #eeeff1;
-            border-radius: 9px;
-            padding: 2px;
-            margin-bottom: 15px;
-        }
-
-        .segment-btn {
-            flex: 1;
-            border: none;
-            background: transparent;
-            padding: 6px 0;
-            font-size: 13px;
-            font-weight: 500;
-            border-radius: 7px;
-            color: #666;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .segment-btn.active {
-            background: #fff;
-            color: #000;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-            font-weight: 600;
-        }
-
-        .service-card {
-            background: white;
-            border-radius: 12px;
-            padding: 15px;
-            margin-bottom: 12px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-            position: relative;
-            border-left: 4px solid var(--purple);
-        }
-
-        .service-type-tag {
-            font-size: 11px;
-            background: #f3e5f5;
-            color: var(--purple);
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-weight: bold;
-            display: inline-block;
-            margin-bottom: 5px;
-        }
-
-        .service-name {
-            font-weight: bold;
-            font-size: 15px;
-            margin-bottom: 5px;
-            color: #333;
-        }
-
-        .service-row {
-            display: flex;
-            justify-content: space-between;
-            font-size: 13px;
-            color: #666;
-            margin-top: 4px;
-        }
-
-        .progress-bg {
-            height: 6px;
-            background: #eee;
-            border-radius: 3px;
-            margin-top: 8px;
-            overflow: hidden;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: var(--green);
-            width: 0%;
-            border-radius: 3px;
-        }
-
-        /* 其余样式 (待办、日历、输入框等) */
-        .fab-add {
-            position: fixed;
-            bottom: 30px;
-            right: 20px;
-            width: 56px;
-            height: 56px;
-            background-color: var(--primary);
-            color: white;
-            border-radius: 50%;
-            border: none;
-            box-shadow: 0 4px 12px rgba(0, 122, 255, 0.4);
-            font-size: 28px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            z-index: 900;
-            transition: transform 0.1s;
-        }
-
-        .fab-add:active {
-            transform: scale(0.95);
-            background-color: #0056b3;
-        }
-
-        .asset-card-row {
-            display: flex;
-            flex-direction: column;
-            margin-bottom: 20px;
-        }
-
-        .asset-card {
-            width: 100%;
-            border-radius: 16px;
-            padding: 20px;
-            box-shadow: 0 4px 15px rgba(0, 122, 255, 0.2);
-            position: relative;
-            overflow: hidden;
-            cursor: pointer;
-            transition: transform 0.1s;
-            box-sizing: border-box;
-        }
-
-        .asset-card.blue {
-            background: linear-gradient(135deg, #007AFF 0%, #0056b3 100%);
-            color: white;
-        }
-
-        .asset-label {
-            font-size: 12px;
-            opacity: 0.8;
-            margin-bottom: 5px;
-        }
-
-        .asset-value {
-            font-size: 28px;
-            font-weight: 800;
-            line-height: 1.1;
-        }
-
-        .calendar-section {
-            background: white;
-            border-radius: 16px;
-            padding: 15px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
-        }
-
-        .cal-header {
-            font-weight: bold;
-            margin-bottom: 10px;
-            font-size: 15px;
-            display: flex;
-            justify-content: space-between;
-        }
-
-        .cal-grid {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 5px;
-            text-align: center;
-        }
-
-        .cal-day {
-            font-size: 13px;
-            height: 32px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-            color: #333;
-            position: relative;
-        }
-
-        .cal-day.today {
-            background: var(--primary);
-            color: white;
-            font-weight: bold;
-            box-shadow: 0 2px 5px rgba(0, 122, 255, 0.4);
-        }
-
-        .cal-day.has-log::after {
-            content: '';
-            width: 4px;
-            height: 4px;
-            background: var(--red);
-            border-radius: 50%;
-            position: absolute;
-            bottom: 4px;
-        }
-
-        .todo-section {
-            margin-bottom: 30px;
-        }
-
-        .todo-header-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-        }
-
-        .btn-history {
-            background: rgba(0, 0, 0, 0.05);
-            color: var(--primary);
-            padding: 6px 12px;
-            border-radius: 15px;
-            font-size: 12px;
-            font-weight: 600;
-            border: none;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        .todo-input-row {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-
-        .todo-input {
-            flex: 1;
-            border: none;
-            background: #fff;
-            padding: 12px 15px;
-            border-radius: 10px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
-            font-size: 14px;
-        }
-
-        .todo-add-btn {
-            background: var(--text);
-            color: white;
-            border: none;
-            width: 44px;
-            border-radius: 10px;
-            font-size: 20px;
-            cursor: pointer;
-        }
-
-        .todo-list {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .todo-item {
-            background: white;
-            padding: 14px 16px;
-            border-radius: 12px;
-            display: flex;
-            align-items: flex-start;
-            gap: 12px;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
-            transition: all 0.2s ease;
-            position: relative;
-        }
-
-        .todo-checkbox {
-            width: 22px;
-            height: 22px;
-            border-radius: 50%;
-            border: 2px solid #ddd;
-            cursor: pointer;
-            flex-shrink: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s;
-        }
-
-        .todo-text {
-            font-size: 15px;
-            line-height: 1.4;
-            color: #333;
-            flex: 1;
-            word-break: break-all;
-        }
-
-        .empty-state {
-            text-align: center;
-            color: #999;
-            font-size: 13px;
-            padding: 20px 0;
-            font-style: italic;
-            opacity: 0.6;
-        }
-
-        .history-list {
-            max-height: 60vh;
-            overflow-y: auto;
-        }
-
-        .history-item {
-            padding: 12px 0;
-            border-bottom: 1px solid #eee;
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-
-        .history-time {
-            font-size: 11px;
-            color: #bbb;
-            margin-top: 2px;
-        }
-
-        .btn-restore {
-            font-size: 12px;
-            color: var(--primary);
-            border: 1px solid var(--primary);
-            padding: 4px 8px;
-            border-radius: 6px;
-            background: none;
-            cursor: pointer;
-        }
-
-        .project-entry-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 15px;
-            margin-bottom: 30px;
-        }
-
-        .entry-card {
-            background: white;
-            border-radius: 16px;
-            padding: 20px;
-            text-align: center;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
-            cursor: pointer;
-            border: 1px solid transparent;
-            transition: all 0.1s;
-        }
-
-        .entry-card.eng {
-            border-bottom: 4px solid var(--primary);
-        }
-
-        .entry-card.non-eng {
-            border-bottom: 4px solid var(--purple);
-        }
-
-        .entry-card.tools {
-            border-bottom: 4px solid var(--orange);
-        }
-
-        .entry-icon {
-            font-size: 32px;
-            margin-bottom: 10px;
-            display: block;
-        }
-
-        .entry-title {
-            font-weight: 700;
-            font-size: 15px;
-            color: #333;
-            display: block;
-        }
-
-        .footer-tools {
-            display: flex;
-            gap: 10px;
-            justify-content: center;
-            margin-bottom: 40px;
-        }
-
-        .tool-btn {
-            font-size: 12px;
-            color: #999;
-            padding: 8px 15px;
-            background: rgba(0, 0, 0, 0.03);
-            border-radius: 20px;
-            cursor: pointer;
-        }
-
-        .ot-summary-card {
-            background: linear-gradient(135deg, #007AFF 0%, #5856D6 100%);
-            color: white;
-            padding: 25px;
-            border-radius: 15px;
-            text-align: center;
-            margin-bottom: 15px;
-        }
-
-        .ot-big-num {
-            font-size: 48px;
-            font-weight: bold;
-            margin: 10px 0;
-        }
-
-        .ot-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 10px;
-            margin-top: 15px;
-            background: rgba(255, 255, 255, 0.15);
-            padding: 10px;
-            border-radius: 10px;
-        }
-
-        .ot-label {
-            font-size: 12px;
-            opacity: 0.9;
-        }
-
-        .ot-val {
-            font-size: 16px;
-            font-weight: bold;
-        }
-
-        .ot-settings-mini {
-            background: #fff;
-            padding: 10px 15px;
-            border-radius: 10px;
-            display: flex;
-            gap: 15px;
-            align-items: center;
-            font-size: 13px;
-            color: #666;
-            margin-bottom: 20px;
-            border: 1px solid #eee;
-        }
-
-        .ot-input-mini {
-            width: 60px;
-            padding: 4px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            text-align: center;
-            font-weight: bold;
-            color: var(--primary);
-        }
-
-        .ot-card {
-            background: white;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 10px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-            border-left: 4px solid var(--green);
-            position: relative;
-        }
-
-        .ot-card.used {
-            border-left-color: #ccc;
-            background: #f9f9f9;
-            color: #999;
-        }
-
-        .ot-card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 5px;
-        }
-
-        .ot-date {
-            font-weight: bold;
-            font-size: 16px;
-        }
-
-        .ot-badge {
-            background: #e8f5e9;
-            color: var(--green);
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 12px;
-            font-weight: bold;
-        }
-
-        .ot-card.used .ot-badge {
-            background: #eee;
-            color: #999;
-        }
-
-        .ot-desc {
-            font-size: 13px;
-            color: #666;
-            margin-bottom: 5px;
-        }
-
-        .ot-deadline {
-            font-size: 12px;
-            color: var(--orange);
-            margin-top: 5px;
-            font-weight: 500;
-        }
-
-        .ot-list-item {
-            background: white;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 10px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-        }
-
-        .leave-type-tag {
-            font-size: 12px;
-            padding: 2px 6px;
-            border-radius: 4px;
-            margin-right: 5px;
-            color: white;
-        }
-
-        .list-item {
-            background: white;
-            padding: 0;
-            margin-bottom: 10px;
-            border-radius: 10px;
-            display: flex;
-            align-items: stretch;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-            overflow: hidden;
-        }
-
-        .list-item-content {
-            flex: 1;
-            padding: 12px 15px;
-            cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .list-sort-zone {
-            width: 32px;
-            background: #fcfcfc;
-            border-left: 1px solid #f0f0f0;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .sort-btn {
-            flex: 1;
-            border: none;
-            background: transparent;
-            color: #ccc;
-            font-size: 14px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: color 0.2s;
-        }
-
-        .sort-btn:active {
-            color: var(--primary);
-            background: #e0e0e0;
-        }
-
-        .sort-btn.up {
-            border-bottom: 1px solid #eee;
-        }
-
-        .list-item-title {
-            font-weight: 600;
-            font-size: 15px;
-            margin-bottom: 4px;
-            color: #333;
-        }
-
-        .list-item-date {
-            font-size: 12px;
-            color: #999;
-        }
-
-        .project-section-header {
-            font-size: 14px;
-            font-weight: bold;
-            color: #555;
-            margin: 15px 0 10px;
-            padding-left: 10px;
-            border-left: 4px solid var(--primary);
-            display: flex;
-            justify-content: space-between;
-        }
-
-        .home-section-title {
-            font-size: 14px;
-            font-weight: bold;
-            color: #666;
-            margin: 25px 0 10px 5px;
-            border-left: 3px solid var(--primary);
-            padding-left: 8px;
-        }
-
-        .stage-card {
-            background: white;
-            margin-bottom: 15px;
-            border-radius: 10px;
-            position: relative;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-            display: flex;
-            overflow: hidden;
-        }
-
-        .card-content {
-            flex: 1;
-            padding: 12px 15px;
-            position: relative;
-            min-width: 0;
-        }
-
-        .status-bar {
-            position: absolute;
-            left: 0;
-            top: 0;
-            bottom: 0;
-            width: 4px;
-        }
-
-        .status-bar.done {
-            background: var(--green);
-        }
-
-        .status-bar.processing {
-            background: var(--orange);
-        }
-
-        .status-bar.waiting {
-            background: #ddd;
-        }
-
-        .card-header-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-            padding-right: 70px;
-        }
-
-        .card-title {
-            font-weight: bold;
-            font-size: 15px;
-            color: #333;
-        }
-
-        .card-status-text {
-            font-size: 12px;
-            color: #999;
-        }
-
-        .card-actions-fixed {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            display: flex;
-            gap: 8px;
-            z-index: 5;
-        }
-
-        .icon-btn-card {
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-            border: none;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 14px;
-            font-weight: bold;
-            background: #f2f2f7;
-            color: #555;
-        }
-
-        .data-grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 6px;
-            background: #f9f9f9;
-            padding: 8px;
-            border-radius: 6px;
-            font-size: 13px;
-        }
-
-        .data-item {
-            display: flex;
-            justify-content: space-between;
-            border-bottom: 1px dashed #eee;
-            padding-bottom: 4px;
-        }
-
-        .data-label {
-            color: #888;
-        }
-
-        .data-value {
-            font-weight: 500;
-            color: #333;
-            text-align: right;
-        }
-
-        .preview-section {
-            background: white;
-            border-radius: 10px;
-            padding: 12px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-        }
-
-        .preview-item.done {
-            background: #f0fdf4;
-            border-color: #bbf7d0;
-            color: #333;
-            padding: 8px 10px;
-            border-radius: 6px;
-            border: 1px solid #eee;
-            margin-bottom: 8px;
-            font-size: 12px;
-        }
-
-        .preview-data-table {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-            gap: 4px 8px;
-            margin-top: 5px;
-        }
-
-        .preview-kv {
-            display: flex;
-            align-items: center;
-        }
-
-        .preview-k {
-            color: #666;
-            margin-right: 6px;
-            white-space: nowrap;
-        }
-
-        .btn-add-node {
-            background: var(--primary);
-            color: white;
-            border: none;
-            padding: 12px 40px;
-            border-radius: 30px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
-            width: 80%;
-        }
-
-        .back-btn-float {
-            padding: 5px 12px;
-            background: #e3f2fd;
-            border-radius: 15px;
-            color: var(--primary);
-            font-size: 13px;
-            border: 1px solid rgba(0, 122, 255, 0.1);
-            cursor: pointer;
-            font-weight: 500;
-        }
-
-        .btn-mini {
-            padding: 4px 10px;
-            border-radius: 15px;
-            border: 1px solid #ddd;
-            background: white;
-            font-size: 12px;
-            cursor: pointer;
-            color: #555;
-        }
-
-        .btn-mini.action {
-            border-color: var(--primary);
-            color: var(--primary);
-        }
-
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            align-items: center;
-            justify-content: center;
-            z-index: 999;
-            backdrop-filter: blur(2px);
-        }
-
-        .modal.open {
-            display: flex;
-        }
-
-        .modal-content {
-            background: white;
-            width: 85%;
-            max-width: 450px;
-            padding: 25px 20px;
-            border-radius: 15px;
-            max-height: 80vh;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .form-label {
-            display: block;
-            font-size: 14px;
-            font-weight: bold;
-            margin: 12px 0 6px;
-            color: #444;
-        }
-
-        .input-box {
-            width: 100%;
-            height: 46px;
-            padding: 0 12px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            font-size: 15px;
-            background: #fafafa;
-            color: #333;
-            -webkit-appearance: none;
-            appearance: none;
-            margin: 0;
-            display: block;
-        }
-
-        select.input-box {
-            background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23999999%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
-            background-repeat: no-repeat;
-            background-position: right 12px center;
-            background-size: 10px;
-            padding-right: 30px;
-        }
-
-        input[type="date"].input-box {
-            display: flex;
-            align-items: center;
-            line-height: 46px;
-        }
-
-        .log-textarea {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            box-sizing: border-box;
-            font-size: 15px;
-            background: #fafafa;
-            min-height: 100px;
-            resize: vertical;
-        }
-
-        .btn-primary {
-            width: 100%;
-            padding: 14px;
-            background: var(--primary);
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 16px;
-            margin-top: 25px;
-            cursor: pointer;
-            font-weight: 600;
-        }
-
-        .btn-cancel {
-            width: 100%;
-            margin-top: 10px;
-            border: none;
-            background: transparent;
-            color: #999;
-            cursor: pointer;
-            padding: 10px;
-            font-size: 14px;
-        }
-
-        .config-container {
-            display: flex;
-            flex-direction: column;
-            max-height: 70vh;
-            overflow-y: auto;
-            margin-top: 10px;
-        }
-
-        .config-category-title {
-            background: #f5f5f7;
-            border-left: 4px solid var(--primary);
-            padding: 12px 15px;
-            font-size: 14px;
-            font-weight: bold;
-            color: #333;
-            margin: 15px 0 10px 0;
-            width: 100%;
-            box-sizing: border-box;
-        }
-
-        .config-node-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 12px;
-            padding: 0 10px;
-            margin-bottom: 10px;
-        }
-
-        .config-node-item {
-            background: white;
-            border: 1px solid #e0e0e0;
-            border-radius: 8px;
-            padding: 15px 10px;
-            text-align: center;
-            cursor: pointer;
-            font-size: 12px;
-            color: #333;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 60px;
-        }
-
-        .config-node-item:hover {
-            background: #f9f9f9;
-            border-color: var(--primary);
-            box-shadow: 0 4px 8px rgba(0, 122, 255, 0.1);
-        }
-
-        .node-detail-modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            backdrop-filter: blur(2px);
-        }
-
-        .node-detail-modal.open {
-            display: flex;
-        }
-
-        .node-detail-content {
-            background: white;
-            width: 85%;
-            max-width: 500px;
-            padding: 25px 20px;
-            border-radius: 15px;
-            max-height: 80vh;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .node-detail-header {
-            font-size: 16px;
-            font-weight: bold;
-            margin-bottom: 20px;
-            color: #333;
-        }
-
-        .node-field-list {
-            flex: 1;
-            margin-bottom: 15px;
-        }
-
-        .node-field-item {
-            background: #f9f9f9;
-            border: 1px solid #e0e0e0;
-            border-radius: 8px;
-            padding: 12px;
-            margin-bottom: 8px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .node-field-info {
-            flex: 1;
-        }
-
-        .node-field-name {
-            font-weight: bold;
-            color: #333;
-            margin-bottom: 4px;
-        }
-
-        .node-field-type {
-            font-size: 12px;
-            color: #999;
-        }
-
-        .node-sort-zone {
-            width: 36px;
-            background: #f9f9f9;
-            border-right: 1px solid #eee;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .node-sort-btn {
-            flex: 1;
-            width: 100%;
-            border: none;
-            background: transparent;
-            color: #ccc;
-            font-size: 14px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 0;
-        }
-
-        .node-sort-btn:active {
-            color: var(--primary);
-            background: #eee;
-        }
-
-        .node-sort-btn:first-child {
-            border-bottom: 1px solid #eee;
-        }
-
-        .hidden {
-            display: none;
-        }
-
-        #auth-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.6);
-            z-index: 9999;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            backdrop-filter: blur(5px);
-        }
-
-        /* 🌟 核心：为白框增加相对定位 */
-        .auth-box {
-            position: relative;
-            background: white;
-            padding: 30px;
-            border-radius: 16px;
-            width: 85%;
-            max-width: 350px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-            text-align: center;
-        }
-
-        /* 🌟 核心：让叉号相对于白框绝对定位 */
-        .auth-close-btn {
-            position: absolute;
-            top: 10px;
-            right: 15px;
-            font-size: 28px;
-            color: #ccc;
-            cursor: pointer;
-            line-height: 1;
-            z-index: 10;
-            padding: 10px;
-            /* 增加手机点击区域 */
-        }
-
-        .auth-close-btn:hover {
-            color: #333;
-        }
-
-        .auth-box h2 {
-            margin-top: 0;
-            color: #1d1d1f;
-        }
-
-        .auth-input {
-            width: 100%;
-            padding: 12px;
-            margin: 10px 0;
-            border: 1px solid #d2d2d7;
-            border-radius: 8px;
-            box-sizing: border-box;
-            font-size: 16px;
-        }
-
-        .auth-btn {
-            width: 100%;
-            padding: 12px;
-            background: #007aff;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            margin-top: 10px;
-        }
-
-        .auth-btn:active {
-            background: #005bb5;
-        }
-
-        .auth-switch {
-            margin-top: 15px;
-            font-size: 14px;
-            color: #007aff;
-            cursor: pointer;
-            text-decoration: underline;
-        }
-
-        .error-msg {
-            color: #ff3b30;
-            font-size: 14px;
-            margin-top: 10px;
-            display: none;
-        }
-
-        .toast {
-            position: fixed;
-            bottom: 80px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.7);
-            color: white;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 12px;
-            opacity: 0;
-            transition: opacity 0.3s;
-            pointer-events: none;
-            z-index: 1000;
-        }
-
-        .user-badge {
-            font-size: 12px;
-            color: var(--primary);
-            background: #e3f2fd;
-            padding: 4px 8px;
-            border-radius: 10px;
-            cursor: pointer;
-        }
-
-        .btn-delete-icon {
-            width: 32px;
-            height: 32px;
-            background: transparent;
-            border: none;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            margin-left: 8px;
-            flex-shrink: 0;
-            opacity: 0.4;
-            transition: all 0.2s;
-        }
-
-        .btn-delete-icon:active {
-            transform: scale(0.9);
-            opacity: 1;
-        }
-
-        .btn-delete-icon svg {
-            width: 18px;
-            height: 18px;
-            stroke: #999;
-            stroke-width: 1.5;
-            fill: none;
-        }
-
-        .btn-delete-icon:active svg {
-            stroke: #FF3B30;
-        }
-
-        #toolsPage {
-            display: none;
-            position: absolute;
-            top: 44px;
-            /* 从导航栏下方开始 */
-            left: 0;
-            width: 100%;
-            height: calc(100% - 44px);
-            /* 扣除导航栏高度 */
-            background: var(--bg);
-            padding: 20px;
-            box-sizing: border-box;
-            z-index: 50;
-        }
-
-        #toolsPage.active {
-            display: flex !important;
-            flex-direction: column;
-            justify-content: flex-start;
-        }
-
-        #toolsPage .page-header-row {
-            margin-top: 0 !important;
-            padding-top: 0;
-        }
-
-        .page-header-row {
-            display: flex;
-            align-items: center;
-            padding: 10px 0 20px 0;
-            width: 100%;
-            border-bottom: 1px solid #f5f5f7;
-            margin-bottom: 15px;
-            flex-shrink: 0;
-        }
-
-        .page-header-title {
-            font-size: 18px;
-            font-weight: 700;
-            margin-left: 15px;
-            color: #333;
-        }
-
-        .tool-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 15px;
-            align-content: start;
-            width: 100%;
-        }
-
-        .tool-item {
-            background: white;
-            border-radius: 16px;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
-            cursor: pointer;
-            border: 1px solid #f5f5f7;
-            height: 90px;
-        }
-
-        .tool-item:active {
-            transform: scale(0.95);
-            background: #fafafa;
-        }
-
-        .tool-icon {
-            font-size: 32px;
-            margin-bottom: 8px;
-            line-height: 1;
-        }
-
-        .tool-name {
-            font-size: 13px;
-            font-weight: 500;
-            color: #333;
-        }
-
-        .node-library-grid {
-            display: grid !important;
-            grid-template-columns: 1fr 1fr !important;
-            gap: 12px;
-            max-height: 60vh;
-            overflow-y: auto;
-            padding: 10px;
-        }
-
-        .node-library-grid>div[style*="grid-column"] {
-            grid-column: 1 / -1 !important;
-            margin: 15px 0 5px 0;
-            padding-left: 8px;
-            border-left: 3px solid var(--primary);
-            font-size: 13px;
-            font-weight: bold;
-            color: #666;
-            background: #f8f9fa;
-            line-height: 30px;
-        }
-
-        .node-option {
-            background: #ffffff;
-            border: 1px solid #e5e5ea;
-            border-radius: 12px;
-            padding: 15px 10px;
-            text-align: center;
-            font-size: 13px;
-            font-weight: 500;
-            color: #333;
-            cursor: pointer;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
-            transition: all 0.2s;
-        }
-
-        .node-option:active {
-            background: #f2f2f7;
-            transform: scale(0.96);
-        }
-
-        /* 管理员专用面板 */
-        .admin-float-btn {
-            position: fixed;
-            bottom: 100px;
-            left: 20px;
-            background: #000;
-            color: #fff;
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            display: none;
-            /* 默认隐藏 */
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-            font-size: 24px;
-            cursor: pointer;
-            z-index: 999;
-        }
-
-        .admin-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 12px;
-            margin-top: 10px;
-        }
-
-        .admin-table th {
-            text-align: left;
-            background: #eee;
-            padding: 8px;
-        }
-
-        .admin-table td {
-            border-bottom: 1px solid #eee;
-            padding: 8px;
-        }
-
-        .btn-del-user {
-            color: white;
-            background: red;
-            border: none;
-            padding: 4px 8px;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-    </style>
-</head>
+            .btn-delete-icon svg {
+                width: 18px;
+                height: 18px;
+                stroke: #999;
+                stroke-width: 1.5;
+                fill: none;
+            }
+
+            .btn-delete-icon:active svg {
+                stroke: #FF3B30;
+            }
+
+            #toolsPage {
+                display: none;
+                position: absolute;
+                top: 44px;
+                /* 从导航栏下方开始 */
+                left: 0;
+                width: 100%;
+                height: calc(100% - 44px);
+                /* 扣除导航栏高度 */
+                background: var(--bg);
+                padding: 20px;
+                box-sizing: border-box;
+                z-index: 50;
+            }
+
+            #toolsPage.active {
+                display: flex !important;
+                flex-direction: column;
+                justify-content: flex-start;
+            }
+
+            #toolsPage .page-header-row {
+                margin-top: 0 !important;
+                padding-top: 0;
+            }
+
+            .page-header-row {
+                display: flex;
+                align-items: center;
+                padding: 10px 0 20px 0;
+                width: 100%;
+                border-bottom: 1px solid #f5f5f7;
+                margin-bottom: 15px;
+                flex-shrink: 0;
+            }
+
+            .page-header-title {
+                font-size: 18px;
+                font-weight: 700;
+                margin-left: 15px;
+                color: #333;
+            }
+
+            .tool-grid {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 15px;
+                align-content: start;
+                width: 100%;
+            }
+
+            .tool-item {
+                background: white;
+                border-radius: 16px;
+                padding: 0;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+                cursor: pointer;
+                border: 1px solid #f5f5f7;
+                height: 90px;
+            }
+
+            .tool-item:active {
+                transform: scale(0.95);
+                background: #fafafa;
+            }
+
+            .tool-icon {
+                font-size: 32px;
+                margin-bottom: 8px;
+                line-height: 1;
+            }
+
+            .tool-name {
+                font-size: 13px;
+                font-weight: 500;
+                color: #333;
+            }
+
+            .node-library-grid {
+                display: grid !important;
+                grid-template-columns: 1fr 1fr !important;
+                gap: 12px;
+                max-height: 60vh;
+                overflow-y: auto;
+                padding: 10px;
+            }
+
+            .node-library-grid>div[style*="grid-column"] {
+                grid-column: 1 / -1 !important;
+                margin: 15px 0 5px 0;
+                padding-left: 8px;
+                border-left: 3px solid var(--primary);
+                font-size: 13px;
+                font-weight: bold;
+                color: #666;
+                background: #f8f9fa;
+                line-height: 30px;
+            }
+
+            .node-option {
+                background: #ffffff;
+                border: 1px solid #e5e5ea;
+                border-radius: 12px;
+                padding: 15px 10px;
+                text-align: center;
+                font-size: 13px;
+                font-weight: 500;
+                color: #333;
+                cursor: pointer;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+                transition: all 0.2s;
+            }
+
+            .node-option:active {
+                background: #f2f2f7;
+                transform: scale(0.96);
+            }
+
+            /* 管理员专用面板 */
+            .admin-float-btn {
+                position: fixed;
+                bottom: 100px;
+                left: 20px;
+                background: #000;
+                color: #fff;
+                width: 50px;
+                height: 50px;
+                border-radius: 50%;
+                display: none;
+                /* 默认隐藏 */
+                align-items: center;
+                justify-content: center;
+                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+                font-size: 24px;
+                cursor: pointer;
+                z-index: 999;
+            }
+
+            .admin-table {
+                width: 100%;
+                border-collapse: collapse;
+                font-size: 12px;
+                margin-top: 10px;
+            }
+
+            .admin-table th {
+                text-align: left;
+                background: #eee;
+                padding: 8px;
+            }
+
+            .admin-table td {
+                border-bottom: 1px solid #eee;
+                padding: 8px;
+            }
+
+            .btn-del-user {
+                color: white;
+                background: red;
+                border: none;
+                padding: 4px 8px;
+                border-radius: 4px;
+                cursor: pointer;
+            }
+        </style>
+    </head>
 
 <body>
 
@@ -1607,13 +1602,10 @@
             <h1 id="globalPageTitle" class="page-title">工作助手</h1>
         </div>
         <div class="nav-right">
-            <span id="userBadge" class="user-badge" onclick="openPersonalCenter()" style="display:none;"></span> 
-            
-            <button id="nodeConfigBtn" class="nav-btn-right" onclick="openConfigModal('global')" style="display:none;">
+            <span id="userBadge" class="user-badge" onclick="openPersonalCenter()" style="display:none;"></span> <button
+                id="nodeConfigBtn" class="nav-btn-right" onclick="openConfigModal('global')">
                 ⚙️ 节点库
             </button>
-
-            <button id="refreshBtnMain" class="btn-refresh" onclick="manualSyncData(this)">↻</button>
         </div>
     </nav>
 
@@ -1640,8 +1632,6 @@
             <button class="nav-btn-right" onclick="openConfigModal('global')">
                 ⚙️ 节点库
             </button>
-
-            <button id="refreshBtnDetail" class="btn-refresh" onclick="manualSyncData(this)">↻</button>
         </div>
         </div>
     </nav>
@@ -2062,138 +2052,72 @@
         let syncTimer = null;
 
         // 📍 1. 定义一个变量，专门记位置
-        let homeScrollTop = 0;
+    let homeScrollTop = 0;
 
-        // 🔄 2. 覆盖旧的跳转函数 (去别的页面时，记下当前位置)
-        window.goToPage = function (id) {
-            const container = document.querySelector('.page-container');
-
-            // 如果是从首页离开，赶紧记下位置！
-            if (document.getElementById('homePage').classList.contains('active')) {
-                homeScrollTop = container.scrollTop;
-            }
-
-            // --- 原有的显示逻辑 ---
-            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-
-            // 导航栏处理
-            if (id === 'projectDetail') {
-                document.getElementById('mainNavBar').style.display = 'none';
-                document.getElementById('detailNavBar').style.display = 'flex';
-            } else {
-                document.getElementById('mainNavBar').style.display = 'flex';
-                document.getElementById('detailNavBar').style.display = 'none';
-                const isHome = (id === 'homePage');
-                document.getElementById('globalBackBtn').style.display = isHome ? 'none' : 'flex';
-                document.getElementById('userBadge').style.display = isHome ? 'block' : 'none';
-                document.getElementById('nodeConfigBtn').style.display = (id === 'projectList') ? 'block' : 'none';
-                document.getElementById('globalPageTitle').innerText = isHome ? '工作助手' : '';
-            }
-
-            // 渲染逻辑
-            if (id === 'projectList') renderProjects();
-            if (id === 'attendancePage') renderOtPage();
-            if (id === 'homePage') initHome();
-
-            // --- 📍 核心位置恢复逻辑 ---
-            if (id === 'homePage') {
-                // 如果是回首页，恢复位置
-                setTimeout(() => { container.scrollTop = homeScrollTop; }, 0);
-            } else {
-                // 如果是去新页面，滚到最上面
-                container.scrollTop = 0;
-            }
-
-            // 历史记录 (防止浏览器后退退出)
-            history.pushState({ pageId: id }, null, "#" + id);
-        };
-
-        // 🏠 3. 覆盖旧的回首页函数
-        window.goHome = function () {
-            if (history.state && history.state.pageId) {
-                history.back(); // 优先触发浏览器的返回
-            } else {
-                // 强制回首页
-                document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-                document.getElementById('homePage').classList.add('active');
-                document.getElementById('mainNavBar').style.display = 'flex';
-                document.getElementById('detailNavBar').style.display = 'none';
-                document.getElementById('globalBackBtn').style.display = 'none';
-                document.getElementById('userBadge').style.display = 'block';
-
-                // 恢复位置
-                setTimeout(() => {
-                    document.querySelector('.page-container').scrollTop = homeScrollTop;
-                }, 0);
-            }
-        };
-        // ==========================================
-        // 👇 这里是新加的“智能合并”功能区
-        // ==========================================
-
-        // 🔧 核心函数：智能更新本地缓存 (已移除时间排序，防止乱跳)
-        // 🔧 核心函数：智能更新本地缓存 (已修正：严格按录入时间倒序排列)
-        function updateLocalStorage(cloudContent) {
-            if (!cloudContent) return;
-
-            // 1. 合并工程项目 (使用 id 唯一标识)
-            const localProjects = JSON.parse(localStorage.getItem(DB_KEY_DATA) || '[]');
-            const cloudProjects = cloudContent.projects || [];
-            localStorage.setItem(DB_KEY_DATA, JSON.stringify(mergeLists(localProjects, cloudProjects, 'id')));
-
-            // 2. 合并待办事项 (使用 text 唯一标识)
-            const localTodos = JSON.parse(localStorage.getItem(DB_KEY_TODO) || '[]');
-            const cloudTodos = cloudContent.todo || [];
-            localStorage.setItem(DB_KEY_TODO, JSON.stringify(mergeLists(localTodos, cloudTodos, 'text')));
-
-            // 3. 合并加班记录 (使用 id 唯一标识)
-            const localOt = DB_OT.get();
-            const cloudOt = cloudContent.attendance || { records: [], leaveRecords: [] };
-            const mergedRecords = mergeLists(localOt.records || [], cloudOt.records || [], 'id');
-            const mergedLeaves = mergeLists(localOt.leaveRecords || [], cloudOt.leaveRecords || [], (item) => item.date + item.type);
-            
-            localStorage.setItem(DB_KEY_OT, JSON.stringify({
-                ...localOt,
-                records: mergedRecords,
-                leaveRecords: mergedLeaves
-            }));
-
-            // 4. 日历日志 (对象合并)
-            const localCal = DB_CAL.get();
-            const cloudCal = cloudContent.calendar || {};
-            localStorage.setItem(DB_KEY_CAL, JSON.stringify({ ...cloudCal, ...localCal }));
+    // 🔄 2. 覆盖旧的跳转函数 (去别的页面时，记下当前位置)
+    window.goToPage = function(id) {
+        const container = document.querySelector('.page-container');
+        
+        // 如果是从首页离开，赶紧记下位置！
+        if (document.getElementById('homePage').classList.contains('active')) {
+            homeScrollTop = container.scrollTop;
         }
 
-        // 🔧 通用工具：智能合并两个列表 (基于时间戳去重)
-        function mergeLists(listA, listB, keyField) {
-            const map = new Map();
+        // --- 原有的显示逻辑 ---
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
 
-            // 将两个列表合并到一个桶里
-            [...listB, ...listA].forEach(item => {
-                const key = (typeof keyField === 'function') ? keyField(item) : item[keyField];
-                if (!key) return;
-
-                if (!map.has(key)) {
-                    map.set(key, item);
-                } else {
-                    const existing = map.get(key);
-                    // 🌟 核心：对比 lastModified (如果没有，回退到 createDate)
-                    const timeNew = new Date(item.lastModified || item.createDate || 0).getTime();
-                    const timeOld = new Date(existing.lastModified || existing.createDate || 0).getTime();
-                    
-                    if (timeNew > timeOld) {
-                        map.set(key, item);
-                    }
-                }
-            });
-
-            return Array.from(map.values());
+        // 导航栏处理
+        if (id === 'projectDetail') {
+            document.getElementById('mainNavBar').style.display = 'none';
+            document.getElementById('detailNavBar').style.display = 'flex';
+        } else {
+            document.getElementById('mainNavBar').style.display = 'flex';
+            document.getElementById('detailNavBar').style.display = 'none';
+            const isHome = (id === 'homePage');
+            document.getElementById('globalBackBtn').style.display = isHome ? 'none' : 'flex';
+            document.getElementById('userBadge').style.display = isHome ? 'block' : 'none';
+            document.getElementById('nodeConfigBtn').style.display = (id === 'projectList') ? 'block' : 'none';
+            document.getElementById('globalPageTitle').innerText = isHome ? '工作助手' : '';
         }
         
-        // ==========================================
-        // 👆 新加功能区结束
-        // ==========================================
+        // 渲染逻辑
+        if (id === 'projectList') renderProjects();
+        if (id === 'attendancePage') renderOtPage();
+        if (id === 'homePage') initHome();
+        
+        // --- 📍 核心位置恢复逻辑 ---
+        if (id === 'homePage') {
+            // 如果是回首页，恢复位置
+            setTimeout(() => { container.scrollTop = homeScrollTop; }, 0);
+        } else {
+            // 如果是去新页面，滚到最上面
+            container.scrollTop = 0;
+        }
+
+        // 历史记录 (防止浏览器后退退出)
+        history.pushState({ pageId: id }, null, "#" + id);
+    };
+
+    // 🏠 3. 覆盖旧的回首页函数
+    window.goHome = function() {
+        if (history.state && history.state.pageId) {
+            history.back(); // 优先触发浏览器的返回
+        } else {
+            // 强制回首页
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById('homePage').classList.add('active');
+            document.getElementById('mainNavBar').style.display = 'flex';
+            document.getElementById('detailNavBar').style.display = 'none';
+            document.getElementById('globalBackBtn').style.display = 'none';
+            document.getElementById('userBadge').style.display = 'block';
+            
+            // 恢复位置
+            setTimeout(() => { 
+                document.querySelector('.page-container').scrollTop = homeScrollTop; 
+            }, 0);
+        }
+    };
         async function initApp() {
 
 
@@ -2342,31 +2266,21 @@
 
         function debouncedSync() {
             if (!currentUser) return;
+            showToast('🔄 正在同步...');
             clearTimeout(syncTimer);
             syncTimer = setTimeout(async () => {
-                try {
-                    // 1. 上传前先下载云端镜像
-                    const { data: cloud } = await _supabase.from('user_data').select('content').eq('user_id', currentUser.id).maybeSingle();
-                    
-                    // 2. 只有在云端有东西时，才进行本地合并
-                    if (cloud && cloud.content) {
-                        updateLocalStorage(cloud.content);
-                        // 合并完立刻刷新一下当前屏幕，保证用户看到的和即将上传的一致
-                        if (typeof refreshCurrentPage === 'function') refreshCurrentPage();
-                    }
-
-                    // 3. 此时 localStorage 已经是“云端+本地”的最优解，放心上传
-                    const payload = {
-                        projects: JSON.parse(localStorage.getItem(DB_KEY_DATA) || '[]'),
-                        todo: JSON.parse(localStorage.getItem(DB_KEY_TODO) || '[]'),
-                        attendance: DB_OT.get(),
-                        calendar: DB_CAL.get(),
-                        updated_at: new Date().toISOString()
-                    };
-                    await _supabase.from('user_data').upsert({ user_id: currentUser.id, content: payload });
-                    console.log('🚀 多端冲突已处理并完成全量同步');
-                } catch (e) { console.error('同步异常:', e); }
-            }, 2000); 
+                const payload = {
+                    projects: JSON.parse(localStorage.getItem(DB_KEY_DATA) || '[]'),
+                    config: JSON.parse(localStorage.getItem(DB_KEY_CONFIG) || '{}'),
+                    attendance: JSON.parse(localStorage.getItem(DB_KEY_OT) || '{}'),
+                    todo: JSON.parse(localStorage.getItem(DB_KEY_TODO) || '[]'),
+                    calendar: JSON.parse(localStorage.getItem(DB_KEY_CAL) || '{}'),
+                    updated_at: new Date().toISOString()
+                };
+                const { error } = await _supabase.from('user_data').upsert({ user_id: currentUser.id, content: payload });
+                if (!error) showToast('✅ 已同步到云端');
+                else showToast('❌ 同步失败: ' + error.message);
+            }, 1000);
         }
 
         async function syncCloudToLocal() {
@@ -2386,68 +2300,6 @@
             t.innerText = msg;
             t.style.opacity = '1';
             setTimeout(() => t.style.opacity = '0', 2000);
-        }
-// 🎨 新增：专门负责在不刷新网页的情况下，更新屏幕上的文字
-        function refreshCurrentPage() {
-            const activePage = document.querySelector('.page.active');
-            if (!activePage) return;
-
-            // 根据你当前停留在哪个页面，执行对应的刷新逻辑
-            if (activePage.id === 'homePage') {
-                initHome();    // 刷新首页统计、日历、待办
-            }
-            else if (activePage.id === 'projectList') {
-                renderProjects(); // 刷新工程列表
-            }
-            else if (activePage.id === 'attendancePage') {
-                renderOtPage(); // 刷新加班考勤
-            }
-            else if (activePage.id === 'projectDetail' && currentProjectId) {
-                // 如果在详情页，重新查一下本地缓存并显示
-                const list = JSON.parse(localStorage.getItem(DB_KEY_DATA) || '[]');
-                const p = list.find(x => x.id == currentProjectId);
-                if (p) refreshDetail(p);
-            }
-        }
-
-        // 🔄 手动同步逻辑：点击右上角 ↻ 触发
-        async function manualSyncData(btnElement) {
-            if (!currentUser) return showToast('请先登录');
-
-            // 1. 让按钮转起来
-            if(btnElement) btnElement.classList.add('spin-anim');
-            const minTime = new Promise(resolve => setTimeout(resolve, 600));
-
-            try {
-                // 2. 从服务器拉取最新数据
-                const { data, error } = await _supabase
-                    .from('user_data')
-                    .select('content')
-                    .eq('user_id', currentUser.id)
-                    .maybeSingle();
-
-                await minTime; // 保证动画流畅
-
-                if (error) throw error;
-
-                if (data && data.content) {
-                    // 3. 将云端数据合并到本地缓存 (localStorage)
-                    updateLocalStorage(data.content);
-                    
-                    // 4. 🔥 最关键：立刻重绘界面！
-                    refreshCurrentPage();
-                    
-                    showToast('已刷新');
-                } else {
-                    showToast('云端暂无数据');
-                }
-            } catch (err) {
-                console.error(err);
-                showToast('❌ 同步失败');
-            } finally {
-                // 5. 停止转圈
-                if(btnElement) btnElement.classList.remove('spin-anim');
-            }
         }
 
         // --- 🌟 V64 核心修改：智能导航栏切换 logic ---
@@ -2678,51 +2530,33 @@
         }
 
         function addTodo() {
-            const inputEl = document.getElementById('todoInput');
-            const val = inputEl.value.trim();
+            const val = document.getElementById('todoInput').value.trim();
             if (!val) return;
-
             const list = DB_TODO.get();
-            const now = new Date().toISOString();
-            
-            // 🌟 核心修改：将 push 改为 unshift
-            // unshift 会把新任务塞到数组的第 0 个位置，这样它就会出现在最上面
-            list.unshift({ 
-                text: val, 
-                done: false, 
-                createDate: now,
-                lastModified: now 
-            });
-            
-            // 保存并刷新界面
+            list.unshift({ text: val, done: false, createDate: new Date().toISOString() });
             DB_TODO.save(list);
-            inputEl.value = '';
-            
-            // 立即重新渲染列表，让新任务直接出现在屏幕顶端
+            document.getElementById('todoInput').value = '';
             renderTodos();
-            
-            // 如果首页有统计或简易列表，也同步更新
-            if (typeof initHome === 'function') initHome();
+            initHome();
         }
 
         function toggleTodo(originIdx) {
-    const list = DB_TODO.get();
-    const item = list[originIdx];
-    item.done = !item.done;
-    
-    // 🌟 记录修改时间
-    item.lastModified = new Date().toISOString(); 
-
-    if (item.done) {
-        const now = new Date();
-        const timeStr = `${now.getMonth() + 1}月${now.getDate()}日 ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
-        item.completedAt = timeStr;
-    } else {
-        delete item.completedAt;
-    }
-    DB_TODO.save(list);
-    renderTodos();
-}
+            const list = DB_TODO.get();
+            const item = list[originIdx];
+            item.done = !item.done;
+            if (item.done) {
+                const now = new Date();
+                const timeStr = `${now.getMonth() + 1}月${now.getDate()}日 ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+                item.completedAt = timeStr;
+            } else {
+                delete item.completedAt;
+            }
+            DB_TODO.save(list);
+            renderTodos();
+            if (document.getElementById('todoHistoryModal').classList.contains('open')) {
+                renderHistoryList();
+            }
+        }
 
         function deleteTodo(originIdx) {
             if (!confirm("彻底删除？")) return;
@@ -2818,23 +2652,8 @@
         }
 
         function saveBaseLeave() { const data = DB_OT.get(); data.annual = document.getElementById('inpAnnual').value || 0; data.saved = document.getElementById('inpSaved').value || 0; DB_OT.save(data); renderOtPage(); }
-function addOvertime() {
-    const date = document.getElementById('otDate').value;
-    const days = document.getElementById('otDays').value;
-    if (!date || !days) return alert("请填写完整");
-    const data = DB_OT.get();
-    data.records.push({
-        id: Date.now().toString(),
-        date,
-        days,
-        note: document.getElementById('otNote').value,
-        status: 'active',
-        lastModified: new Date().toISOString() // 🌟 记录修改时间
-    });
-    DB_OT.save(data);
-    closeModal('addOtModal');
-    renderOtPage();
-}        function preUseOt(id) { document.getElementById('useOtId').value = id; document.getElementById('useOtDate').value = new Date().toISOString().split('T')[0]; openModal('useOtModal'); }
+        function addOvertime() { const date = document.getElementById('otDate').value; const days = document.getElementById('otDays').value; if (!date || !days) return alert("请填写完整"); const data = DB_OT.get(); data.records.push({ id: Date.now().toString(), date, days, note: document.getElementById('otNote').value, status: 'active' }); DB_OT.save(data); closeModal('addOtModal'); renderOtPage(); }
+        function preUseOt(id) { document.getElementById('useOtId').value = id; document.getElementById('useOtDate').value = new Date().toISOString().split('T')[0]; openModal('useOtModal'); }
         function confirmUseOt() { const id = document.getElementById('useOtId').value; const date = document.getElementById('useOtDate').value; if (!date) return alert("请填写日期"); const data = DB_OT.get(); const item = data.records.find(r => r.id === id); if (item) { item.status = 'used'; item.usedDate = date; DB_OT.save(data); closeModal('useOtModal'); renderOtPage(); } }
         function delOtItem(id) { if (confirm("删除此记录？")) { const data = DB_OT.get(); data.records = data.records.filter(r => r.id !== id); DB_OT.save(data); renderOtPage(); } }
         function openNewLeave() { document.getElementById('lvEditIndex').value = ''; document.getElementById('leaveModalTitle').innerText = '录入休假'; document.getElementById('lvType').value = '年假'; document.getElementById('lvDate').value = new Date().toISOString().split('T')[0]; document.getElementById('lvDays').value = ''; document.getElementById('lvNote').value = ''; document.getElementById('lvSaveBtn').innerText = '确认'; openModal('addLeaveModal'); }
@@ -3085,21 +2904,8 @@ function addOvertime() {
             }
         }
 
-function createProject() {
-    const n = document.getElementById('newProjectName').value;
-    if (!n) return alert("请输入名称");
-    const newProj = {
-        id: Date.now(),
-        name: n,
-        type: document.getElementById('newProjectType').value,
-        createDate: new Date().toLocaleDateString(),
-        lastModified: new Date().toISOString(), // 🌟 记录修改时间
-        stages: []
-    };
-    DB.save([newProj, ...DB.get()]);
-    closeModal('createModal');
-    goToPage('projectList');
-}        function openNodeLibrary() {
+        function createProject() { const n = document.getElementById('newProjectName').value; if (!n) return alert("请输入名称"); DB.save([{ id: Date.now(), name: n, type: document.getElementById('newProjectType').value, createDate: new Date().toLocaleDateString(), stages: [] }, ...DB.get()]); closeModal('createModal'); goToPage('projectList'); }
+        function openNodeLibrary() {
             const container = document.getElementById('nodeLibraryGrid');
             container.innerHTML = '';
 
@@ -3250,26 +3056,18 @@ function createProject() {
         }
 
         function saveDynamicData() {
-    const list = DB.get();
-    const p = list.find(x => x.id === currentProjectId);
-    const stage = p.stages[currentStageIndex];
-    
-    let nd = {}; let full = true;
-    stage.config.forEach(f => {
-        const el = document.getElementById(`f_${f.key}`);
-        if (el) { nd[f.key] = el.value; if (el.value === '') full = false; }
-    });
-    
-    stage.data = { ...stage.data, ...nd };
-    stage.status = Object.values(nd).some(v => v) ? (full ? 'done' : 'processing') : 'waiting';
-    
-    // 🌟 核心：只要动了节点，整个工程的最后修改时间都要更新
-    p.lastModified = new Date().toISOString(); 
-    
-    DB.save(list);
-    closeModal('dynamicFormModal');
-    refreshDetail(p);
-}
+            const list = DB.get();
+            const p = list.find(x => x.id === currentProjectId);
+            const stage = p.stages[currentStageIndex];
+            let nd = {}; let full = true;
+            stage.config.forEach(f => {
+                const el = document.getElementById(`f_${f.key}`);
+                if (el) { nd[f.key] = el.value; if (el.value === '') full = false; }
+            });
+            stage.data = { ...stage.data, ...nd };
+            stage.status = Object.values(nd).some(v => v) ? (full ? 'done' : 'processing') : 'waiting';
+            DB.save(list); closeModal('dynamicFormModal'); refreshDetail(p);
+        }
         function deleteStage(i) { if (confirm("删节点？")) { const l = DB.get(); const p = l.find(x => x.id == currentProjectId); p.stages.splice(i, 1); DB.save(l); refreshDetail(p); } }
 
         function renderProjects() {
@@ -3509,31 +3307,41 @@ function createProject() {
             openModal('personalCenterModal');
         }
 
-        // --- 🔙 终极修复：完美保留位置 (V68 修正版) ---
+    // --- 🔙 核心修复：接管浏览器返回键 & 滑动返回 ---
 
-    // 1. 🛑 霸道接管：禁止浏览器插手滚动条
-    if ('scrollRestoration' in history) {
-        history.scrollRestoration = 'manual';
-    }
-
-    // 2. 📍 全局变量：像钉子一样记住位置
-    window.homeScrollMemory = 0;
-
-    // 3. 🔄 页面跳转
-    window.goToPage = function(id) {
-        const container = document.querySelector('.page-container');
+    // 1. 监听浏览器的“后退”动作 (包括边缘滑动、物理返回键)
+    window.addEventListener('popstate', function(event) {
+        // 如果 history 状态里没有 ID，说明回到了原点（首页）
+        const state = event.state;
         
-        // 离开首页时，赶紧记下位置
-        if (document.getElementById('homePage').classList.contains('active')) {
-            window.homeScrollMemory = container.scrollTop;
+        if (state && state.pageId) {
+            // 如果历史记录里有页面ID，就跳过去（比如前进时）
+            // 这里我们通常只需要处理“回退”到首页的情况
+            // 但为了保险，还是留着
+            showPageSimple(state.pageId);
+        } else {
+            // 如果没有状态了，说明退到了最开始，强制回首页
+            goHomeSimple();
         }
+    });
 
-        showPageSimple(id); 
+    // 2. 改造页面跳转函数：每次跳转都“虚构”一条历史记录
+    // ⚠️ 注意：请用这个替换代码里原本的 goToPage 函数，或者覆盖它
+    const originalGoToPage = window.goToPage; // 备份一下旧逻辑如果有的话
+
+    window.goToPage = function(id) {
+        // 先执行原本的 UI 切换逻辑
+        showPageSimple(id);
+
+        // 📝 关键：往浏览器历史里塞一条记录
+        // 这样浏览器觉得如果你滑回去，就是撤销这条记录，而不是关闭网页
         history.pushState({ pageId: id }, null, "#" + id);
     };
 
-    // 4. 🏠 返回首页
+    // 3. 改造回首页函数
     window.goHome = function() {
+        // 如果当前有历史记录（不是首页），就通过 history.back() 返回
+        // 这样可以模拟用户的“点击返回”操作
         if (history.state && history.state.pageId) {
             history.back(); 
         } else {
@@ -3541,26 +3349,16 @@ function createProject() {
         }
     };
 
-    // 5. 👂 监听滑动返回
-    window.addEventListener('popstate', function(event) {
-        const state = event.state;
-        if (state && state.pageId) {
-            showPageSimple(state.pageId);
-        } else {
-            goHomeSimple();
-        }
-    });
-
-    // 6. 🛠️ 显示切换 (绝对不刷新数据)
+    // --- 内部工具：纯粹的显示隐藏，不操作历史记录 ---
+// --- 内部工具：纯粹的显示隐藏，不操作历史记录 ---
     function showPageSimple(id) {
-        const container = document.querySelector('.page-container');
-
-        // 切换画面
+        // 1. 隐藏所有页面
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        // 2. 显示目标页面
         const target = document.getElementById(id);
         if(target) target.classList.add('active');
 
-        // 导航栏处理
+        // 3. 处理导航栏显示
         if (id === 'projectDetail') {
             document.getElementById('mainNavBar').style.display = 'none';
             document.getElementById('detailNavBar').style.display = 'flex';
@@ -3568,6 +3366,7 @@ function createProject() {
             document.getElementById('mainNavBar').style.display = 'flex';
             document.getElementById('detailNavBar').style.display = 'none';
             
+            // 首页特殊处理
             const isHome = (id === 'homePage');
             document.getElementById('globalBackBtn').style.display = isHome ? 'none' : 'flex';
             document.getElementById('userBadge').style.display = isHome ? 'block' : 'none';
@@ -3575,38 +3374,23 @@ function createProject() {
             document.getElementById('globalPageTitle').innerText = isHome ? '工作助手' : '';
         }
 
-        // 子页面刷新数据
+        // 4. 触发页面特定的渲染逻辑
         if (id === 'projectList') renderProjects();
         if (id === 'attendancePage') renderOtPage();
-
-        // 🌟 核心：首页位置恢复 (三道保险)
-        if (id === 'homePage') {
-            // 第一道：立刻恢复
-            container.scrollTop = window.homeScrollMemory;
-            
-            // 第二道：下一帧恢复 (解决渲染延迟)
-            requestAnimationFrame(() => {
-                container.scrollTop = window.homeScrollMemory;
-            });
-
-            // 第三道：50ms后强制按住 (专门解决那个“先回位置再跳顶部”的鬼畜问题)
-            setTimeout(() => {
-                container.scrollTop = window.homeScrollMemory;
-            }, 50);
-        } else {
-            container.scrollTop = 0;
-        }
+        
+        // ❌【关键修改】删掉了下面这一行 initHome()
+        // if (id === 'homePage') initHome();  <-- 原来这里有一行，现在去掉了！
     }
 
+    // --- 内部工具：纯粹回首页 UI ---
     function goHomeSimple() {
         showPageSimple('homePage');
     }
     
-    // 初始化
+    // 初始化：刚打开网页时，把首页替换为当前状态，防止乱跑
     history.replaceState({ pageId: 'homePage' }, null, "#home");
 
     </script>
-
     <div id="personalCenterModal" class="modal">
         <div class="modal-content" style="max-width: 320px; text-align: center;">
             <h3 style="margin-bottom: 5px;">个人中心</h3>
