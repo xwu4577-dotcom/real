@@ -1634,31 +1634,27 @@
                 animation: spin 1s linear infinite;
             }
 
-            /* 日历日志弹窗 iOS 风格优化 */
+/* 日历日志弹窗 - 手机优化版 */
 #dayLogModal .modal-content {
     max-width: 92% !important;
     border-radius: 20px !important;
-    padding: 24px 20px !important;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    padding: 20px 18px !important;
 }
 
 #dayLogModal .log-textarea {
-    min-height: 180px !important;
+    min-height: 160px !important;
     font-size: 16px !important;
-    line-height: 1.55 !important;
-    padding: 16px !important;
-    border-radius: 14px !important;
-    border: 1px solid #ddd;
-    background: #f9f9f9;
-    resize: vertical;
+    line-height: 1.5 !important;
+    padding: 14px !important;
+    border-radius: 12px !important;
+    background: #f8f8f8;
+    border: 1px solid #e0e0e0;
 }
 
 #dayLogModal .btn-primary {
-    height: 52px !important;
+    height: 46px !important;
     font-size: 17px !important;
-    font-weight: 600 !important;
-    border-radius: 14px !important;
-    margin: 8px 0 12px 0 !important;
+    border-radius: 12px !important;
 }
 
 #dayLogModal .btn-cancel {
@@ -1983,34 +1979,38 @@
         </div>
     </div>
 
-    <div id="dayLogModal" class="modal">
-        <div class="modal-content" style="max-width: 92%; border-radius: 20px; padding: 24px 20px;">
-            <!-- 日期标题（更大更醒目） -->
-            <div id="logDateTitle"
-                style="font-size: 22px; font-weight: 700; color: #000; text-align: center; margin-bottom: 20px;">
-                2026-02-10
-            </div>
-
-            <div style="margin-bottom: 18px;">
-                <div style="font-size: 15px; font-weight: 600; color: #333; margin-bottom: 8px;">工作日志</div>
-                <textarea id="logContent" class="log-textarea" placeholder="记录今天的工作重点、完成事项、待跟进内容..."
-                    style="min-height: 180px; font-size: 16px; line-height: 1.5; padding: 16px; border-radius: 14px;">
-            </textarea>
-            </div>
-
-            <!-- 主按钮（更大、更圆润） -->
-            <button class="btn-primary" onclick="saveDayLog()"
-                style="height: 52px; font-size: 17px; font-weight: 600; border-radius: 14px; margin-bottom: 10px;">
-                保存日志
-            </button>
-
-            <!-- 次要关闭按钮 -->
-            <button class="btn-cancel" onclick="closeModal('dayLogModal')"
-                style="font-size: 16px; padding: 14px; color: #666;">
-                取消
-            </button>
+<div id="dayLogModal" class="modal">
+    <div class="modal-content" style="max-width: 92%; border-radius: 20px; padding: 20px 18px;">
+        
+        <!-- 日期标题 -->
+        <div id="logDateTitle" style="font-size: 20px; font-weight: 700; text-align: center; margin-bottom: 16px; color: #1c1c1e;">
+            2026-02-10
         </div>
+
+        <!-- 日志输入区 -->
+        <div style="margin-bottom: 20px;">
+            <div style="font-size: 15px; font-weight: 600; color: #333; margin-bottom: 8px; padding-left: 2px;">
+                工作日志
+            </div>
+            <textarea id="logContent" class="log-textarea" 
+                placeholder="记录今天的工作重点、完成事项、待跟进内容..."
+                style="min-height: 160px; font-size: 16px; padding: 14px; border-radius: 12px;">
+            </textarea>
+        </div>
+
+        <!-- 保存按钮（更小、更优雅） -->
+        <button class="btn-primary" onclick="saveDayLog()" 
+            style="height: 46px; font-size: 17px; font-weight: 600; border-radius: 12px; margin-bottom: 8px;">
+            保存日志
+        </button>
+
+        <!-- 取消按钮（轻量化） -->
+        <button onclick="closeModal('dayLogModal')" 
+            style="width: 100%; background: none; border: none; color: #666; font-size: 16px; padding: 12px 0;">
+            取消
+        </button>
     </div>
+</div>
 
     <div id="todoHistoryModal" class="modal">
         <div class="modal-content">
