@@ -42,20 +42,24 @@
             }
 
             /* 核心布局 */
-            
+
             /* 👇 1. 替换 body 样式：加上 html 标签，彻底锁死橡皮筋效果 */
-            html, body {
+            html,
+            body {
                 width: 100%;
                 height: 100%;
-                overflow: hidden; /* 💀 关键：禁止整个浏览器窗口滚动 */
+                overflow: hidden;
+                /* 💀 关键：禁止整个浏览器窗口滚动 */
                 margin: 0;
                 padding: 0;
-                position: fixed; /* 💀 关键：像钉子一样钉在屏幕上 */
+                position: fixed;
+                /* 💀 关键：像钉子一样钉在屏幕上 */
                 font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
                 background: var(--bg);
                 color: var(--text);
                 display: flex;
-                flex-direction: column; /* 垂直布局 */
+                flex-direction: column;
+                /* 垂直布局 */
                 -webkit-tap-highlight-color: transparent;
             }
 
@@ -69,19 +73,24 @@
             .navbar-common {
                 background: var(--white);
                 color: var(--text);
-                height: 44px;      /* 🔒 高度写死 */
-                min-height: 44px;  /* 🔒 最小高度写死 */
+                height: 44px;
+                /* 🔒 高度写死 */
+                min-height: 44px;
+                /* 🔒 最小高度写死 */
                 padding: 0 15px;
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
                 box-shadow: 0 1px 0 rgba(0, 0, 0, 0.05);
-                
-                flex-shrink: 0;    /* 💀 关键：禁止被内容挤扁 */
-                position: relative; 
-                z-index: 999;      /* 保证在最上层 */
+
+                flex-shrink: 0;
+                /* 💀 关键：禁止被内容挤扁 */
+                position: relative;
+                z-index: 999;
+                /* 保证在最上层 */
                 width: 100%;
             }
+
             .nav-left {
                 display: flex;
                 align-items: center;
@@ -202,16 +211,18 @@
 
             /* 👇 3. 替换内容容器样式：只有这里能滚动 */
             .page-container {
-                flex: 1;           /* 霸占剩余所有空间 */
-                overflow-y: auto;  /* 允许内部上下滚动 */
+                flex: 1;
+                /* 霸占剩余所有空间 */
+                overflow-y: auto;
+                /* 允许内部上下滚动 */
                 overflow-x: hidden;
                 width: 100%;
                 padding: 15px;
                 padding-bottom: 80px;
                 position: relative;
-                
+
                 /* iOS 丝滑滚动体验 */
-                -webkit-overflow-scrolling: touch; 
+                -webkit-overflow-scrolling: touch;
             }
 
             .page {
@@ -1588,36 +1599,40 @@
             }
 
             /* 刷新按钮样式 */
-#refreshBtnMain {
-    background: transparent;
-    border: none;
-    font-size: 20px;
-    width: 32px;
-    height: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--primary);
-    cursor: pointer;
-    border-radius: 50%;
-    transition: all 0.2s;
-}
+            #refreshBtnMain {
+                background: transparent;
+                border: none;
+                font-size: 20px;
+                width: 32px;
+                height: 32px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: var(--primary);
+                cursor: pointer;
+                border-radius: 50%;
+                transition: all 0.2s;
+            }
 
-#refreshBtnMain:active {
-    background: rgba(0, 122, 255, 0.1);
-    transform: rotate(180deg);
-}
+            #refreshBtnMain:active {
+                background: rgba(0, 122, 255, 0.1);
+                transform: rotate(180deg);
+            }
 
-/* 转圈动画（点击时） */
-@keyframes spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-}
+            /* 转圈动画（点击时） */
+            @keyframes spin {
+                from {
+                    transform: rotate(0deg);
+                }
 
-#refreshBtnMain.spin {
-    animation: spin 1s linear infinite;
-}
+                to {
+                    transform: rotate(360deg);
+                }
+            }
 
+            #refreshBtnMain.spin {
+                animation: spin 1s linear infinite;
+            }
         </style>
     </head>
 
@@ -1633,17 +1648,18 @@
             </button>
             <h1 id="globalPageTitle" class="page-title">工作助手</h1>
         </div>
-        <div class="nav-right" style="gap: 8px;">
-    <!-- 个人中心按钮向左靠一点 -->
-    <span id="userBadge" class="user-badge" onclick="openPersonalCenter()" style="display:none; margin-right: 4px;"></span>
+        <div class="nav-right" style="gap: 8px; align-items: center;">
+    <!-- 个人中心按钮（最左） -->
+    <span id="userBadge" class="user-badge" onclick="openPersonalCenter()" style="display:none;"></span>
     
-    <!-- 新增：数据刷新按钮 -->
-    <button id="refreshBtnMain" class="nav-btn-right" onclick="manualSyncData(this)" title="刷新云端数据">
-        ↻
+    <!-- 节点库按钮 -->
+    <button id="nodeConfigBtn" class="nav-btn-right" onclick="openConfigModal('global')" style="display:none;">
+        ⚙️ 节点库
     </button>
     
-    <button id="nodeConfigBtn" class="nav-btn-right" onclick="openConfigModal('global')">
-        ⚙️ 节点库
+    <!-- 刷新按钮（最右端） -->
+    <button id="refreshBtnMain" class="nav-btn-right" onclick="manualSyncData(this)" title="刷新云端数据">
+        ↻
     </button>
 </div>
     </nav>
@@ -1667,12 +1683,21 @@
             <div id="navDetailType" class="detail-sub-title"></div>
         </div>
 
-        <div class="nav-right">
-            <button class="nav-btn-right" onclick="openConfigModal('global')">
+        <div class="nav-right" style="gap: 6px; align-items: center;">
+            <!-- 个人中心按钮 -->
+            <span id="userBadge" class="user-badge" onclick="openPersonalCenter()" style="display:none;"></span>
+
+            <!-- 节点库按钮（靠左） -->
+            <button id="nodeConfigBtn" class="nav-btn-right" onclick="openConfigModal('global')" style="display:none;">
                 ⚙️ 节点库
             </button>
+
+            <!-- 刷新按钮（放在最后 = 最右端） -->
+            <button id="refreshBtnMain" class="nav-btn-right" onclick="manualSyncData(this)" title="刷新云端数据">
+                ↻
+            </button>
         </div>
-        </div>
+
     </nav>
 
     <div id="auth-modal" style="display:none;">
@@ -2091,72 +2116,72 @@
         let syncTimer = null;
 
         // 📍 1. 定义一个变量，专门记位置
-    let homeScrollTop = 0;
+        let homeScrollTop = 0;
 
-    // 🔄 2. 覆盖旧的跳转函数 (去别的页面时，记下当前位置)
-    window.goToPage = function(id) {
-        const container = document.querySelector('.page-container');
-        
-        // 如果是从首页离开，赶紧记下位置！
-        if (document.getElementById('homePage').classList.contains('active')) {
-            homeScrollTop = container.scrollTop;
-        }
+        // 🔄 2. 覆盖旧的跳转函数 (去别的页面时，记下当前位置)
+        window.goToPage = function (id) {
+            const container = document.querySelector('.page-container');
 
-        // --- 原有的显示逻辑 ---
-        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-        document.getElementById(id).classList.add('active');
+            // 如果是从首页离开，赶紧记下位置！
+            if (document.getElementById('homePage').classList.contains('active')) {
+                homeScrollTop = container.scrollTop;
+            }
 
-        // 导航栏处理
-        if (id === 'projectDetail') {
-            document.getElementById('mainNavBar').style.display = 'none';
-            document.getElementById('detailNavBar').style.display = 'flex';
-        } else {
-            document.getElementById('mainNavBar').style.display = 'flex';
-            document.getElementById('detailNavBar').style.display = 'none';
-            const isHome = (id === 'homePage');
-            document.getElementById('globalBackBtn').style.display = isHome ? 'none' : 'flex';
-            document.getElementById('userBadge').style.display = isHome ? 'block' : 'none';
-            document.getElementById('nodeConfigBtn').style.display = (id === 'projectList') ? 'block' : 'none';
-            document.getElementById('globalPageTitle').innerText = isHome ? '工作助手' : '';
-        }
-        
-        // 渲染逻辑
-        if (id === 'projectList') renderProjects();
-        if (id === 'attendancePage') renderOtPage();
-        if (id === 'homePage') initHome();
-        
-        // --- 📍 核心位置恢复逻辑 ---
-        if (id === 'homePage') {
-            // 如果是回首页，恢复位置
-            setTimeout(() => { container.scrollTop = homeScrollTop; }, 0);
-        } else {
-            // 如果是去新页面，滚到最上面
-            container.scrollTop = 0;
-        }
-
-        // 历史记录 (防止浏览器后退退出)
-        history.pushState({ pageId: id }, null, "#" + id);
-    };
-
-    // 🏠 3. 覆盖旧的回首页函数
-    window.goHome = function() {
-        if (history.state && history.state.pageId) {
-            history.back(); // 优先触发浏览器的返回
-        } else {
-            // 强制回首页
+            // --- 原有的显示逻辑 ---
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            document.getElementById('homePage').classList.add('active');
-            document.getElementById('mainNavBar').style.display = 'flex';
-            document.getElementById('detailNavBar').style.display = 'none';
-            document.getElementById('globalBackBtn').style.display = 'none';
-            document.getElementById('userBadge').style.display = 'block';
-            
-            // 恢复位置
-            setTimeout(() => { 
-                document.querySelector('.page-container').scrollTop = homeScrollTop; 
-            }, 0);
-        }
-    };
+            document.getElementById(id).classList.add('active');
+
+            // 导航栏处理
+            if (id === 'projectDetail') {
+                document.getElementById('mainNavBar').style.display = 'none';
+                document.getElementById('detailNavBar').style.display = 'flex';
+            } else {
+                document.getElementById('mainNavBar').style.display = 'flex';
+                document.getElementById('detailNavBar').style.display = 'none';
+                const isHome = (id === 'homePage');
+                document.getElementById('globalBackBtn').style.display = isHome ? 'none' : 'flex';
+                document.getElementById('userBadge').style.display = isHome ? 'block' : 'none';
+                document.getElementById('nodeConfigBtn').style.display = (id === 'projectList') ? 'block' : 'none';
+                document.getElementById('globalPageTitle').innerText = isHome ? '工作助手' : '';
+            }
+
+            // 渲染逻辑
+            if (id === 'projectList') renderProjects();
+            if (id === 'attendancePage') renderOtPage();
+            if (id === 'homePage') initHome();
+
+            // --- 📍 核心位置恢复逻辑 ---
+            if (id === 'homePage') {
+                // 如果是回首页，恢复位置
+                setTimeout(() => { container.scrollTop = homeScrollTop; }, 0);
+            } else {
+                // 如果是去新页面，滚到最上面
+                container.scrollTop = 0;
+            }
+
+            // 历史记录 (防止浏览器后退退出)
+            history.pushState({ pageId: id }, null, "#" + id);
+        };
+
+        // 🏠 3. 覆盖旧的回首页函数
+        window.goHome = function () {
+            if (history.state && history.state.pageId) {
+                history.back(); // 优先触发浏览器的返回
+            } else {
+                // 强制回首页
+                document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+                document.getElementById('homePage').classList.add('active');
+                document.getElementById('mainNavBar').style.display = 'flex';
+                document.getElementById('detailNavBar').style.display = 'none';
+                document.getElementById('globalBackBtn').style.display = 'none';
+                document.getElementById('userBadge').style.display = 'block';
+
+                // 恢复位置
+                setTimeout(() => {
+                    document.querySelector('.page-container').scrollTop = homeScrollTop;
+                }, 0);
+            }
+        };
         async function initApp() {
 
 
@@ -2323,53 +2348,53 @@
         }
 
         // ==================== 数据刷新按钮调用函数 ====================
-async function manualSyncData(btnElement) {
-    if (!currentUser) {
-        showToast('请先登录账号才能同步云端数据');
-        return;
-    }
-
-    // 点击时显示转圈
-    if (btnElement) btnElement.classList.add('spin');
-
-    try {
-        const { data, error } = await _supabase
-            .from('user_data')
-            .select('content')
-            .eq('user_id', currentUser.id)
-            .maybeSingle();
-
-        if (error) throw error;
-
-        if (data && data.content) {
-            // 覆盖本地数据（以云端为准）
-            const c = data.content;
-            if (c.projects) localStorage.setItem(DB_KEY_DATA, JSON.stringify(c.projects));
-            if (c.config) localStorage.setItem(DB_KEY_CONFIG, JSON.stringify(c.config));
-            if (c.attendance) localStorage.setItem(DB_KEY_OT, JSON.stringify(c.attendance));
-            if (c.todo) localStorage.setItem(DB_KEY_TODO, JSON.stringify(c.todo));
-            if (c.calendar) localStorage.setItem(DB_KEY_CAL, JSON.stringify(c.calendar));
-
-            // 刷新当前页面显示
-            if (document.getElementById('homePage').classList.contains('active')) {
-                initHome();
-            } else if (document.getElementById('projectList').classList.contains('active')) {
-                renderProjects();
-            } else if (document.getElementById('attendancePage').classList.contains('active')) {
-                renderOtPage();
+        async function manualSyncData(btnElement) {
+            if (!currentUser) {
+                showToast('请先登录账号才能同步云端数据');
+                return;
             }
 
-            showToast('✅ 数据已从云端刷新');
-        } else {
-            showToast('云端暂无数据');
+            // 点击时显示转圈
+            if (btnElement) btnElement.classList.add('spin');
+
+            try {
+                const { data, error } = await _supabase
+                    .from('user_data')
+                    .select('content')
+                    .eq('user_id', currentUser.id)
+                    .maybeSingle();
+
+                if (error) throw error;
+
+                if (data && data.content) {
+                    // 覆盖本地数据（以云端为准）
+                    const c = data.content;
+                    if (c.projects) localStorage.setItem(DB_KEY_DATA, JSON.stringify(c.projects));
+                    if (c.config) localStorage.setItem(DB_KEY_CONFIG, JSON.stringify(c.config));
+                    if (c.attendance) localStorage.setItem(DB_KEY_OT, JSON.stringify(c.attendance));
+                    if (c.todo) localStorage.setItem(DB_KEY_TODO, JSON.stringify(c.todo));
+                    if (c.calendar) localStorage.setItem(DB_KEY_CAL, JSON.stringify(c.calendar));
+
+                    // 刷新当前页面显示
+                    if (document.getElementById('homePage').classList.contains('active')) {
+                        initHome();
+                    } else if (document.getElementById('projectList').classList.contains('active')) {
+                        renderProjects();
+                    } else if (document.getElementById('attendancePage').classList.contains('active')) {
+                        renderOtPage();
+                    }
+
+                    showToast('✅ 数据已从云端刷新');
+                } else {
+                    showToast('云端暂无数据');
+                }
+            } catch (err) {
+                console.error(err);
+                showToast('❌ 刷新失败');
+            } finally {
+                if (btnElement) btnElement.classList.remove('spin');
+            }
         }
-    } catch (err) {
-        console.error(err);
-        showToast('❌ 刷新失败');
-    } finally {
-        if (btnElement) btnElement.classList.remove('spin');
-    }
-}
 
         async function syncCloudToLocal() {
             const { data, error } = await _supabase.from('user_data').select('content').eq('user_id', currentUser.id).single();
@@ -3395,85 +3420,85 @@ async function manualSyncData(btnElement) {
             openModal('personalCenterModal');
         }
 
-    // --- 🔙 核心修复：接管浏览器返回键 & 滑动返回 ---
+        // --- 🔙 核心修复：接管浏览器返回键 & 滑动返回 ---
 
-    // 1. 监听浏览器的“后退”动作 (包括边缘滑动、物理返回键)
-    window.addEventListener('popstate', function(event) {
-        // 如果 history 状态里没有 ID，说明回到了原点（首页）
-        const state = event.state;
-        
-        if (state && state.pageId) {
-            // 如果历史记录里有页面ID，就跳过去（比如前进时）
-            // 这里我们通常只需要处理“回退”到首页的情况
-            // 但为了保险，还是留着
-            showPageSimple(state.pageId);
-        } else {
-            // 如果没有状态了，说明退到了最开始，强制回首页
-            goHomeSimple();
+        // 1. 监听浏览器的“后退”动作 (包括边缘滑动、物理返回键)
+        window.addEventListener('popstate', function (event) {
+            // 如果 history 状态里没有 ID，说明回到了原点（首页）
+            const state = event.state;
+
+            if (state && state.pageId) {
+                // 如果历史记录里有页面ID，就跳过去（比如前进时）
+                // 这里我们通常只需要处理“回退”到首页的情况
+                // 但为了保险，还是留着
+                showPageSimple(state.pageId);
+            } else {
+                // 如果没有状态了，说明退到了最开始，强制回首页
+                goHomeSimple();
+            }
+        });
+
+        // 2. 改造页面跳转函数：每次跳转都“虚构”一条历史记录
+        // ⚠️ 注意：请用这个替换代码里原本的 goToPage 函数，或者覆盖它
+        const originalGoToPage = window.goToPage; // 备份一下旧逻辑如果有的话
+
+        window.goToPage = function (id) {
+            // 先执行原本的 UI 切换逻辑
+            showPageSimple(id);
+
+            // 📝 关键：往浏览器历史里塞一条记录
+            // 这样浏览器觉得如果你滑回去，就是撤销这条记录，而不是关闭网页
+            history.pushState({ pageId: id }, null, "#" + id);
+        };
+
+        // 3. 改造回首页函数
+        window.goHome = function () {
+            // 如果当前有历史记录（不是首页），就通过 history.back() 返回
+            // 这样可以模拟用户的“点击返回”操作
+            if (history.state && history.state.pageId) {
+                history.back();
+            } else {
+                goHomeSimple();
+            }
+        };
+
+        // --- 内部工具：纯粹的显示隐藏，不操作历史记录 ---
+        function showPageSimple(id) {
+            // 1. 隐藏所有页面
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            // 2. 显示目标页面
+            const target = document.getElementById(id);
+            if (target) target.classList.add('active');
+
+            // 3. 处理导航栏显示
+            if (id === 'projectDetail') {
+                document.getElementById('mainNavBar').style.display = 'none';
+                document.getElementById('detailNavBar').style.display = 'flex';
+            } else {
+                document.getElementById('mainNavBar').style.display = 'flex';
+                document.getElementById('detailNavBar').style.display = 'none';
+
+                // 首页特殊处理
+                const isHome = (id === 'homePage');
+                document.getElementById('globalBackBtn').style.display = isHome ? 'none' : 'flex';
+                document.getElementById('userBadge').style.display = isHome ? 'block' : 'none';
+                document.getElementById('nodeConfigBtn').style.display = (id === 'projectList') ? 'block' : 'none';
+                document.getElementById('globalPageTitle').innerText = isHome ? '工作助手' : '';
+            }
+
+            // 4. 触发页面特定的渲染逻辑
+            if (id === 'projectList') renderProjects();
+            if (id === 'attendancePage') renderOtPage();
+            if (id === 'homePage') initHome();
         }
-    });
 
-    // 2. 改造页面跳转函数：每次跳转都“虚构”一条历史记录
-    // ⚠️ 注意：请用这个替换代码里原本的 goToPage 函数，或者覆盖它
-    const originalGoToPage = window.goToPage; // 备份一下旧逻辑如果有的话
-
-    window.goToPage = function(id) {
-        // 先执行原本的 UI 切换逻辑
-        showPageSimple(id);
-
-        // 📝 关键：往浏览器历史里塞一条记录
-        // 这样浏览器觉得如果你滑回去，就是撤销这条记录，而不是关闭网页
-        history.pushState({ pageId: id }, null, "#" + id);
-    };
-
-    // 3. 改造回首页函数
-    window.goHome = function() {
-        // 如果当前有历史记录（不是首页），就通过 history.back() 返回
-        // 这样可以模拟用户的“点击返回”操作
-        if (history.state && history.state.pageId) {
-            history.back(); 
-        } else {
-            goHomeSimple();
-        }
-    };
-
-    // --- 内部工具：纯粹的显示隐藏，不操作历史记录 ---
-    function showPageSimple(id) {
-        // 1. 隐藏所有页面
-        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-        // 2. 显示目标页面
-        const target = document.getElementById(id);
-        if(target) target.classList.add('active');
-
-        // 3. 处理导航栏显示
-        if (id === 'projectDetail') {
-            document.getElementById('mainNavBar').style.display = 'none';
-            document.getElementById('detailNavBar').style.display = 'flex';
-        } else {
-            document.getElementById('mainNavBar').style.display = 'flex';
-            document.getElementById('detailNavBar').style.display = 'none';
-            
-            // 首页特殊处理
-            const isHome = (id === 'homePage');
-            document.getElementById('globalBackBtn').style.display = isHome ? 'none' : 'flex';
-            document.getElementById('userBadge').style.display = isHome ? 'block' : 'none';
-            document.getElementById('nodeConfigBtn').style.display = (id === 'projectList') ? 'block' : 'none';
-            document.getElementById('globalPageTitle').innerText = isHome ? '工作助手' : '';
+        // --- 内部工具：纯粹回首页 UI ---
+        function goHomeSimple() {
+            showPageSimple('homePage');
         }
 
-        // 4. 触发页面特定的渲染逻辑
-        if (id === 'projectList') renderProjects();
-        if (id === 'attendancePage') renderOtPage();
-        if (id === 'homePage') initHome();
-    }
-
-    // --- 内部工具：纯粹回首页 UI ---
-    function goHomeSimple() {
-        showPageSimple('homePage');
-    }
-    
-    // 初始化：刚打开网页时，把首页替换为当前状态，防止乱跑
-    history.replaceState({ pageId: 'homePage' }, null, "#home");
+        // 初始化：刚打开网页时，把首页替换为当前状态，防止乱跑
+        history.replaceState({ pageId: 'homePage' }, null, "#home");
 
     </script>
     <div id="personalCenterModal" class="modal">
